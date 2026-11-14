@@ -9,6 +9,8 @@ const DisconnectReason = NetworkService.DisconnectReason
 
 ## How long a connection on this computer may take.
 const TIMEOUT_FRAMES: int = 300
+## Random ports to try before giving up on finding a free one.
+const PORT_PROBES: int = 50
 
 var _host: EnetNetworkService
 var _guest: EnetNetworkService
@@ -28,8 +30,7 @@ func before_each() -> void:
 	_guest = EnetNetworkService.new()
 	_host_side.add_child(_host)
 	_guest_side.add_child(_guest)
-	# A different port for every test, away from the default.
-	_port = 30000 + randi() % 20000
+	_port = _free_port()
 
 
 func after_each() -> void:
@@ -226,3 +227,22 @@ static func _create_messenger(parent: Node) -> NetMessenger:
 	messenger.register_event(&"test.number", NetMessenger.SenderRule.HOST_ONLY)
 	messenger.register_event(&"test.request", NetMessenger.SenderRule.ANYONE)
 	return messenger
+
+
+## A random port, away from the default, that this computer lets the test bind,
+## together with the next one (a test hosts twice). Windows reserves whole port
+## blocks, e.g. for Hyper-V, and binding inside one fails.
+static func _free_port() -> int:
+	var port: int = 0
+	for _probe: int in PORT_PROBES:
+		port = 30000 + randi() % 20000
+		if _can_bind(port) and _can_bind(port + 1):
+			return port
+	return port
+
+
+static func _can_bind(port: int) -> bool:
+	var socket: PacketPeerUDP = PacketPeerUDP.new()
+	var bound: bool = socket.bind(port, "127.0.0.1") == OK
+	socket.close()
+	return bound
