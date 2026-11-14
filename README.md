@@ -252,6 +252,27 @@ Declared in the InputMap and named in `InputActions`. Only the `InputService` im
 
 The bindings are a proposal. `Ctrl`, `Alt` and the function keys are avoided because browsers use them.
 
+### Input and touch controls
+
+`Services.input` is the `DeviceInputService` ([services/input/device_input_service.gd](services/input/device_input_service.gd)). It turns the input actions into what character controllers consume:
+
+```gdscript
+var move: Vector2 = Services.input.get_move_vector()                 # length 0..1
+var aim: Vector2 = Services.input.get_aim_direction(global_position)  # unit vector, never zero
+Services.input.action_pressed.connect(_on_action_pressed)            # abilities of the current role
+Services.input.add_lock(InputActions.MOVE, &"eating")                # gameplay asks for locks
+```
+
+- **Keyboard and mouse:** 8-way movement that is no faster diagonally; the aim points from the character to the mouse pointer.
+- **Touch:** the on-screen controls ([ui/touch/touch_controls.gd](ui/touch/touch_controls.gd)) are Godot's `VirtualJoystick` and `TouchScreenButton` nodes, which trigger the same input actions as the keys. The movement stick is analog; the aim keeps its direction when the aim stick is released. Several fingers work at once.
+- **Role-aware:** only the abilities of the current role are reported, and only that role's touch controls are shown. The Sheepherder gets a second stick to aim plus Fire and Bell; the Monster gets Eat, Sprint, Graze, Bleat and Perk.
+- **A press always gets its release:** when the role changes, gameplay input is switched off, an action is locked, the touch controls disappear, or the window or tab loses focus.
+- **Which controls are shown** follows the device in use: touch controls on a touchscreen, switching whenever the player touches the screen or uses keyboard or mouse. `-- --touch-controls` and `-- --desktop-controls` force one of them; forced touch controls can be operated with the mouse.
+
+**Rule:** nothing outside the input layer reads a device or the InputMap.
+
+The input sandbox ([systems/input/sandbox/input_sandbox.tscn](systems/input/sandbox/input_sandbox.tscn), run it with **F6**) shows the live vectors and actions and steers a placeholder character with nothing but the input service, with buttons to switch the role, the controls and gameplay input.
+
 ### Physics layers and groups
 
 | 2D physics layer | Name | Used for |

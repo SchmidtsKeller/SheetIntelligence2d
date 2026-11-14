@@ -24,7 +24,7 @@ static func core_contracts() -> Array[Script]:
 ## [param registry]. [param config] is the game configuration the services
 ## read their numbers from.
 static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> void:
-	registry.register(InputService, StubInputService.new())
+	registry.register(InputService, DeviceInputService.new())
 	registry.register(NetworkService, create_network_service(config))
 	registry.register(SwarmService, StubSwarmService.new())
 	registry.register(CombatService, StubCombatService.new(config))
