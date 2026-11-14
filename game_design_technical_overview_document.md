@@ -40,7 +40,7 @@
 
 - **Monster Score:** Gains **+1 point** for every NPC sheep it eats during the round. Sheep shot by the Sheepherder give the Monster **0 points**.
 - **Sheepherder Score:** Gains **+1 point** for every NPC sheep still alive at the end of the round, and loses **2 points** for every NPC sheep they shot.
-- **Match Structure:** Best of 5 rounds, decided by round wins, with players swapping roles after every round. Points only decide rounds that end on the timer. If both players have the same number of round wins after 5 rounds, the match is a **Draw**.
+- **Match Structure:** Best of 5 rounds, decided by round wins. Roles are assigned at random for round 1, and players swap roles after every round. All 5 rounds are always played, even once the match is decided. Points only decide rounds that end on the timer. If both players have the same number of round wins after 5 rounds, the match is a **Draw**.
 
 ---
 
@@ -55,9 +55,10 @@
 - **Vision & Fog of War Mechanics:**
   * Equipped with a directional Light-Source (Flashlight/Torch) casting a light cone restricted by specific width and length parameters.
   * *Aiming/Rotation:* Rotates 360 degrees around the Sheepherder to match viewing direction (controlled via Mouse cursor on PC; secondary virtual joystick on Mobile).
-  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone. Players must rely on spatial audio cues to track unseen movement.
+  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone. **Blood** from killed sheep is also only visible inside the light cone. Players must rely on spatial audio cues to track unseen movement.
 - **Combat & Firearm Mechanics:**
   * Equipped with a single-shot firearm with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
+  * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
   * **Reloading:** Reloads automatically after each shot, using a long reload timer. Once all bullets are expended, the weapon is permanently empty for the rest of the round.
   * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). Shooting the Monster before it evolves into the spider results in an instant Sheepherder victory.
 - **Sheepherder Base Abilities:**
@@ -112,7 +113,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 
 - **Faster Consumption (Passive):** Halves the eating/killing animation duration (vulnerability window **1.0s → 0.5s**).
 - **Temporary Invisibility (Active):** Turns the Monster invisible for up to **5 seconds** (30-second cooldown). The duration meter drains slowly while standing still, and drains very rapidly while moving. Invisibility also hides the Monster from the Shepherd Dog, and the Monster cannot eat while invisible. Bullets still hit the Monster while it is invisible.
-- **Allied Bat (Companion / Active):** Commands an allied bat to fly toward the Sheepherder, harassing them and shrinking their flashlight cone's length and angle by about **42%** each for **10 seconds**, which cuts the lit area by **80%** (30-second cooldown).
+- **Allied Bat (Companion / Active):** Commands an allied bat to fly toward the Sheepherder, harassing them and shrinking their flashlight cone's length and angle by about **42%** each for **10 seconds**, which cuts the lit area by **80%** (30-second cooldown). The bat enters from a random position on the map edge nearest the Sheepherder.
 
 ---
 
@@ -123,7 +124,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | Category | Parameter | Default Value | Notes |
 | :--- | :--- | :--- | :--- |
 | **Match Rules** | Round Duration | `180s` | At timeout the higher score wins the round; equal score with both players alive is a Draw |
-| | Match Format | `Best of 5` | Decided by round wins; equal round wins after 5 rounds is a Draw; players swap roles every round |
+| | Match Format | `Best of 5` | Decided by round wins; all 5 rounds are always played; equal round wins after 5 rounds is a Draw; roles are random in round 1, then swap every round |
 | | Flock Size | `10 NPC Sheep` | Plus 1 disguised Monster (11 sheep-like entities total) |
 | | Shot Sheep Penalty | `-2 points` | Sheepherder only; the Monster gets `0` for shot sheep |
 | **Sheepherder** | Base Movement Speed | `180 px/s` | Standard patrol speed |
@@ -189,6 +190,8 @@ Before each round begins, each player selects **1 Perk** from their respective p
 ### 8.2 In-Game HUD
 
 - **PC HUD:** Each player sees only the HUD elements for their current role.
+  * *Both Roles:*
+    * Round timer (remaining time of the current round).
   * *Sheepherder Only:*
     * Bullet counter (visual display of remaining bullets out of 3, or 4 with *Spare Bullet*).
     * Reload progress indicator.
