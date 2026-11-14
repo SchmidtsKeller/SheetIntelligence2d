@@ -42,6 +42,11 @@ var _form: GameEnums.MonsterForm = GameEnums.MonsterForm.SHEEP
 var _stamina: MonsterStamina = MonsterStamina.new()
 var _driver: SheepPlayerDriver
 var _camera: Camera2D
+## The flock the body was registered with as a neighbour.
+var _swarm: SwarmService
+## How far the sheep reaches for the vision system, to restore it after the
+## spider.
+var _sheep_radius: float = 0.0
 
 
 ## Registers the Monster's kind with [param for_session], on both devices and
@@ -50,11 +55,7 @@ var _camera: Camera2D
 static func register(for_session: GameSession, parent_provider: Callable = Callable()) -> void:
 	var parent: Callable = parent_provider
 	if not parent.is_valid():
-		parent = func() -> Node:
-			if not for_session.is_inside_tree():
-				return null
-			var arena: Arena = for_session.get_tree().get_first_node_in_group(Groups.ARENA) as Arena
-			return arena.get_entities_layer() if arena != null else null
+		parent = Monster._entities_layer_of_arena.bind(for_session)
 	for_session.entities.register_kind(KIND, Monster.build.bind(for_session), parent)
 
 
@@ -101,6 +102,13 @@ static func of(body: Node) -> Monster:
 	return body.get_node_or_null(NODE_NAME) as Monster if body != null else null
 
 
+static func _entities_layer_of_arena(for_session: GameSession) -> Node:
+	if not for_session.is_inside_tree():
+		return null
+	var arena: Arena = for_session.get_tree().get_first_node_in_group(Groups.ARENA) as Arena
+	return arena.get_entities_layer() if arena != null else null
+
+
 func _ready() -> void:
 	_body = get_parent() as SheepBody
 	if _body == null:
@@ -117,7 +125,8 @@ func _ready() -> void:
 	combat.monster_form_changed.connect(_on_form_changed)
 	combat.monster_shot.connect(_on_monster_shot)
 	# The flock treats the Monster's sheep as one of its own.
-	Services.swarm.register_neighbour(_body)
+	_swarm = Services.swarm
+	_swarm.register_neighbour(_body)
 	if controlled_locally:
 		_take_control()
 
@@ -125,14 +134,11 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if _body == null:
 		return
+	# The Monster leaves the tree only to be freed, which ends its signal
+	# connections by itself; what holds on to it otherwise is let go of here.
 	session.messenger.unsubscribe(EVENT_BLEAT, _on_bleat_event)
-	var combat: CombatService = Services.combat
-	combat.eat_started.disconnect(_on_eat_started)
-	combat.monster_form_changed.disconnect(_on_form_changed)
-	combat.monster_shot.disconnect(_on_monster_shot)
-	Services.swarm.unregister_neighbour(_body)
-	if Services.input.action_pressed.is_connected(_on_action_pressed):
-		Services.input.action_pressed.disconnect(_on_action_pressed)
+	if is_instance_valid(_swarm):
+		_swarm.unregister_neighbour(_body)
 
 
 func _physics_process(delta: float) -> void:
@@ -258,14 +264,22 @@ func _on_form_changed(form: GameEnums.MonsterForm) -> void:
 	if _driver != null:
 		# A spider neither grazes nor bleats.
 		_driver.mimicry_enabled = not spider
+	# The spider is shown and hidden by the body's vision target like the sheep
+	# was (it is drawn in the same place), but it is much larger.
+	var vision: VisionTarget = _body.get_node_or_null(^"VisionTarget") as VisionTarget
 	if not spider:
 		_body.set_visual_override(null)
+		if vision != null:
+			vision.radius = _sheep_radius
 		return
 	_body.set_grazing(false)
 	var visual: SpiderVisual = SpiderVisual.new()
 	visual.name = "Spider"
 	visual.body = _body
 	_body.set_visual_override(visual)
+	if vision != null:
+		_sheep_radius = vision.radius
+		vision.radius = SpiderVisual.RADIUS
 
 
 ## A bullet ends the Monster like a sheep: it stays on the ground.

@@ -32,9 +32,7 @@ func reset(capacity: float) -> void:
 ## walks, so sprinting would do something; standing still costs nothing.
 ## [br][param capacity] and [param refill_rate] are the current stats: seconds
 ## of sprinting a full meter holds, and seconds regained per second.
-func advance(
-	delta: float, held: bool, moving: bool, capacity: float, refill_rate: float
-) -> bool:
+func advance(delta: float, held: bool, moving: bool, capacity: float, refill_rate: float) -> bool:
 	_capacity = maxf(capacity, 0.0)
 	if not held:
 		_exhausted = false

@@ -13,6 +13,8 @@ const LEG_COLOR: Color = Color(0.06, 0.05, 0.04)
 const EYE_COLOR: Color = Color(0.72, 0.68, 0.45)
 const JAW_COLOR: Color = Color(0.3, 0.08, 0.06)
 
+## How far the spider reaches from its center, for the vision system.
+const RADIUS: float = 80.0
 const LEGS_PER_SIDE: int = 4
 const LEG_REACH: float = 78.0
 const LEG_WIDTH: float = 5.0

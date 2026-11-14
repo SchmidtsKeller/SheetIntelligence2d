@@ -163,6 +163,27 @@ func test_a_remote_controlled_sheepherder_ignores_the_local_input() -> void:
 	assert_false(herder.get_camera().enabled)
 
 
+func test_a_killed_sheepherder_does_nothing_any_more() -> void:
+	var herder: Sheepherder = _spawn()
+	_input.move_vector = Vector2.RIGHT
+	await _physics_frames(5)
+	watch_signals(herder)
+
+	_combat.sheepherder_killed.emit(herder.position)
+	var at: Vector2 = herder.position
+	await _physics_frames(10)
+	_input.simulate_press(InputActions.SHOOT)
+	_input.simulate_press(InputActions.BELL)
+
+	assert_false(herder.is_alive())
+	assert_eq(herder.position, at, "it stays where it died")
+	assert_eq(herder.velocity, Vector2.ZERO)
+	assert_eq(_combat.requests.size(), 0, "no shot")
+	assert_false(herder.can_ring_bell())
+	assert_false(herder.ring_bell())
+	assert_signal_not_emitted(herder, &"bell_rung")
+
+
 # --- Two devices -----------------------------------------------------------------
 
 
