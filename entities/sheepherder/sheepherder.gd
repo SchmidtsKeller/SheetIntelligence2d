@@ -36,6 +36,8 @@ var session: GameSession:
 
 var _bell_cooldown_left: float = 0.0
 var _alive: bool = true
+## The perk service this Sheepherder registered with.
+var _perks: PerkService
 
 @onready var _camera: Camera2D = $Camera
 @onready var _vision_target: VisionTarget = $VisionTarget
@@ -66,6 +68,9 @@ func _ready() -> void:
 	messenger.subscribe(EVENT_PUSH, _on_push)
 	Services.combat.shot_fired.connect(_on_shot_fired)
 	Services.combat.sheepherder_killed.connect(_on_killed)
+	# The companions (the dog, the Monster's bat) find the Sheepherder here.
+	_perks = Services.perks
+	_perks.register_character(GameEnums.Role.SHEEPHERDER, self)
 	if controlled_locally:
 		Services.input.action_pressed.connect(_on_action_pressed)
 		_camera.enabled = true
@@ -85,6 +90,8 @@ func _exit_tree() -> void:
 		Services.combat.sheepherder_killed.disconnect(_on_killed)
 	if Services.input.action_pressed.is_connected(_on_action_pressed):
 		Services.input.action_pressed.disconnect(_on_action_pressed)
+	if is_instance_valid(_perks):
+		_perks.unregister_character(self)
 
 
 func _physics_process(delta: float) -> void:

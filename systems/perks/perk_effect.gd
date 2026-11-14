@@ -1,11 +1,14 @@
 @abstract class_name PerkEffect
 extends RefCounted
-## What an active perk does while it runs (GDD §4), e.g. the Monster's
-## invisibility.
+## What a perk does beyond changing stats (GDD §4): the Monster's invisibility,
+## the Allied Bat, the Shepherd Dog.
 ##
-## The perk service creates one per round and player and decides, on the host,
-## when it starts and ends; both devices then call [method start] and
-## [method stop]. The fields below are kept by the perk service.
+## The perk service creates one per round and player when the selection is
+## locked, on both devices. A triggered effect ([member PerkDefinition.triggered])
+## starts and ends when the host decides; any other effect starts once the
+## round has its character and stops when the round or the character ends.
+## Both devices call [method start] and [method stop]. The fields below are
+## kept by the perk service.
 
 ## The role whose perk this is.
 var role: GameEnums.Role = GameEnums.Role.NONE
@@ -14,12 +17,22 @@ var role: GameEnums.Role = GameEnums.Role.NONE
 var character: Node2D
 ## The stat lookup of this device.
 var perks: PerkService
+## The session, for effects that spawn entities or send events.
+var session: GameSession
+## Whether the perk button starts it.
+var triggered: bool = false
 ## Whether the effect is running.
 var running: bool = false
 ## What is left of the running effect, from 1 to 0.
 var charge: float = 0.0
 ## Seconds until the perk can be triggered again.
 var cooldown_left: float = 0.0
+
+
+## Prepares the round on both devices when the selection is locked, before
+## anything starts: e.g. registers the kind of entity the effect spawns.
+func setup() -> void:
+	pass
 
 
 ## Whether the perk may be triggered right now, apart from its cooldown.

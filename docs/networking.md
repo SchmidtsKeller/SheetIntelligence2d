@@ -131,6 +131,13 @@ The Monster's grazing travels in its snapshots like a sheep's, and its eating an
 
 The meter of a running perk is kept on both devices for the HUD, but only the host ends it.
 
+**Companions** are entities owned by the host: it simulates them, and the guest shows them through their `NetTransform2D`. The kinds are registered when the selection is locked, on both devices, so they are known before the host spawns one.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `companion.dog_bark` | Host | `[entity_id]` |
+| `companion.bat_arrived` | Host | `[entity_id]`; both devices shrink the cone for the disruption time |
+
 ## Session
 
 `Services.session` answers what every system needs to know:
@@ -244,6 +251,8 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 `tools/test_two_instances.sh monster` does the same for a round's lethal part, in the [Monster sandbox](../entities/monster/sandbox/monster_sandbox.tscn) with scripted players and a shortened cooldown: the guest's Monster walks, sprints, grazes, bleats, eats sheep until it is the spider, takes a bullet and kills the host's Sheepherder. Both instances check that they saw the same thing, and the host that the Monster moved without jumps. It accepts the network flags as well.
 
 `tools/test_two_instances.sh match` plays a whole Best of 5 on the real round and results screens, with scripted players and short rounds. Every round ends another way: the Monster kills the Sheepherder, the Sheepherder shoots the Monster, the time runs out with nothing done, it runs out at 5 to 5 points, and the Monster kills after the Sheepherder has wasted every bullet. Both instances check the roles of every round, each round's record and the match result against the script, that no button did anything in a countdown, and that both end in the lobby without a match. The host also compares the guest's timer with its own (within 0.1 s) and the guest's record of the match with its own. It accepts the network flags as well.
+
+`tools/test_two_instances.sh companions` checks the companion perks the same way, with `--perk=shepherd_dog,allied_bat`. The host's Sheepherder has the dog, and the guest's Monster eats a sheep near it and then sends the bat. Both instances check four things: the dog stayed near the Sheepherder, they heard its bark, the cone was shrunk for the disruption time, and the cooldown started when the bat left.
 
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
 
