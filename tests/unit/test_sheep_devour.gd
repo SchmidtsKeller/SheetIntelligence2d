@@ -4,7 +4,6 @@ extends TestCase
 
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 
-
 # --- Eating ----------------------------------------------------------------------
 
 

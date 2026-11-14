@@ -6,7 +6,6 @@ const ARENA_SCENE: PackedScene = preload("res://systems/arena/arena.tscn")
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 const HOST_ID: int = SessionPair.HOST_ID
 const GUEST_ID: int = SessionPair.GUEST_ID
-const EatTarget = CombatService.EatTarget
 const SPIDER: GameEnums.MonsterForm = GameEnums.MonsterForm.SPIDER
 
 
@@ -277,7 +276,7 @@ func test_eating_holds_the_monster_on_both_devices() -> void:
 	_input.move_vector = Vector2.RIGHT
 	await _physics_frames(20)
 
-	_combat.eat_started.emit(EatTarget.SHEEP, 3, 0.5)
+	_combat.eat_started.emit(CombatService.EatTarget.SHEEP, 3, 0.5)
 	var at: Vector2 = body.position
 	await _physics_frames(10)
 
@@ -293,7 +292,7 @@ func test_eating_uses_no_stamina() -> void:
 	var monster: Monster = _spawn(HOST_ID)[0]
 	_input.move_vector = Vector2.RIGHT
 	_input.simulate_press(InputActions.SPRINT)
-	_combat.eat_started.emit(EatTarget.SHEEP, 3, 1.0)
+	_combat.eat_started.emit(CombatService.EatTarget.SHEEP, 3, 1.0)
 
 	await _physics_frames(30)
 

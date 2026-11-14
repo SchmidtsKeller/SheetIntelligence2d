@@ -351,9 +351,7 @@ func _problems() -> Array[String]:
 		return problems
 	var combat: CombatService = Services.combat
 	var config: GameConfig = Services.config
-	var role: GameEnums.Role = (
-		GameEnums.Role.SHEEPHERDER if _hosting else GameEnums.Role.MONSTER
-	)
+	var role: GameEnums.Role = GameEnums.Role.SHEEPHERDER if _hosting else GameEnums.Role.MONSTER
 	if _session.get_local_role() != role or Services.input.get_role() != role:
 		problems.append("plays the %s" % GameEnums.role_name(_session.get_local_role()))
 	if monster.controlled_locally == _hosting or herder.controlled_locally != _hosting:

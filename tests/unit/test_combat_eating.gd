@@ -4,7 +4,9 @@ extends TestCase
 
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 const MONSTER_AT: Vector2 = Vector2(500.0, 500.0)
-const EatTarget = CombatService.EatTarget
+const EAT_SHEEP: CombatService.EatTarget = CombatService.EatTarget.SHEEP
+const EAT_BODY: CombatService.EatTarget = CombatService.EatTarget.SHEEP_BODY
+const EAT_HERDER: CombatService.EatTarget = CombatService.EatTarget.SHEEPHERDER
 
 var _pair: SessionPair
 var _host: SessionCombatService
@@ -14,6 +16,7 @@ var _sheepherder: Node2D
 var _monster: Node2D
 var _audio: StubAudioService
 var _original_audio: Node
+var _last_sheep: SheepBody
 
 
 func before_each() -> void:
@@ -85,7 +88,7 @@ func test_the_host_decides_a_guest_attack_and_both_devices_agree() -> void:
 
 	assert_eq(sheep.get_state(), SheepBody.State.EATEN)
 	for combat: SessionCombatService in [_host, _guest]:
-		assert_signal_emitted_with(combat, &"eat_started", [EatTarget.SHEEP, 0, 1.0])
+		assert_signal_emitted_with(combat, &"eat_started", [EAT_SHEEP, 0, 1.0])
 		assert_signal_emitted_with(combat, &"sheep_killed", [0, GameEnums.DeathCause.EATEN, at])
 		assert_signal_emitted_with(combat, &"blood_spilled", [at])
 		assert_signal_emitted_with(combat, &"eaten_count_changed", [1])
@@ -108,7 +111,7 @@ func test_eating_locks_for_one_second_then_cools_down_for_five() -> void:
 
 	_host.advance(0.2)
 	assert_false(_host.is_eating())
-	assert_signal_emitted_with(_host, &"eat_finished", [EatTarget.SHEEP, 0, 5.0])
+	assert_signal_emitted_with(_host, &"eat_finished", [EAT_SHEEP, 0, 5.0])
 	assert_almost_eq(_host.get_eat_cooldown_remaining(), 4.9, 0.001, "starts when eating ends")
 	assert_false(_host.can_eat(), "cooling down")
 
@@ -131,7 +134,7 @@ func test_the_eating_time_follows_the_stat() -> void:
 
 	_host.request_eat()
 
-	assert_signal_emitted_with(_guest, &"eat_started", [EatTarget.SHEEP, 0, 0.5])
+	assert_signal_emitted_with(_guest, &"eat_started", [EAT_SHEEP, 0, 0.5])
 	Services.replace(PerkService, original_perks)
 	perks.free()
 
@@ -161,7 +164,7 @@ func test_only_the_host_announces_attacks() -> void:
 	expect_error("only the host may send")
 
 	var sent: bool = _pair.guest.messenger.broadcast(
-		SessionCombatService.EVENT_EAT, [EatTarget.SHEEP, 0, Vector2.ZERO, Vector2.ZERO, 1.0, 5.0]
+		SessionCombatService.EVENT_EAT, [EAT_SHEEP, 0, Vector2.ZERO, Vector2.ZERO, 1.0, 5.0]
 	)
 
 	assert_false(sent)
@@ -215,7 +218,7 @@ func test_the_body_of_a_shot_sheep_can_be_eaten() -> void:
 
 	assert_eq(sheep.get_state(), SheepBody.State.EATEN, "the body is gone")
 	for combat: SessionCombatService in [_host, _guest]:
-		assert_signal_emitted_with(combat, &"eat_started", [EatTarget.SHEEP_BODY, 0, 1.0])
+		assert_signal_emitted_with(combat, &"eat_started", [EAT_BODY, 0, 1.0])
 		assert_signal_not_emitted(combat, &"sheep_killed", "it was dead already")
 		assert_signal_not_emitted(combat, &"blood_spilled", "its blood is there since the shot")
 		assert_eq(combat.get_eaten_count(), 1, "it counts toward the evolution")
@@ -277,7 +280,7 @@ func test_one_attack_kills_the_sheepherder() -> void:
 	assert_true(_guest.request_eat())
 
 	for combat: SessionCombatService in [_host, _guest]:
-		assert_signal_emitted_with(combat, &"eat_started", [EatTarget.SHEEPHERDER, -1, 1.0])
+		assert_signal_emitted_with(combat, &"eat_started", [EAT_HERDER, -1, 1.0])
 		assert_signal_emitted_with(combat, &"sheepherder_killed", [at])
 		assert_true(combat.is_eating(), "the eating animation still plays")
 		assert_false(combat.can_shoot(), "the Sheepherder cannot shoot back")
@@ -373,7 +376,7 @@ func test_the_spider_keeps_the_eating_rules() -> void:
 
 	assert_true(_host.request_eat())
 
-	assert_signal_emitted_with(_host, &"eat_started", [EatTarget.SHEEPHERDER, -1, 1.0])
+	assert_signal_emitted_with(_host, &"eat_started", [EAT_HERDER, -1, 1.0])
 
 
 # --- The firearm against the Monster ---------------------------------------------
@@ -437,8 +440,6 @@ func test_a_new_round_starts_from_nothing() -> void:
 
 
 # --- Helpers ---------------------------------------------------------------------
-
-var _last_sheep: SheepBody
 
 
 func _combat(session: GameSession) -> SessionCombatService:
