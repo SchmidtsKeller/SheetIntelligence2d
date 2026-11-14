@@ -1,5 +1,4 @@
-@abstract
-class_name StatIds
+@abstract class_name StatIds
 extends RefCounted
 ## Names of all gameplay stats (GDD §5).
 ##
@@ -42,6 +41,37 @@ const SHEEP_MOVE_SPEED: StringName = &"sheep_move_speed"
 const SHEEP_GRAZE_DURATION_MIN: StringName = &"sheep_graze_duration_min"
 const SHEEP_GRAZE_DURATION_MAX: StringName = &"sheep_graze_duration_max"
 
+# --- Flock -------------------------------------------------------------------
+const FLOCK_WALK_TIME_MIN: StringName = &"flock_walk_time_min"
+const FLOCK_WALK_TIME_MAX: StringName = &"flock_walk_time_max"
+const FLOCK_PAUSE_TIME_MIN: StringName = &"flock_pause_time_min"
+const FLOCK_PAUSE_TIME_MAX: StringName = &"flock_pause_time_max"
+const FLOCK_GRAZE_CHANCE: StringName = &"flock_graze_chance"
+const FLOCK_BLEAT_INTERVAL_MIN: StringName = &"flock_bleat_interval_min"
+const FLOCK_BLEAT_INTERVAL_MAX: StringName = &"flock_bleat_interval_max"
+const FLOCK_WANDER_DISTANCE_MIN: StringName = &"flock_wander_distance_min"
+const FLOCK_WANDER_DISTANCE_MAX: StringName = &"flock_wander_distance_max"
+const FLOCK_SEPARATION_RADIUS: StringName = &"flock_separation_radius"
+const FLOCK_COHESION_RADIUS: StringName = &"flock_cohesion_radius"
+const FLOCK_ALIGNMENT_WEIGHT: StringName = &"flock_alignment_weight"
+const FLOCK_SEPARATION_WEIGHT: StringName = &"flock_separation_weight"
+const FLOCK_COHESION_WEIGHT: StringName = &"flock_cohesion_weight"
+const FLOCK_OBSTACLE_WEIGHT: StringName = &"flock_obstacle_weight"
+const FLOCK_BORDER_WEIGHT: StringName = &"flock_border_weight"
+const FLOCK_OBSTACLE_MARGIN: StringName = &"flock_obstacle_margin"
+const FLOCK_BORDER_MARGIN: StringName = &"flock_border_margin"
+const FLOCK_BODY_CLEARANCE: StringName = &"flock_body_clearance"
+const BELL_STOP_DISTANCE: StringName = &"bell_stop_distance"
+const BELL_FOLLOW_TIME: StringName = &"bell_follow_time"
+
+# --- Sheep motion ------------------------------------------------------------
+const SHEEP_ACCELERATION: StringName = &"sheep_acceleration"
+const SHEEP_TURN_RATE_DEG: StringName = &"sheep_turn_rate_deg"
+
+# --- Arena -------------------------------------------------------------------
+const ARENA_WIDTH: StringName = &"arena_width"
+const ARENA_HEIGHT: StringName = &"arena_height"
+
 # --- Perks -------------------------------------------------------------------
 const PERK_WIDE_FLASHLIGHT_ANGLE_DEG: StringName = &"perk_wide_flashlight_angle_deg"
 const PERK_LONG_FLASHLIGHT_LENGTH: StringName = &"perk_long_flashlight_length"
@@ -59,6 +89,12 @@ const BAT_COOLDOWN: StringName = &"bat_cooldown"
 # --- Audio -------------------------------------------------------------------
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
+
+# --- Network -----------------------------------------------------------------
+const NET_TICK_RATE: StringName = &"net_tick_rate"
+const NET_INTERPOLATION_DELAY: StringName = &"net_interpolation_delay"
+const NET_MAX_EXTRAPOLATION: StringName = &"net_max_extrapolation"
+const NET_CONNECT_TIMEOUT: StringName = &"net_connect_timeout"
 
 # --- View --------------------------------------------------------------------
 const VIEW_MAX_WORLD_WIDTH: StringName = &"view_max_world_width"

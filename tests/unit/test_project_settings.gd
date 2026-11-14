@@ -20,7 +20,9 @@ func test_movement_and_abilities_have_desktop_bindings() -> void:
 	bound.append_array(InputActions.MONSTER_ACTIONS)
 
 	for action: StringName in bound:
-		assert_gt(InputMap.action_get_events(action).size(), 0, "'%s' has a default binding" % action)
+		assert_gt(
+			InputMap.action_get_events(action).size(), 0, "'%s' has a default binding" % action
+		)
 
 
 func test_no_key_is_bound_to_two_actions() -> void:
@@ -32,9 +34,17 @@ func test_no_key_is_bound_to_two_actions() -> void:
 			if key_event == null:
 				continue
 			var key: int = key_event.physical_keycode
-			assert_false(owner_of_key.has(key), "key %s is bound to '%s' and '%s'" % [
-				OS.get_keycode_string(key), owner_of_key.get(key, &""), action,
-			])
+			assert_false(
+				owner_of_key.has(key),
+				(
+					"key %s is bound to '%s' and '%s'"
+					% [
+						OS.get_keycode_string(key),
+						owner_of_key.get(key, &""),
+						action,
+					]
+				)
+			)
 			owner_of_key[key] = action
 
 
@@ -72,17 +82,27 @@ func test_physics_layer_constants_match_their_layer_numbers() -> void:
 
 func test_groups_are_declared_as_global_groups() -> void:
 	for group: StringName in Groups.ALL:
-		assert_true(ProjectSettings.has_setting(Groups.setting_path(group)), "global group '%s' exists" % group)
+		assert_true(
+			ProjectSettings.has_setting(Groups.setting_path(group)),
+			"global group '%s' exists" % group
+		)
 
 
 func test_project_is_set_up_for_a_2d_web_game() -> void:
-	assert_eq(ProjectSettings.get_setting("rendering/renderer/rendering_method"), "gl_compatibility")
-	assert_eq(ProjectSettings.get_setting("rendering/renderer/rendering_method.mobile"), "gl_compatibility")
+	assert_eq(
+		ProjectSettings.get_setting("rendering/renderer/rendering_method"), "gl_compatibility"
+	)
+	assert_eq(
+		ProjectSettings.get_setting("rendering/renderer/rendering_method.mobile"),
+		"gl_compatibility"
+	)
 	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_width"), 1280)
 	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_height"), 720)
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "canvas_items")
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/aspect"), "expand")
-	assert_eq(ProjectSettings.get_setting("physics/2d/default_gravity"), 0.0, "top-down: no gravity")
+	assert_eq(
+		ProjectSettings.get_setting("physics/2d/default_gravity"), 0.0, "top-down: no gravity"
+	)
 
 
 func test_untyped_code_is_a_compile_error() -> void:

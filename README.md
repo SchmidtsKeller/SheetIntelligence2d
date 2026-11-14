@@ -8,7 +8,8 @@ An asymmetric 1v1 social deduction game for the browser. One player is the **She
 
 ## Requirements
 
-- **Godot 4.7** (strictly this version, GDD §9.1). The standard build is enough; the project uses GDScript only, because C# projects cannot be exported to the Web.
+- **Godot 4.7** (strictly this version, GDD §9.1), **standard build**. The project uses GDScript only. The .NET build of Godot can run the project and the tests, but it cannot export to the Web.
+- For the Web build: the Web export templates of the same version (*Editor → Manage Export Templates*).
 
 ## Run the project
 
@@ -19,6 +20,30 @@ godot --path .
 ```
 
 The game starts in the boot screen, which checks the services and hands over to the lobby. Lobby, round and results are placeholder screens for now; their buttons walk through the scene flow.
+
+The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
+
+The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbox.tscn), **F6**) shows the whole arena with a round's spawn layout. Its buttons let the sheep wander into obstacles and borders, switch the debug overlay (footprints, occluders, borders, spawn areas) and change the zoom.
+
+The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn](entities/sheepherder/sandbox/sheepherder_sandbox.tscn), **F6**) puts you in the arena as the Sheepherder, among a round's sheep that stand still: walk with WASD, aim with the mouse, ring the bell with Space and shoot with the left mouse button.
+
+The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden).
+
+The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/monster/sandbox/monster_sandbox.tscn), **F6**) is a round without rules: you are the Monster among a round's flock, with a Sheepherder who only stands there. Walk with WASD, sprint with Shift, graze with C, bleat with F and eat with E; the status line shows stamina, the eaten count and the attack's cooldown, and a button lets the Sheepherder shoot at you. Started twice with `-- --host` and `-- --join`, it is the same round between two players.
+
+### Two instances on one computer
+
+The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
+
+```bash
+godot --path . -- --host
+```
+
+```bash
+godot --path . -- --join
+```
+
+Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
 
 ## Run the tests
 
@@ -71,6 +96,26 @@ func test_bell_reaches_sheep_inside_the_radius() -> void:
 
 The harness lives in the repository and has no dependencies, so it cannot fall behind the engine version. GUT and gdUnit4 are the usual choices; they were not evaluated against Godot 4.7 for this project. The assertion names follow GUT's, so switching later is mostly a change of the base class.
 
+## Web build
+
+The game ships as a Web build. Details, including the reasoning behind the export settings, are in [docs/web-build.md](docs/web-build.md).
+
+**Build and serve locally.** Export the Web build and serve it at <http://localhost:8060>:
+
+```bash
+tools/export_web.sh --serve
+```
+
+On Windows: `tools\export_web.ps1 --serve`. Add `--debug` for a debug build.
+
+**Continuous integration.** Every pull request and every push to `main` runs the format and lint check, the import check with the unit tests, and the Web export. The exported build of a pull request can be downloaded from its CI run as the artifact `web-build`.
+
+**Deployment.** Every push to `main` is deployed to GitHub Pages: <https://schmidtskeller.github.io/SheetIntelligence2d/>. Pages has to be enabled once by the repository owner (*Settings → Pages → Source: GitHub Actions*).
+
+**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost`.
+
+**Thread Support** is off and the Progressive Web App option is not used, because GitHub Pages cannot send the cross-origin isolation headers that threads need. This affects audio latency in *Stream* mode; see the decision in [docs/web-build.md](docs/web-build.md#decision-no-thread-support-no-progressive-web-app).
+
 ## Architecture
 
 The code follows two rules from GDD §9.2: **separation of concerns** through service contracts, and **one source of truth** for every number and name.
@@ -79,12 +124,14 @@ The code follows two rules from GDD §9.2: **separation of concerns** through se
 res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
-├── entities/         Sheepherder, Monster, NPC sheep, companions
-├── systems/          Game config, scene flow, view rule; later lighting, AI, swarm
+├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, seeded randomness; later lighting
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
-└── tools/            Developer scripts
+├── tools/            Developer scripts: tests, import check, Web export, local server
+├── web/              Page files that ship next to the exported game
+└── docs/             Decisions and how-tos
 ```
 
 ### Service contracts
@@ -100,7 +147,7 @@ Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
 | `PerkService` | Perk selection and the modifier-aware stat lookup |
 | `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
 
-Every contract has a stub in `services/stubs/` that is registered by default. A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input and the flock are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
 
 ### Service registry
 
@@ -146,6 +193,73 @@ var bullets: int = Services.perks.get_stat_int(StatIds.FIREARM_AMMO)
 | `PhysicsLayers` | The 2D physics layers as bit masks |
 | `Groups` | The node groups |
 
+### Seeded randomness
+
+Everything both devices derive from a seed, such as the look of a sheep, uses [SeededRandom](systems/random/seeded_random.gd), never `RandomNumberGenerator` or the global `randi()`. It is integer-only, so a seed gives the same numbers on every platform; Godot documents the algorithm of `RandomNumberGenerator` as an implementation detail.
+
+### Arena and line of sight
+
+The [Arena](systems/arena/arena.gd) is the playing field. It provides:
+
+- its bounds and play area
+- the layers to place things in (entities, decals, overlays)
+- obstacle footprints for steering
+- free-position sampling and a round's spawn layout
+- camera limits
+
+Its size comes from the config, and the borders are built from it.
+
+Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it.
+
+**Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
+
+### The flock
+
+`Services.swarm` is the `FlockSwarmService` ([services/swarm/flock_swarm_service.gd](services/swarm/flock_swarm_service.gd)): the ten NPC sheep of a round (GDD §3.3). The host simulates them; the guest gets the same sheep through the session.
+
+```gdscript
+Services.swarm.spawn_flock(round_seed)                      # host, once the arena is in the tree
+Services.swarm.ring_bell(origin, Services.perks.get_stat(StatIds.BELL_RADIUS))   # either device
+Services.swarm.kill_sheep(sheep_id, GameEnums.DeathCause.SHOT)                   # host
+Services.swarm.register_neighbour(monster_body)             # the flock treats it as one of its own
+```
+
+- **Behaviour.** Each sheep has a [FlockAgent](systems/flock/flock_agent.gd) that strings together plain segments: walk a short way, stand, graze, and bleat now and then. Where a walk leads is decided when it starts: somewhere nearby, leaning toward where the others are heading and back toward the flock when the sheep has strayed. While walking, the forces in [FlockSteering](systems/flock/flock_steering.gd) keep it apart from the others and clear of obstacles and borders. There is nothing in it a player could not do with a stick and two buttons, which is the point: the Monster has to pass as one of them.
+- **Bell.** Living sheep within the radius walk to where it rang, stop a few steps short and return to normal after `bell_follow_time`. Sheep outside the radius do not react.
+- **Tuning.** Every duration, distance and chance is in the *Flock* group of the game config.
+- **Deterministic start.** Positions, looks and minds follow from the round seed. A round has `flock_size + 1` slots for sheep-like entities; [RoundCast](systems/flock/round_cast.gd) names the slot the flock leaves free for the Monster, so the Monster (#16) and the round (#17) take its position and visual seed from the same place.
+- **The arena** is found through the group `arena`; the sheep live in its entities layer.
+
+The flock sandbox ([systems/flock/sandbox/flock_sandbox.tscn](systems/flock/sandbox/flock_sandbox.tscn), **F6**) shows a round's flock in the arena, with one more sheep in the Monster's slot that can be steered with the Monster's keys. A click rings the bell there; the buttons start a new flock, switch the debug overlay (activity, target and steering per sheep, the reach of the last bell), run a time lapse and kill a sheep.
+
+### The Monster
+
+The [Monster](entities/monster/monster.gd) (GDD §3.2) has no body of its own. It is one node inside the shared sheep body, spawned in the slot the flock leaves free:
+
+```gdscript
+Monster.register(Services.session)                                   # both devices, before the round
+Services.session.entities.spawn(Monster.KIND, owner_id, Monster.spawn_data(round_seed, arena))   # host
+Services.combat.begin_round(sheepherder, Monster.of(body).get_body())
+```
+
+- **Disguise.** Same scene, same replication and same layer as an NPC sheep, steered through the same motion model, grazing and bleat. Whatever would tell it apart on the Sheepherder's device is a bug: [docs/no-tell-audit.md](docs/no-tell-audit.md) is the checklist, and `tests/unit/test_monster_no_tell.gd` works through it.
+- **Sprint.** Hold to move at `monster_sprint_speed` while the stamina lasts ([MonsterStamina](entities/monster/monster_stamina.gd)). An empty meter ends the sprint until the button is let go of; it refills whenever the Monster is not sprinting.
+- **Eating.** `Services.combat.request_eat()` asks the host, which looks for something within `melee_range`: a living sheep, the body of a shot one, or the Sheepherder once `herder_kill_threshold` sheep are eaten. The Monster is locked for `eat_duration`, and the cooldown starts when that ends. Other systems can forbid the attack with `add_eat_blocker()` and ask `is_eating()`.
+- **Evolution.** Every eaten sheep counts, also the body of one the Sheepherder shot (which gives no points: `get_eaten_alive_count()`). At `spider_evolution_threshold` the Monster becomes the [spider](entities/monster/spider_visual.gd) when it has finished eating: faster, without sprint or mimicry, and bullets do nothing to it.
+- **For the HUD:** `get_stamina_ratio()`, `is_sprinting()` and `get_form()` on the Monster; `get_eaten_count()`, `get_eat_cooldown_remaining()`, `can_kill_sheepherder()` and `is_monster_killable()` on the combat service.
+
+### Vision
+
+What a player sees is decided on their own device by the [VisionSystem](systems/vision/vision_system.gd) (GDD §3.1, §3.2). It changes only what is drawn, never the simulation or what is sent.
+
+- **Sheepherder:** heavy darkness, in which static scenery stays faintly visible. Entities and blood are seen only where the [flashlight](entities/sheepherder/flashlight_light.gd) lights them: inside the cone and not in an obstacle's shadow.
+- **Monster:** no darkness. Entities are seen unless an obstacle hides them; all of the ground is seen, including blood and the Sheepherder's light.
+- **Everybody** always sees their own character.
+
+**Rule:** anything that may be hidden (a character, a sheep, a companion, a mark on the ground) has a [VisionTarget](systems/vision/vision_target.gd) child that names the part to fade, and its root is in the group `dynamic_entities`. Effects that belong to it (a muzzle flash, an eating effect) are attached to that target with `attach()`, so they are never seen when the entity is not. There are no rules per entity type.
+
+The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
+
 ### Scene flow
 
 `SceneFlow` (autoload, [systems/flow/scene_flow_controller.gd](systems/flow/scene_flow_controller.gd)) knows which screen is shown and which may follow:
@@ -157,6 +271,14 @@ boot → lobby → round → results ─┬→ round   (next round)
 ```
 
 `SceneFlow.go_to(SceneFlowController.Screen.ROUND)` changes the scene and refuses transitions the flow does not allow. Each screen is a scene in `ui/screens/`; a task replaces a placeholder by setting `SceneFlow.screen_scenes[...]`.
+
+### Session and replication
+
+`Services.session` ([systems/session/game_session.gd](systems/session/game_session.gd)) sits between the connection and the game. It knows who is host, who plays which role and which screen both devices are on, and it owns the building blocks every networked feature uses: reliable ordered events, unreliable snapshots with interpolation, host-owned synced values, and spawning of replicated entities with stable ids.
+
+The host decides the flock, combat and the round; each player moves their own character. The conventions (authority table, channels, tick rate, how to add a replicated entity or event) are in [docs/networking.md](docs/networking.md).
+
+**Rule:** gameplay code talks to the session, never to a transport or to Godot's multiplayer API directly.
 
 ## Project settings
 
@@ -183,6 +305,27 @@ Declared in the InputMap and named in `InputActions`. Only the `InputService` im
 
 The bindings are a proposal. `Ctrl`, `Alt` and the function keys are avoided because browsers use them.
 
+### Input and touch controls
+
+`Services.input` is the `DeviceInputService` ([services/input/device_input_service.gd](services/input/device_input_service.gd)). It turns the input actions into what character controllers consume:
+
+```gdscript
+var move: Vector2 = Services.input.get_move_vector()                 # length 0..1
+var aim: Vector2 = Services.input.get_aim_direction(global_position)  # unit vector, never zero
+Services.input.action_pressed.connect(_on_action_pressed)            # abilities of the current role
+Services.input.add_lock(InputActions.MOVE, &"eating")                # gameplay asks for locks
+```
+
+- **Keyboard and mouse:** 8-way movement that is no faster diagonally; the aim points from the character to the mouse pointer.
+- **Touch:** the on-screen controls ([ui/touch/touch_controls.gd](ui/touch/touch_controls.gd)) are Godot's `VirtualJoystick` and `TouchScreenButton` nodes, which trigger the same input actions as the keys. The movement stick is analog; the aim keeps its direction when the aim stick is released. Several fingers work at once.
+- **Role-aware:** only the abilities of the current role are reported, and only that role's touch controls are shown. The Sheepherder gets a second stick to aim plus Fire and Bell; the Monster gets Eat, Sprint, Graze, Bleat and Perk.
+- **A press always gets its release:** when the role changes, gameplay input is switched off, an action is locked, the touch controls disappear, or the window or tab loses focus.
+- **Which controls are shown** follows the device in use: touch controls on a touchscreen, switching whenever the player touches the screen or uses keyboard or mouse. `-- --touch-controls` and `-- --desktop-controls` force one of them; forced touch controls can be operated with the mouse.
+
+**Rule:** nothing outside the input layer reads a device or the InputMap.
+
+The input sandbox ([systems/input/sandbox/input_sandbox.tscn](systems/input/sandbox/input_sandbox.tscn), run it with **F6**) shows the live vectors and actions and steers a placeholder character with nothing but the input service, with buttons to switch the role, the controls and gameplay input.
+
 ### Physics layers and groups
 
 | 2D physics layer | Name | Used for |
@@ -201,12 +344,15 @@ The bindings are a proposal. `Ctrl`, `Alt` and the function keys are avoided bec
 | `dynamic_entities` | Everything the vision system may hide |
 | `obstacles` | Solid props that block movement and line of sight |
 | `static_scenery` | Static map elements that stay faintly visible in darkness |
+| `arena` | The arena of the running round |
 
 NPC sheep and the Monster share every layer and group they are in, so neither can be used to tell them apart (GDD §3.2, "No Built-in Tell").
 
 ## Code conventions
 
+- **Formatted and linted.** CI checks every script with `gdformat` and `gdlint` from [gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit) 4.5.0; the settings are in `gdformatrc` and `gdlintrc`. Install it with `pipx install "gdtoolkit==4.5.0"`, then format with `gdformat $(git ls-files '*.gd')` and lint with `gdlint $(git ls-files '*.gd')` before pushing.
 - **Static typing everywhere.** Every variable, parameter and return value has a type. The project setting `debug/gdscript/warnings/untyped_declaration` is set to *Error*, so untyped code does not compile.
+- Definitions follow the style guide's order: signals, enums, constants, exported variables, variables, then functions.
 - Naming follows the [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html): `snake_case` for files, functions and variables; `PascalCase` for classes and nodes; `CONSTANT_CASE` for constants and enum values; a leading `_` for private members; signals in the past tense (`sheep_died`).
 - Contracts are named `<Thing>Service`, stubs `Stub<Thing>Service`, tests `tests/unit/test_<subject>.gd`.
 - Public classes, methods and signals carry `##` documentation comments.

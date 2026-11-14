@@ -1,5 +1,4 @@
-@abstract
-class_name CombatService
+@abstract class_name CombatService
 extends Node
 ## Contract for everything lethal (GDD §2.2, §3.1, §3.2).
 ##
@@ -10,6 +9,76 @@ extends Node
 ##
 ## This service reports what happened. Who wins because of it is decided by
 ## the round rules, which listen to these signals.
+
+# --- Firearm -----------------------------------------------------------------
+
+## A shot was fired and resolved. The bullet travelled from [param origin] to
+## [param end_position]. Emitted for every shot that used up a bullet.
+@warning_ignore("unused_signal")
+signal shot_fired(origin: Vector2, end_position: Vector2, result: ShotResult)
+
+## The number of bullets left changed.
+@warning_ignore("unused_signal")
+signal ammo_changed(remaining: int, capacity: int)
+
+## The automatic reload after a shot started and takes [param duration] seconds.
+@warning_ignore("unused_signal")
+signal reload_started(duration: float)
+
+## The firearm is ready to fire again.
+@warning_ignore("unused_signal")
+signal reload_finished
+
+## The last bullet is gone: the firearm stays empty for the rest of the round
+## and the Monster can no longer be killed (GDD §2.2).
+@warning_ignore("unused_signal")
+signal ammo_depleted
+
+# --- Deaths ------------------------------------------------------------------
+
+## A living NPC sheep was killed by a shot or by the Monster. Not emitted when
+## the Monster eats the body of a sheep that was shot before.
+@warning_ignore("unused_signal")
+signal sheep_killed(sheep_id: int, cause: GameEnums.DeathCause, position: Vector2)
+
+## The Monster was shot in its sheep form.
+@warning_ignore("unused_signal")
+signal monster_shot(position: Vector2)
+
+## The Monster's attack landed on the Sheepherder, who dies instantly.
+@warning_ignore("unused_signal")
+signal sheepherder_killed(position: Vector2)
+
+# --- Monster -----------------------------------------------------------------
+
+## The Monster started eating. It can neither move nor abort for
+## [param duration] seconds. [param target_id] is the sheep id, or -1 when the
+## target is the Sheepherder. [param target] tells a living sheep from the
+## body of a shot one, which gives no points and does not alarm the dog.
+@warning_ignore("unused_signal")
+signal eat_started(target: EatTarget, target_id: int, duration: float)
+
+## The eating animation ended and the cooldown of [param cooldown] seconds began.
+@warning_ignore("unused_signal")
+signal eat_finished(target: EatTarget, target_id: int, cooldown: float)
+
+## Blood appeared on the ground where a living sheep was eaten or shot. It
+## stays for the whole round (GDD §3.1, §3.2).
+@warning_ignore("unused_signal")
+signal blood_spilled(position: Vector2)
+
+## The number of sheep the Monster has eaten changed, bodies included.
+@warning_ignore("unused_signal")
+signal eaten_count_changed(eaten: int)
+
+## The Monster may now kill the Sheepherder (5 sheep eaten, GDD §2.1).
+@warning_ignore("unused_signal")
+signal sheepherder_kill_unlocked
+
+## The Monster changed form (10 sheep eaten: spider, GDD §2.1). The spider
+## appears when the eating animation of the last sheep ends.
+@warning_ignore("unused_signal")
+signal monster_form_changed(form: GameEnums.MonsterForm)
 
 ## What a shot did.
 enum ShotResult {
@@ -30,90 +99,22 @@ enum ShotResult {
 ## What the Monster's melee attack is aimed at.
 enum EatTarget {
 	NONE,
+	## A living NPC sheep.
 	SHEEP,
 	SHEEPHERDER,
+	## The body of a sheep the Sheepherder shot. Counts toward the evolution
+	## like a living sheep, but gives no points (GDD §2.3, §3.2).
+	SHEEP_BODY,
 }
-
-# --- Firearm -----------------------------------------------------------------
-
-## A shot was fired and resolved. The bullet travelled from [param origin] to
-## [param end_position]. Emitted for every shot that used up a bullet.
-@warning_ignore("unused_signal")
-signal shot_fired(origin: Vector2, end_position: Vector2, result: ShotResult)
-
-## The number of bullets left changed.
-@warning_ignore("unused_signal")
-signal ammo_changed(remaining: int, capacity: int)
-
-## The automatic reload after a shot started and takes [param duration] seconds.
-@warning_ignore("unused_signal")
-signal reload_started(duration: float)
-
-## The firearm is ready to fire again.
-@warning_ignore("unused_signal")
-signal reload_finished()
-
-## The last bullet is gone: the firearm stays empty for the rest of the round
-## and the Monster can no longer be killed (GDD §2.2).
-@warning_ignore("unused_signal")
-signal ammo_depleted()
-
-# --- Deaths ------------------------------------------------------------------
-
-## An NPC sheep was killed by a shot or by the Monster.
-@warning_ignore("unused_signal")
-signal sheep_killed(sheep_id: int, cause: GameEnums.DeathCause, position: Vector2)
-
-## The Monster was shot in its sheep form.
-@warning_ignore("unused_signal")
-signal monster_shot(position: Vector2)
-
-## The Monster's attack landed on the Sheepherder, who dies instantly.
-@warning_ignore("unused_signal")
-signal sheepherder_killed(position: Vector2)
-
-# --- Monster -----------------------------------------------------------------
-
-## The Monster started eating. It can neither move nor abort for
-## [param duration] seconds. [param target_id] is the sheep id, or -1 when the
-## target is the Sheepherder.
-@warning_ignore("unused_signal")
-signal eat_started(target: EatTarget, target_id: int, duration: float)
-
-## The eating animation ended and the cooldown of [param cooldown] seconds began.
-@warning_ignore("unused_signal")
-signal eat_finished(target: EatTarget, target_id: int, cooldown: float)
-
-## Blood appeared on the ground where a sheep was eaten. It stays for the
-## whole round (GDD §3.2).
-@warning_ignore("unused_signal")
-signal blood_spilled(position: Vector2)
-
-## The number of sheep the Monster has eaten changed.
-@warning_ignore("unused_signal")
-signal eaten_count_changed(eaten: int)
-
-## The Monster may now kill the Sheepherder (5 sheep eaten, GDD §2.1).
-@warning_ignore("unused_signal")
-signal sheepherder_kill_unlocked()
-
-## The Monster changed form (10 sheep eaten: spider, GDD §2.1).
-@warning_ignore("unused_signal")
-signal monster_form_changed(form: GameEnums.MonsterForm)
-
 
 # --- Round lifecycle ---------------------------------------------------------
 
 ## Resets ammo, reload, cooldowns, counters and the Monster's form for a new
 ## round, and remembers the two characters to resolve attacks against.
-@abstract
-func begin_round(sheepherder: Node2D, monster: Node2D) -> void
-
+@abstract func begin_round(sheepherder: Node2D, monster: Node2D) -> void
 
 ## Stops all combat. Requests are rejected until the next [method begin_round].
-@abstract
-func end_round() -> void
-
+@abstract func end_round() -> void
 
 # --- Firearm -----------------------------------------------------------------
 
@@ -123,97 +124,69 @@ func end_round() -> void
 ## leaves the map (no piercing). The light cone does not limit its range, so
 ## targets the Sheepherder cannot see can be hit (GDD §3.1). A miss still uses
 ## up the bullet.
-@abstract
-func request_shot(origin: Vector2, direction: Vector2) -> bool
-
+@abstract func request_shot(origin: Vector2, direction: Vector2) -> bool
 
 ## Whether a shot would be accepted right now (loaded and not reloading).
-@abstract
-func can_shoot() -> bool
-
+@abstract func can_shoot() -> bool
 
 ## Bullets left this round.
-@abstract
-func get_ammo() -> int
-
+@abstract func get_ammo() -> int
 
 ## Bullets the firearm started the round with (3, or 4 with Spare Bullet).
-@abstract
-func get_ammo_capacity() -> int
-
+@abstract func get_ammo_capacity() -> int
 
 ## Whether the automatic reload is running.
-@abstract
-func is_reloading() -> bool
-
+@abstract func is_reloading() -> bool
 
 ## Reload progress from 0 (just fired) to 1 (ready).
-@abstract
-func get_reload_progress() -> float
-
+@abstract func get_reload_progress() -> float
 
 ## Whether all bullets are used up.
-@abstract
-func is_ammo_depleted() -> bool
-
+@abstract func is_ammo_depleted() -> bool
 
 ## How many NPC sheep the Sheepherder has shot this round.
-@abstract
-func get_shot_sheep_count() -> int
-
+@abstract func get_shot_sheep_count() -> int
 
 # --- Monster -----------------------------------------------------------------
 
 ## Asks to attack what is in melee range of the Monster: the Sheepherder if
-## the kill is unlocked, otherwise the nearest living sheep. Returns whether
-## the request was accepted locally; the result arrives as [signal eat_started].
-@abstract
-func request_eat() -> bool
-
+## the kill is unlocked, otherwise the nearest sheep, living or the body of a
+## shot one. Returns whether the request was accepted locally; the result
+## arrives as [signal eat_started].
+@abstract func request_eat() -> bool
 
 ## Whether an attack would be accepted right now: something is in range, the
 ## cooldown is over and nothing blocks eating.
-@abstract
-func can_eat() -> bool
-
+@abstract func can_eat() -> bool
 
 ## Whether the Monster is in the middle of its eating animation.
-@abstract
-func is_eating() -> bool
-
+@abstract func is_eating() -> bool
 
 ## Seconds until the Monster may attack again; 0 when ready.
-@abstract
-func get_eat_cooldown_remaining() -> float
-
+@abstract func get_eat_cooldown_remaining() -> float
 
 ## Forbids eating until [method remove_eat_blocker] is called with the same
 ## [param source] (e.g. while the Monster is invisible).
-@abstract
-func add_eat_blocker(source: StringName) -> void
-
+@abstract func add_eat_blocker(source: StringName) -> void
 
 ## Removes a blocker added with [method add_eat_blocker].
-@abstract
-func remove_eat_blocker(source: StringName) -> void
+@abstract func remove_eat_blocker(source: StringName) -> void
 
+## How many sheep the Monster has eaten this round, toward its evolution.
+## The eaten bodies of shot sheep count; a shot sheep that was left lying does
+## not (GDD §2.1, §3.2).
+@abstract func get_eaten_count() -> int
 
-## How many sheep the Monster has eaten this round. Shot sheep never count.
-@abstract
-func get_eaten_count() -> int
-
+## How many of the eaten sheep were alive when the Monster ate them. Only
+## these give the Monster points (GDD §2.3).
+@abstract func get_eaten_alive_count() -> int
 
 ## The Monster's current form.
-@abstract
-func get_monster_form() -> GameEnums.MonsterForm
-
+@abstract func get_monster_form() -> GameEnums.MonsterForm
 
 ## Whether the Monster's attack can kill the Sheepherder.
-@abstract
-func can_kill_sheepherder() -> bool
-
+@abstract func can_kill_sheepherder() -> bool
 
 ## Whether a bullet can still kill the Monster: not in spider form and the
 ## firearm is not permanently empty.
-@abstract
-func is_monster_killable() -> bool
+@abstract func is_monster_killable() -> bool

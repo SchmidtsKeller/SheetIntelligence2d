@@ -1,5 +1,4 @@
-@abstract
-class_name PhysicsLayers
+@abstract class_name PhysicsLayers
 extends RefCounted
 ## The named 2D physics layers (`project.godot`, `layer_names/2d_physics`).
 ##

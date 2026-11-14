@@ -50,10 +50,40 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 	# Audio
 	&"hearing_range_quiet": 400.0,
 	&"hearing_range_loud": 800.0,
+	# Arena
+	&"arena_width": 3200.0,
+	&"arena_height": 2400.0,
 }
 
 ## Values that are project decisions rather than GDD parameters.
 const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
+	&"flock_walk_time_min": 1.5,
+	&"flock_walk_time_max": 4.0,
+	&"flock_pause_time_min": 0.8,
+	&"flock_pause_time_max": 2.5,
+	&"flock_graze_chance": 0.45,
+	&"flock_bleat_interval_min": 8.0,
+	&"flock_bleat_interval_max": 25.0,
+	&"flock_wander_distance_min": 80.0,
+	&"flock_wander_distance_max": 240.0,
+	&"flock_separation_radius": 72.0,
+	&"flock_cohesion_radius": 280.0,
+	&"flock_alignment_weight": 0.35,
+	&"flock_separation_weight": 1.6,
+	&"flock_cohesion_weight": 2.5,
+	&"flock_obstacle_weight": 2.2,
+	&"flock_border_weight": 2.2,
+	&"flock_obstacle_margin": 60.0,
+	&"flock_border_margin": 70.0,
+	&"flock_body_clearance": 28.0,
+	&"bell_stop_distance": 110.0,
+	&"bell_follow_time": 6.0,
+	&"sheep_acceleration": 900.0,
+	&"sheep_turn_rate_deg": 540.0,
+	&"net_tick_rate": 20,
+	&"net_interpolation_delay": 0.1,
+	&"net_max_extrapolation": 0.1,
+	&"net_connect_timeout": 10.0,
 	&"view_max_world_width": 1600.0,
 	&"view_max_world_height": 900.0,
 }
@@ -88,9 +118,10 @@ func test_every_config_value_is_covered_by_this_test() -> void:
 func test_integer_parameters_are_stored_as_integers() -> void:
 	var config: GameConfig = GameConfig.new()
 
-	for number_name: StringName in GDD_DEFAULTS:
-		var expected_type: int = typeof(GDD_DEFAULTS[number_name])
-		assert_eq(typeof(config.get(number_name)), expected_type, "type of '%s'" % number_name)
+	for defaults: Dictionary in [GDD_DEFAULTS, PROJECT_DEFAULTS]:
+		for number_name: StringName in defaults:
+			var expected_type: int = typeof(defaults[number_name])
+			assert_eq(typeof(config.get(number_name)), expected_type, "type of '%s'" % number_name)
 
 
 func test_stat_ids_and_config_values_are_the_same_set() -> void:
@@ -122,6 +153,7 @@ func test_get_number_fails_loudly_for_an_unknown_name() -> void:
 
 # --- Relations the design document states in words ------------------------------
 
+
 func test_monster_moves_exactly_like_the_sheep_it_imitates() -> void:
 	var config: GameConfig = GameConfig.new()
 
@@ -148,10 +180,16 @@ func test_spider_is_faster_than_a_sprinting_sheep() -> void:
 
 func test_both_flashlight_perks_light_half_as_much_area_again() -> void:
 	var config: GameConfig = GameConfig.new()
-	var base_area: float = _lit_area(config.flashlight_cone_angle_deg, config.flashlight_cone_length)
+	var base_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.flashlight_cone_length
+	)
 
-	var wide_area: float = _lit_area(config.perk_wide_flashlight_angle_deg, config.flashlight_cone_length)
-	var long_area: float = _lit_area(config.flashlight_cone_angle_deg, config.perk_long_flashlight_length)
+	var wide_area: float = _lit_area(
+		config.perk_wide_flashlight_angle_deg, config.flashlight_cone_length
+	)
+	var long_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.perk_long_flashlight_length
+	)
 
 	assert_almost_eq(wide_area / base_area, 1.5, 0.01)
 	assert_almost_eq(long_area / base_area, 1.5, 0.01)
@@ -160,7 +198,9 @@ func test_both_flashlight_perks_light_half_as_much_area_again() -> void:
 func test_bat_cuts_the_lit_area_by_about_eighty_percent() -> void:
 	var config: GameConfig = GameConfig.new()
 	var remaining: float = 1.0 - config.bat_cone_shrink
-	var base_area: float = _lit_area(config.flashlight_cone_angle_deg, config.flashlight_cone_length)
+	var base_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.flashlight_cone_length
+	)
 
 	var disrupted_area: float = _lit_area(
 		config.flashlight_cone_angle_deg * remaining,
@@ -192,9 +232,15 @@ func test_spider_needs_the_whole_flock() -> void:
 
 func _assert_matches_gdd(config: GameConfig) -> void:
 	for number_name: StringName in GDD_DEFAULTS:
-		assert_eq(config.get(number_name), GDD_DEFAULTS[number_name], "GDD §5 default of '%s'" % number_name)
+		assert_eq(
+			config.get(number_name),
+			GDD_DEFAULTS[number_name],
+			"GDD §5 default of '%s'" % number_name
+		)
 	for number_name: StringName in PROJECT_DEFAULTS:
-		assert_eq(config.get(number_name), PROJECT_DEFAULTS[number_name], "default of '%s'" % number_name)
+		assert_eq(
+			config.get(number_name), PROJECT_DEFAULTS[number_name], "default of '%s'" % number_name
+		)
 
 
 ## Area of a circular sector, up to a constant factor.

@@ -1,5 +1,4 @@
-@abstract
-class_name ViewRules
+@abstract class_name ViewRules
 extends RefCounted
 ## The view-fairness rule: how much of the world a player may see.
 ##

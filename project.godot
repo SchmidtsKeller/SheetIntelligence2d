@@ -41,6 +41,7 @@ companions="Shepherd Dog and Allied Bat."
 dynamic_entities="Everything the vision system may hide: characters, sheep, companions."
 obstacles="Solid props that block movement and line of sight."
 static_scenery="Static map elements that stay faintly visible in darkness."
+arena="The arena of the running round."
 
 [input]
 
@@ -137,3 +138,4 @@ perk={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

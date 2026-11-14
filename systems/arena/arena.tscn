@@ -1,0 +1,153 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://systems/arena/arena.gd" id="1_4b6ef"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/fence.svg" id="2_46ogl"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/water.svg" id="3_6fvct"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/grass.svg" id="4_qw4ae"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/hill.svg" id="5_whijb"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/grass_patch.svg" id="6_g3bih"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/flowers.svg" id="7_bbex0"]
+[ext_resource type="PackedScene" path="res://entities/obstacles/tree.tscn" id="8_lkula"]
+[ext_resource type="PackedScene" path="res://entities/obstacles/bush.tscn" id="10_2w6um"]
+[ext_resource type="PackedScene" path="res://entities/obstacles/barn.tscn" id="11_e1hjj"]
+[ext_resource type="PackedScene" path="res://entities/obstacles/hay_bale.tscn" id="12_lp0ub"]
+[ext_resource type="PackedScene" path="res://entities/obstacles/shed.tscn" id="13_lpsg0"]
+[ext_resource type="Script" path="res://systems/arena/spawn_area.gd" id="14_fop6x"]
+[ext_resource type="Script" path="res://systems/arena/arena_debug_overlay.gd" id="15_yl510"]
+
+[node name="Arena" type="Node2D" unique_id=1763971139]
+script = ExtResource("1_4b6ef")
+fence_texture = ExtResource("2_46ogl")
+river_texture = ExtResource("3_6fvct")
+ground_texture = ExtResource("4_qw4ae")
+ground_details = Dictionary[Texture2D, int]({
+ExtResource("5_whijb"): 10,
+ExtResource("6_g3bih"): 140,
+ExtResource("7_bbex0"): 70
+})
+
+[node name="Ground" type="Node2D" parent="." unique_id=1516983522]
+
+[node name="GroundDetails" type="Node2D" parent="." unique_id=1321888076]
+
+[node name="Decals" type="Node2D" parent="." unique_id=131757575]
+
+[node name="Borders" type="Node2D" parent="." unique_id=1194973797]
+
+[node name="Entities" type="Node2D" parent="." unique_id=1125390309]
+y_sort_enabled = true
+
+[node name="Obstacles" type="Node2D" parent="." unique_id=2117153134]
+
+[node name="Tree1" type="StaticBody2D" parent="Obstacles" unique_id=867413194 instance=ExtResource("8_lkula")]
+position = Vector2(700, 350)
+
+[node name="Tree2" type="StaticBody2D" parent="Obstacles" unique_id=1721712623 instance=ExtResource("8_lkula")]
+position = Vector2(900, 300)
+
+[node name="Tree3" type="StaticBody2D" parent="Obstacles" unique_id=812032204 instance=ExtResource("8_lkula")]
+position = Vector2(820, 520)
+
+[node name="Tree4" type="StaticBody2D" parent="Obstacles" unique_id=1266441834 instance=ExtResource("8_lkula")]
+position = Vector2(1500, 300)
+
+[node name="Tree5" type="StaticBody2D" parent="Obstacles" unique_id=786672224 instance=ExtResource("8_lkula")]
+position = Vector2(2050, 250)
+
+[node name="Tree6" type="StaticBody2D" parent="Obstacles" unique_id=101493871 instance=ExtResource("8_lkula")]
+position = Vector2(300, 1100)
+
+[node name="Tree7" type="StaticBody2D" parent="Obstacles" unique_id=168911716 instance=ExtResource("8_lkula")]
+position = Vector2(420, 1300)
+
+[node name="Tree8" type="StaticBody2D" parent="Obstacles" unique_id=1241375293 instance=ExtResource("8_lkula")]
+position = Vector2(1250, 1800)
+
+[node name="Tree9" type="StaticBody2D" parent="Obstacles" unique_id=1051708608 instance=ExtResource("8_lkula")]
+position = Vector2(1450, 1900)
+
+[node name="Tree10" type="StaticBody2D" parent="Obstacles" unique_id=1109057187 instance=ExtResource("8_lkula")]
+position = Vector2(2200, 1300)
+
+[node name="Tree11" type="StaticBody2D" parent="Obstacles" unique_id=716147652 instance=ExtResource("8_lkula")]
+position = Vector2(2400, 1400)
+
+[node name="Tree12" type="StaticBody2D" parent="Obstacles" unique_id=1553340090 instance=ExtResource("8_lkula")]
+position = Vector2(2900, 1100)
+
+[node name="Tree13" type="StaticBody2D" parent="Obstacles" unique_id=1119032114 instance=ExtResource("8_lkula")]
+position = Vector2(3000, 1900)
+
+[node name="Tree14" type="StaticBody2D" parent="Obstacles" unique_id=1364189493 instance=ExtResource("8_lkula")]
+position = Vector2(1900, 2000)
+
+[node name="Bush1" type="StaticBody2D" parent="Obstacles" unique_id=413145186 instance=ExtResource("10_2w6um")]
+position = Vector2(1100, 700)
+
+[node name="Bush2" type="StaticBody2D" parent="Obstacles" unique_id=1014106093 instance=ExtResource("10_2w6um")]
+position = Vector2(1290, 700)
+
+[node name="Bush3" type="StaticBody2D" parent="Obstacles" unique_id=1506632032 instance=ExtResource("10_2w6um")]
+position = Vector2(1480, 700)
+
+[node name="Bush4" type="StaticBody2D" parent="Obstacles" unique_id=173195964 instance=ExtResource("10_2w6um")]
+position = Vector2(600, 900)
+
+[node name="Bush5" type="StaticBody2D" parent="Obstacles" unique_id=493091328 instance=ExtResource("10_2w6um")]
+position = Vector2(2700, 820)
+
+[node name="Bush6" type="StaticBody2D" parent="Obstacles" unique_id=1003763756 instance=ExtResource("10_2w6um")]
+position = Vector2(2000, 1600)
+
+[node name="Bush7" type="StaticBody2D" parent="Obstacles" unique_id=340112812 instance=ExtResource("10_2w6um")]
+position = Vector2(2190, 1660)
+
+[node name="Bush8" type="StaticBody2D" parent="Obstacles" unique_id=1262756079 instance=ExtResource("10_2w6um")]
+position = Vector2(900, 2000)
+
+[node name="Bush9" type="StaticBody2D" parent="Obstacles" unique_id=1448091030 instance=ExtResource("10_2w6um")]
+position = Vector2(3000, 600)
+
+[node name="Barn1" type="StaticBody2D" parent="Obstacles" unique_id=583861253 instance=ExtResource("11_e1hjj")]
+position = Vector2(2550, 450)
+
+[node name="HayBale1" type="StaticBody2D" parent="Obstacles" unique_id=1856337987 instance=ExtResource("12_lp0ub")]
+position = Vector2(2300, 470)
+
+[node name="HayBale2" type="StaticBody2D" parent="Obstacles" unique_id=775484449 instance=ExtResource("12_lp0ub")]
+position = Vector2(2550, 660)
+
+[node name="HayBale3" type="StaticBody2D" parent="Obstacles" unique_id=1777430157 instance=ExtResource("12_lp0ub")]
+position = Vector2(1700, 1500)
+
+[node name="HayBale4" type="StaticBody2D" parent="Obstacles" unique_id=1867017852 instance=ExtResource("12_lp0ub")]
+position = Vector2(1000, 1300)
+
+[node name="HayBale5" type="StaticBody2D" parent="Obstacles" unique_id=1046414178 instance=ExtResource("12_lp0ub")]
+position = Vector2(450, 1780)
+
+[node name="HayBale6" type="StaticBody2D" parent="Obstacles" unique_id=2050037020 instance=ExtResource("12_lp0ub")]
+position = Vector2(760, 1780)
+
+[node name="Shed1" type="StaticBody2D" parent="Obstacles" unique_id=303128331 instance=ExtResource("13_lpsg0")]
+position = Vector2(650, 1600)
+
+[node name="Shed2" type="StaticBody2D" parent="Obstacles" unique_id=1916185280 instance=ExtResource("13_lpsg0")]
+position = Vector2(2750, 1650)
+
+[node name="Overlays" type="Node2D" parent="." unique_id=305067853]
+
+[node name="SpawnAreas" type="Node2D" parent="." unique_id=335935531]
+
+[node name="Sheepherder" type="Node2D" parent="SpawnAreas" unique_id=2102944764]
+position = Vector2(275, 275)
+script = ExtResource("14_fop6x")
+size = Vector2(250, 250)
+
+[node name="Flock" type="Node2D" parent="SpawnAreas" unique_id=295588647]
+position = Vector2(1600, 1150)
+script = ExtResource("14_fop6x")
+size = Vector2(500, 400)
+
+[node name="DebugOverlay" type="Node2D" parent="." unique_id=712583864]
+script = ExtResource("15_yl510")
