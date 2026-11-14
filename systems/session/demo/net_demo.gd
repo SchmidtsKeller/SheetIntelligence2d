@@ -48,7 +48,9 @@ func _ready() -> void:
 		_on_session_started()
 	else:
 		var options: LaunchOptions = LaunchOptions.from_command_line()
-		var error: Error = options.start_session(_session) if options.wants_session() else _session.host()
+		var error: Error = (
+			options.start_session(_session) if options.wants_session() else _session.host()
+		)
 		_write("Starting: %s" % error_string(error))
 
 
@@ -97,9 +99,12 @@ func _on_session_started() -> void:
 func _on_entity_spawned(entity_id: int, _entity: Node) -> void:
 	if _session.entities.is_local_authority(entity_id) and _own_box_id == -1:
 		_own_box_id = entity_id
-	_write("Entity %d spawned (%s)." % [
-		entity_id, "mine" if _session.entities.is_local_authority(entity_id) else "theirs"
-	])
+	_write(
+		(
+			"Entity %d spawned (%s)."
+			% [entity_id, "mine" if _session.entities.is_local_authority(entity_id) else "theirs"]
+		)
+	)
 
 
 func _on_session_ended(_reason: NetworkService.DisconnectReason, message: String) -> void:
@@ -127,15 +132,18 @@ func _describe() -> String:
 			_session.get_connection_state() == NetworkService.ConnectionState.CONNECTING
 		)
 		return "Waiting for the other instance …" if waiting else "No session."
-	return "%s  |  peer %d, other peer %d  |  role: %s  |  entities: %d  |  hellos: %d sent, %d received" % [
-		"HOST" if _session.is_host() else "GUEST",
-		_session.get_local_peer_id(),
-		_session.get_remote_peer_id(),
-		GameEnums.role_name(_session.get_local_role()),
-		_session.entities.get_entity_ids().size(),
-		_hellos_sent,
-		_hellos_received,
-	]
+	return (
+		"%s | peer %d, other peer %d | role: %s | entities: %d | hellos: %d sent, %d received"
+		% [
+			"HOST" if _session.is_host() else "GUEST",
+			_session.get_local_peer_id(),
+			_session.get_remote_peer_id(),
+			GameEnums.role_name(_session.get_local_role()),
+			_session.entities.get_entity_ids().size(),
+			_hellos_sent,
+			_hellos_received,
+		]
+	)
 
 
 func _write(line: String) -> void:

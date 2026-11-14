@@ -1,7 +1,10 @@
 extends TestCase
 ## The desktop dev transport, over real sockets on this computer.
 
+# Aliases for enum types, so they are named like types.
+# gdlint: ignore=constant-name
 const ConnectionState = NetworkService.ConnectionState
+# gdlint: ignore=constant-name
 const DisconnectReason = NetworkService.DisconnectReason
 
 ## How long a connection on this computer may take.
@@ -84,7 +87,9 @@ func test_guest_leaving_ends_the_hosts_session() -> void:
 	watch_signals(_host)
 
 	_guest.close_session()
-	await _wait_until(func() -> bool: return _host.get_connection_state() == ConnectionState.DISCONNECTED)
+	await _wait_until(
+		func() -> bool: return _host.get_connection_state() == ConnectionState.DISCONNECTED
+	)
 
 	assert_eq(_host.get_connection_state(), ConnectionState.DISCONNECTED)
 	assert_eq(get_signal_arguments(_host, &"session_ended")[0], DisconnectReason.REMOTE_CLOSE)
@@ -96,7 +101,9 @@ func test_host_leaving_ends_the_guests_session() -> void:
 	watch_signals(_guest)
 
 	_host.close_session()
-	await _wait_until(func() -> bool: return _guest.get_connection_state() == ConnectionState.DISCONNECTED)
+	await _wait_until(
+		func() -> bool: return _guest.get_connection_state() == ConnectionState.DISCONNECTED
+	)
 
 	assert_eq(_guest.get_connection_state(), ConnectionState.DISCONNECTED)
 	var arguments: Array = get_signal_arguments(_guest, &"session_ended")
@@ -119,7 +126,9 @@ func test_joining_without_a_host_times_out() -> void:
 	watch_signals(_guest)
 
 	assert_eq(_guest.join_session({"address": "127.0.0.1", "port": _port}), OK)
-	await _wait_until(func() -> bool: return _guest.get_connection_state() == ConnectionState.DISCONNECTED)
+	await _wait_until(
+		func() -> bool: return _guest.get_connection_state() == ConnectionState.DISCONNECTED
+	)
 
 	assert_eq(_guest.get_connection_state(), ConnectionState.DISCONNECTED)
 	var reason: DisconnectReason = get_signal_arguments(_guest, &"session_ended")[0]
@@ -132,7 +141,9 @@ func test_joining_without_a_host_times_out() -> void:
 func test_host_can_host_again_after_a_session() -> void:
 	await _connect_both()
 	_guest.close_session()
-	await _wait_until(func() -> bool: return _host.get_connection_state() == ConnectionState.DISCONNECTED)
+	await _wait_until(
+		func() -> bool: return _host.get_connection_state() == ConnectionState.DISCONNECTED
+	)
 
 	assert_eq(_host.host_session({"port": _port + 1}), OK)
 

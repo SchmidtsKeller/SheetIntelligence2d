@@ -203,7 +203,9 @@ func test_remote_entity_survives_lost_snapshots() -> void:
 		on_host.position.x += 180.0 * FRAME
 		_step_both()
 
-	assert_almost_eq(on_guest.position.x, on_host.position.x, 60.0, "it keeps up despite the losses")
+	assert_almost_eq(
+		on_guest.position.x, on_host.position.x, 60.0, "it keeps up despite the losses"
+	)
 
 
 func test_owner_is_not_moved_by_its_own_snapshots() -> void:

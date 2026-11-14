@@ -204,7 +204,10 @@ func request_screen(screen: SceneFlowController.Screen) -> bool:
 		return false
 	if scene_flow != null and not scene_flow.can_go_to(screen):
 		push_error(
-			"GameSession: the scene flow does not allow %s." % SceneFlowController.screen_name(screen)
+			(
+				"GameSession: the scene flow does not allow %s."
+				% SceneFlowController.screen_name(screen)
+			)
 		)
 		return false
 	var transition_id: int = _next_transition_id

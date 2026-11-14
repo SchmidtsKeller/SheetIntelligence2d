@@ -162,12 +162,17 @@ func receive(reliable: bool, message: Array, sender_id: int) -> void:
 		return
 	if not reliable and _random.randf() < sim_loss:
 		return
-	_delayed.append({
-		"at": _time + sim_latency + _random.randf() * sim_jitter,
-		"reliable": reliable,
-		"message": message,
-		"sender": sender_id,
-	})
+	(
+		_delayed
+		. append(
+			{
+				"at": _time + sim_latency + _random.randf() * sim_jitter,
+				"reliable": reliable,
+				"message": message,
+				"sender": sender_id,
+			}
+		)
+	)
 
 
 ## Moves time forward and delivers the messages whose simulated delay is over.

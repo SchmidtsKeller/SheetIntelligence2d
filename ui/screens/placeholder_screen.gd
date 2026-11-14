@@ -78,9 +78,9 @@ static func _describe(session: GameSession) -> String:
 	if session.is_active():
 		var who: String = "Host" if session.is_host() else "Guest"
 		var link: String = "connected" if session.has_remote_player() else "offline"
-		return "%s (%s), playing the %s." % [
-			who, link, GameEnums.role_name(session.get_local_role())
-		]
+		return (
+			"%s (%s), playing the %s." % [who, link, GameEnums.role_name(session.get_local_role())]
+		)
 	if session.get_connection_state() == NetworkService.ConnectionState.CONNECTING:
 		return "Waiting for the other player …"
 	if not session.last_end_message.is_empty():

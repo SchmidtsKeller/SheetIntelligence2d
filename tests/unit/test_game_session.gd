@@ -1,7 +1,10 @@
 extends TestCase
 ## The session: who is host, who plays which role, which screen both are on.
 
+# Aliases for enum types, so they are named like types.
+# gdlint: ignore=constant-name
 const Role = GameEnums.Role
+# gdlint: ignore=constant-name
 const Screen = SceneFlowController.Screen
 
 var _pair: SessionPair
@@ -379,5 +382,6 @@ func test_application_session_is_registered_and_configured() -> void:
 
 static func _register_entity_kind(session: GameSession) -> void:
 	session.entities.register_kind(
-		&"thing", func(_entity_id: int, _owner_id: int, _data: Dictionary) -> Node: return Node2D.new()
+		&"thing",
+		func(_entity_id: int, _owner_id: int, _data: Dictionary) -> Node: return Node2D.new()
 	)

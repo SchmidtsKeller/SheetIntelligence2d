@@ -184,7 +184,10 @@ func _on_session_ended(reason: NetworkService.DisconnectReason, message: String)
 		problems.append("no message says why the session ended")
 	if SceneFlow.current_screen != SceneFlowController.Screen.LOBBY:
 		problems.append(
-			"not back in the lobby but on %s" % SceneFlowController.screen_name(SceneFlow.current_screen)
+			(
+				"not back in the lobby but on %s"
+				% SceneFlowController.screen_name(SceneFlow.current_screen)
+			)
 		)
 	_finish(problems)
 
@@ -196,7 +199,9 @@ func _problems() -> Array[String]:
 		problems.append("the session never started")
 		return problems
 	if _roles_changed_count < 2:
-		problems.append("saw %d role changes, expected the assignment and the swap" % _roles_changed_count)
+		problems.append(
+			"saw %d role changes, expected the assignment and the swap" % _roles_changed_count
+		)
 	if _session.is_active() and _session.get_local_role() == GameEnums.Role.NONE:
 		problems.append("no role")
 	if _hosting and _session.get_local_role() == _role_before_swap:
@@ -210,8 +215,10 @@ func _problems() -> Array[String]:
 	var expected_distance: float = BOX_SPEED * _remote_observed_for
 	if _remote_observed_for < 1.0 or _remote_travelled < expected_distance * 0.7:
 		problems.append(
-			"the other box travelled %d px in %.1f s, expected about %d"
-			% [_remote_travelled, _remote_observed_for, expected_distance]
+			(
+				"the other box travelled %d px in %.1f s, expected about %d"
+				% [_remote_travelled, _remote_observed_for, expected_distance]
+			)
 		)
 	if _entered_round_at < 0.0:
 		problems.append("the Round screen was never entered")
@@ -223,16 +230,28 @@ func _finish(problems: Array[String]) -> void:
 		return
 	_finished = true
 	print(
-		"SELFCHECK %s: roles changed %d times, role now %s, %d of %d events in order, "
-		% [
-			_label,
-			_roles_changed_count,
-			GameEnums.role_name(_session.get_local_role()),
-			_events_received.size(),
-			EVENTS_TO_SEND,
-		]
-		+ "other box travelled %d px in %.1f s with %d jumps, round entered: %s, end: '%s'"
-		% [_remote_travelled, _remote_observed_for, _remote_jumps, _entered_round_at >= 0.0, _end_message]
+		(
+			(
+				"SELFCHECK %s: roles changed %d times, role now %s, %d of %d events in order, "
+				% [
+					_label,
+					_roles_changed_count,
+					GameEnums.role_name(_session.get_local_role()),
+					_events_received.size(),
+					EVENTS_TO_SEND,
+				]
+			)
+			+ (
+				"other box travelled %d px in %.1f s with %d jumps, round entered: %s, end: '%s'"
+				% [
+					_remote_travelled,
+					_remote_observed_for,
+					_remote_jumps,
+					_entered_round_at >= 0.0,
+					_end_message
+				]
+			)
+		)
 	)
 	for problem: String in problems:
 		print("SELFCHECK %s PROBLEM: %s" % [_label, problem])
