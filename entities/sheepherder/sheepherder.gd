@@ -22,9 +22,6 @@ const EVENT_BELL_REQUEST: StringName = &"sheepherder.bell_request"
 const EVENT_BELL: StringName = &"sheepherder.bell"
 const EVENT_PUSH: StringName = &"sheepherder.push"
 
-## Corners of the drawn flashlight cone's arc.
-const CONE_ARC_POINTS: int = 16
-
 ## The entity id in the session, or -1 outside the registry (sandboxes, tests).
 var entity_id: int = -1
 ## Whether this device moves the Sheepherder.
@@ -38,10 +35,9 @@ var session: GameSession:
 		return session
 
 var _bell_cooldown_left: float = 0.0
-var _cone_shape: Vector2 = Vector2.ZERO
 
-@onready var _flashlight: Polygon2D = $Flashlight
 @onready var _camera: Camera2D = $Camera
+@onready var _vision_target: VisionTarget = $VisionTarget
 
 
 ## Factory for [method NetEntityRegistry.register_kind]. Bind
@@ -68,7 +64,6 @@ func _ready() -> void:
 	messenger.subscribe(EVENT_BELL, _on_bell)
 	messenger.subscribe(EVENT_PUSH, _on_push)
 	Services.combat.shot_fired.connect(_on_shot_fired)
-	_update_cone_shape()
 	if controlled_locally:
 		Services.input.action_pressed.connect(_on_action_pressed)
 		_camera.enabled = true
@@ -86,10 +81,6 @@ func _exit_tree() -> void:
 		Services.combat.shot_fired.disconnect(_on_shot_fired)
 	if Services.input.action_pressed.is_connected(_on_action_pressed):
 		Services.input.action_pressed.disconnect(_on_action_pressed)
-
-
-func _process(_delta: float) -> void:
-	_update_cone_shape()
 
 
 func _physics_process(delta: float) -> void:
@@ -114,7 +105,7 @@ func get_aim_direction() -> Vector2:
 
 
 ## The flashlight cone as it is right now, with perks and the bat applied. The
-## real light and visibility come with #15.
+## [FlashlightLight] shows it; the [VisionSystem] decides what it reveals.
 func get_flashlight_cone() -> FlashlightCone:
 	var perks: PerkService = Services.perks
 	return FlashlightCone.new(
@@ -229,27 +220,12 @@ func _on_shot_fired(origin: Vector2, end_position: Vector2, _result: int) -> voi
 	_add_effect(ShotEffect.new(origin, end_position))
 
 
-## Effects live in world coordinates, unaffected by the Sheepherder's turning.
+## Effects live in world coordinates, unaffected by the Sheepherder's turning,
+## and are seen only when the Sheepherder is (GDD §3.2).
 func _add_effect(effect: Node2D) -> void:
 	effect.top_level = true
 	add_child(effect)
-
-
-func _update_cone_shape() -> void:
-	var perks: PerkService = Services.perks
-	var shape: Vector2 = Vector2(
-		perks.get_stat(StatIds.FLASHLIGHT_CONE_ANGLE_DEG),
-		perks.get_stat(StatIds.FLASHLIGHT_CONE_LENGTH)
-	)
-	if shape == _cone_shape:
-		return
-	_cone_shape = shape
-	var half_angle: float = deg_to_rad(shape.x) / 2.0
-	var points: PackedVector2Array = [Vector2.ZERO]
-	for index: int in CONE_ARC_POINTS + 1:
-		var angle: float = lerpf(-half_angle, half_angle, float(index) / CONE_ARC_POINTS)
-		points.append(Vector2.from_angle(angle) * shape.y)
-	_flashlight.polygon = points
+	_vision_target.attach(effect)
 
 
 ## Gameplay zoom: the camera shows as much world as a player may see.

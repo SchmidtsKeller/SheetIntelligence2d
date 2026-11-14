@@ -85,9 +85,10 @@ func test_the_flashlight_cone_follows_the_stats() -> void:
 	assert_almost_eq(cone.direction, Vector2.RIGHT)
 	assert_eq(cone.angle_deg, 60.0)
 	assert_eq(cone.length, 350.0)
-	var light: Polygon2D = herder.get_node(^"Flashlight")
-	assert_almost_eq(light.polygon[1].angle(), deg_to_rad(-30.0), 0.001, "drawn from the start")
-	assert_almost_eq(light.polygon[1].length(), 350.0, 0.01)
+	var light: FlashlightLight = herder.get_node(^"Flashlight")
+	assert_eq(light.texture, FlashlightLight.cone_texture(60.0), "lit from the start")
+	assert_almost_eq(light.texture_scale * FlashlightLight.TEXTURE_SIZE / 2.0, 350.0)
+	assert_true(light.shadow_enabled, "obstacles cast shadows")
 
 	var config: GameConfig = GameConfig.new()
 	config.flashlight_cone_angle_deg = config.perk_wide_flashlight_angle_deg
@@ -95,7 +96,7 @@ func test_the_flashlight_cone_follows_the_stats() -> void:
 	assert_eq(herder.get_flashlight_cone().angle_deg, 90.0, "a perk widens it")
 	# A frame starts before the nodes process it, so the change shows in the next one.
 	await wait_frames(2)
-	assert_almost_eq(light.polygon[1].angle(), deg_to_rad(-45.0), 0.001, "the drawn cone widens")
+	assert_eq(light.texture, FlashlightLight.cone_texture(90.0), "the light widens too")
 
 
 func test_shooting_asks_the_combat_service() -> void:

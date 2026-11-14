@@ -55,7 +55,7 @@
 - **Vision & Fog of War Mechanics:**
   * Equipped with a directional Light-Source (Flashlight/Torch) casting a light cone restricted by specific width and length parameters.
   * *Aiming/Rotation:* Rotates 360 degrees around the Sheepherder to match viewing direction (controlled via Mouse cursor on PC; secondary virtual joystick on Mobile).
-  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone. **Blood** from killed sheep is also only visible inside the light cone. Players must rely on spatial audio cues to track unseen movement.
+  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible inside the light cone. Players must rely on spatial audio cues to track unseen movement.
 - **Combat & Firearm Mechanics:**
   * Equipped with a single-shot firearm with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
@@ -74,6 +74,7 @@
 - **Vision:**
   * Sees across the whole map in all directions (no light cone).
   * Line-of-sight obstacles block its view the same way they block the Sheepherder's flashlight: dynamic entities behind them are hidden.
+  * It sees the Sheepherder's light wherever it falls, even when the Sheepherder is hidden.
 - **Movement:**
   * *PC/Mobile Controls:* Directional movement matching PC/Mobile inputs, at the same speed as the NPC sheep.
   * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. Not available in spider form.
