@@ -1,22 +1,31 @@
 class_name SessionCombatService
 extends CombatService
-## The real [CombatService], part 1: the Sheepherder's firearm (GDD §3.1).
+## The real [CombatService]: the Sheepherder's firearm (GDD §3.1) and the
+## Monster's attack and evolution (GDD §2.1, §3.2).
 ##
-## Host-authoritative (docs/networking.md): the Sheepherder's device asks the
-## host for a shot, the host checks ammo and reload, resolves where the bullet
-## goes and announces the result to both devices. Both devices then update
-## ammo and reload and emit the same signals.
+## Host-authoritative (docs/networking.md): a player's device asks the host
+## for a shot or an attack, the host checks whether it is allowed, resolves
+## what it does and announces the result to both devices. Both devices then
+## update their state and emit the same signals.
 ##
 ## A bullet travels along the aim until it hits a sheep-like entity (NPC sheep
 ## or the Monster), a solid obstacle, or a border, where it has left the map.
-## Only the first hit counts. The Monster's attack and evolution arrive with
-## #16; until then they answer like the stub.
+## Only the first hit counts.
+##
+## The Monster's attack takes the Sheepherder if the kill is unlocked and they
+## are in melee range, otherwise the nearest sheep in range, alive or shot.
+## The Monster stands still while it eats; the cooldown starts when it is done.
 ##
 ## Both devices call [method begin_round] before the first shot; that is also
 ## when the service registers its events with the session.
 
 const EVENT_SHOT_REQUEST: StringName = &"combat.shot_request"
 const EVENT_SHOT: StringName = &"combat.shot"
+## The Monster's device to the host: attack. [code][monster_position][/code]
+const EVENT_EAT_REQUEST: StringName = &"combat.eat_request"
+## Host to both: the Monster attacks. [code][target, target_id,
+## target_position, monster_position, duration, cooldown][/code]
+const EVENT_EAT: StringName = &"combat.eat"
 
 ## Farther than any arena. Every shot ends at a border before this.
 const MAX_SHOT_DISTANCE: float = 100000.0
@@ -48,14 +57,31 @@ var _reload_duration: float = 0.0
 var _reload_left: float = 0.0
 var _shot_sheep: int = 0
 var _eat_blockers: Array[StringName] = []
+var _sheepherder_alive: bool = true
+var _monster_alive: bool = true
+var _eaten: int = 0
+var _eaten_alive: int = 0
+var _form: GameEnums.MonsterForm = GameEnums.MonsterForm.SHEEP
+var _eat_target: EatTarget = EatTarget.NONE
+var _eat_target_id: int = -1
+var _eat_left: float = 0.0
+## The cooldown that starts when the running eating animation ends.
+var _eat_cooldown: float = 0.0
+var _eat_cooldown_left: float = 0.0
 
 
 func _process(delta: float) -> void:
 	advance(delta)
 
 
-## Moves the reload forward by [param delta] seconds. Called every frame.
+## Moves the reload, the eating animation and the attack cooldown forward by
+## [param delta] seconds. Called every frame.
 func advance(delta: float) -> void:
+	_advance_reload(delta)
+	_advance_eating(delta)
+
+
+func _advance_reload(delta: float) -> void:
 	if _reload_left <= 0.0:
 		return
 	_reload_left = maxf(_reload_left - delta, 0.0)
@@ -63,6 +89,22 @@ func advance(delta: float) -> void:
 		reload_finished.emit()
 		if is_instance_valid(_sheepherder):
 			Services.audio.play_event(AudioEvents.RELOAD_CLICK, _sheepherder.global_position)
+
+
+func _advance_eating(delta: float) -> void:
+	if not is_eating():
+		_eat_cooldown_left = maxf(_eat_cooldown_left - delta, 0.0)
+		return
+	_eat_left -= delta
+	if _eat_left > 0.0:
+		return
+	# What is left of this frame already counts toward the cooldown.
+	_eat_cooldown_left = maxf(_eat_cooldown + _eat_left, 0.0)
+	_eat_left = 0.0
+	var target: EatTarget = _eat_target
+	_eat_target = EatTarget.NONE
+	eat_finished.emit(target, _eat_target_id, _eat_cooldown)
+	_evolve()
 
 
 # --- Round lifecycle -------------------------------------------------------------
@@ -79,13 +121,22 @@ func begin_round(sheepherder: Node2D, monster: Node2D) -> void:
 	_reload_duration = 0.0
 	_shot_sheep = 0
 	_eat_blockers.clear()
+	_sheepherder_alive = true
+	_monster_alive = true
+	_eaten = 0
+	_eaten_alive = 0
+	_stop_eating()
 	ammo_changed.emit(_ammo, _capacity)
 	eaten_count_changed.emit(0)
+	if _form != GameEnums.MonsterForm.SHEEP:
+		_form = GameEnums.MonsterForm.SHEEP
+		monster_form_changed.emit(_form)
 
 
 func end_round() -> void:
 	_round_active = false
 	_reload_left = 0.0
+	_stop_eating()
 	_sheepherder = null
 	_monster = null
 
@@ -101,7 +152,7 @@ func request_shot(origin: Vector2, direction: Vector2) -> bool:
 
 
 func can_shoot() -> bool:
-	return _round_active and _ammo > 0 and _reload_left <= 0.0
+	return _round_active and _sheepherder_alive and _ammo > 0 and _reload_left <= 0.0
 
 
 func get_ammo() -> int:
@@ -130,23 +181,28 @@ func get_shot_sheep_count() -> int:
 	return _shot_sheep
 
 
-# --- Monster (#16) ---------------------------------------------------------------
+# --- Monster ---------------------------------------------------------------------
 
 
 func request_eat() -> bool:
-	return false
+	if not can_eat():
+		return false
+	_register_events()
+	return session.messenger.send_to_host(EVENT_EAT_REQUEST, [_monster.global_position])
 
 
 func can_eat() -> bool:
-	return false
+	if not _may_eat():
+		return false
+	return _find_eat_target(_monster.global_position, 0.0)[0] != EatTarget.NONE
 
 
 func is_eating() -> bool:
-	return false
+	return _eat_target != EatTarget.NONE
 
 
 func get_eat_cooldown_remaining() -> float:
-	return 0.0
+	return _eat_cooldown_left
 
 
 func add_eat_blocker(source: StringName) -> void:
@@ -159,19 +215,137 @@ func remove_eat_blocker(source: StringName) -> void:
 
 
 func get_eaten_count() -> int:
-	return 0
+	return _eaten
+
+
+func get_eaten_alive_count() -> int:
+	return _eaten_alive
 
 
 func get_monster_form() -> GameEnums.MonsterForm:
-	return GameEnums.MonsterForm.SHEEP
+	return _form
 
 
 func can_kill_sheepherder() -> bool:
-	return false
+	return _eaten >= Services.perks.get_stat_int(StatIds.HERDER_KILL_THRESHOLD)
 
 
 func is_monster_killable() -> bool:
 	return get_monster_form() != GameEnums.MonsterForm.SPIDER and not is_ammo_depleted()
+
+
+# --- Host: resolving an attack ---------------------------------------------------
+
+
+func _on_eat_request(payload: Array, sender_id: int) -> void:
+	if not session.messenger.is_host() or not _may_eat():
+		return
+	var from: Vector2 = payload[0]
+	var remote: bool = sender_id != session.messenger.get_local_id()
+	var lag: float = session.entities.interpolation_delay if remote else 0.0
+	var found: Array = _find_eat_target(from, lag)
+	var target: EatTarget = found[0]
+	if target == EatTarget.NONE:
+		return
+	var is_sheep: bool = target != EatTarget.SHEEPHERDER
+	if is_sheep and not swarm.kill_sheep(found[1], GameEnums.DeathCause.EATEN):
+		return
+	var perks: PerkService = Services.perks
+	var duration: float = perks.get_stat(StatIds.EAT_DURATION)
+	var cooldown: float = perks.get_stat(StatIds.EAT_COOLDOWN)
+	session.messenger.broadcast(EVENT_EAT, [target, found[1], found[2], from, duration, cooldown])
+
+
+## Whether the Monster could attack right now if something were in range.
+func _may_eat() -> bool:
+	return (
+		_round_active
+		and _monster_alive
+		and is_instance_valid(_monster)
+		and not is_eating()
+		and _eat_cooldown_left <= 0.0
+		and _eat_blockers.is_empty()
+	)
+
+
+## What an attack from [param from] takes: [code][EatTarget, sheep_id,
+## target_position][/code], with [constant EatTarget.NONE] if nothing is in
+## melee range.
+## [br][param lag] is how old the attacker's picture of the others was, in
+## seconds. A Monster on the other device sees everyone that far in the past
+## (docs/networking.md), so a target counts as in range if it can have been in
+## range then.
+func _find_eat_target(from: Vector2, lag: float) -> Array:
+	var perks: PerkService = Services.perks
+	var reach: float = perks.get_stat(StatIds.MELEE_RANGE)
+	if _sheepherder_alive and can_kill_sheepherder() and is_instance_valid(_sheepherder):
+		var herder_reach: float = reach + perks.get_stat(StatIds.HERDER_MOVE_SPEED) * lag
+		if from.distance_to(_sheepherder.global_position) <= herder_reach:
+			return [EatTarget.SHEEPHERDER, -1, _sheepherder.global_position]
+	var sheep_id: int = swarm.find_nearest_edible_sheep(from, reach)
+	if sheep_id < 0 and lag > 0.0:
+		var sheep_reach: float = reach + perks.get_stat(StatIds.SHEEP_MOVE_SPEED) * lag
+		sheep_id = swarm.find_nearest_living_sheep(from, sheep_reach)
+	if sheep_id < 0:
+		return [EatTarget.NONE, -1, from]
+	var body: bool = swarm.is_sheep_corpse(sheep_id)
+	return [
+		EatTarget.SHEEP_BODY if body else EatTarget.SHEEP,
+		sheep_id,
+		swarm.get_sheep_body(sheep_id).global_position,
+	]
+
+
+# --- Both devices: what an attack did --------------------------------------------
+
+
+func _on_eat(payload: Array, _sender_id: int) -> void:
+	var target: EatTarget = payload[0]
+	var position: Vector2 = payload[2]
+	_eat_target = target
+	_eat_target_id = payload[1]
+	_eat_left = payload[4]
+	_eat_cooldown = payload[5]
+	Services.audio.play_event(AudioEvents.EAT, payload[3])
+	eat_started.emit(target, _eat_target_id, _eat_left)
+	match target:
+		EatTarget.SHEEP:
+			_eaten_alive += 1
+			sheep_killed.emit(_eat_target_id, GameEnums.DeathCause.EATEN, position)
+			blood_spilled.emit(position)
+			_count_eaten_sheep()
+		EatTarget.SHEEP_BODY:
+			# Its blood is on the ground since it was shot.
+			_count_eaten_sheep()
+		EatTarget.SHEEPHERDER:
+			_sheepherder_alive = false
+			_reload_left = 0.0
+			sheepherder_killed.emit(position)
+
+
+func _count_eaten_sheep() -> void:
+	_eaten += 1
+	eaten_count_changed.emit(_eaten)
+	if _eaten == Services.perks.get_stat_int(StatIds.HERDER_KILL_THRESHOLD):
+		sheepherder_kill_unlocked.emit()
+
+
+## Turns the Monster into the spider once it has eaten enough.
+func _evolve() -> void:
+	var threshold: int = Services.perks.get_stat_int(StatIds.SPIDER_EVOLUTION_THRESHOLD)
+	if _form == GameEnums.MonsterForm.SPIDER or not _monster_alive or _eaten < threshold:
+		return
+	_form = GameEnums.MonsterForm.SPIDER
+	if is_instance_valid(_monster):
+		Services.audio.play_event(AudioEvents.SPIDER_SCREECH, _monster.global_position)
+	monster_form_changed.emit(_form)
+
+
+func _stop_eating() -> void:
+	_eat_target = EatTarget.NONE
+	_eat_target_id = -1
+	_eat_left = 0.0
+	_eat_cooldown_left = 0.0
 
 
 # --- Host: resolving a shot ------------------------------------------------------
@@ -252,6 +426,8 @@ func _on_shot(payload: Array, _sender_id: int) -> void:
 			sheep_killed.emit(sheep_id, GameEnums.DeathCause.SHOT, end)
 			blood_spilled.emit(end)
 		ShotResult.HIT_MONSTER:
+			_monster_alive = false
+			_stop_eating()
 			monster_shot.emit(end)
 	if _ammo > 0:
 		reload_started.emit(_reload_duration)
@@ -268,3 +444,7 @@ func _register_events() -> void:
 	messenger.register_event(EVENT_SHOT, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.subscribe(EVENT_SHOT_REQUEST, _on_shot_request)
 	messenger.subscribe(EVENT_SHOT, _on_shot)
+	messenger.register_event(EVENT_EAT_REQUEST, NetMessenger.SenderRule.ANYONE)
+	messenger.register_event(EVENT_EAT, NetMessenger.SenderRule.HOST_ONLY)
+	messenger.subscribe(EVENT_EAT_REQUEST, _on_eat_request)
+	messenger.subscribe(EVENT_EAT, _on_eat)

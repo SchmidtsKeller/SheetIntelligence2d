@@ -48,6 +48,14 @@ func find_nearest_living_sheep(_position: Vector2, _max_distance: float) -> int:
 	return -1
 
 
+func find_nearest_edible_sheep(_position: Vector2, _max_distance: float) -> int:
+	return -1
+
+
+func is_sheep_corpse(_sheep_id: int) -> bool:
+	return false
+
+
 func register_neighbour(body: Node2D) -> void:
 	if body != null and not _neighbours.has(body):
 		_neighbours.append(body)
