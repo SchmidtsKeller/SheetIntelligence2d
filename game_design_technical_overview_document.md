@@ -165,9 +165,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 
 ### 7.1 Visual & Art Style
 
-- **Core Aesthetic:** Realistic painterly style with dark, atmospheric, slight horror undertones.
-- **Visual References:** *Darkest Dungeon*, *Darkwood* (heavy shadows, textured brushwork, grim and tense atmosphere, stark contrast between the flashlight cone and surrounding darkness).
-- **UI Art Style:** Grim, hand-painted parchment/iron aesthetic inspired by *Darkest Dungeon* and *Darkwood*.
+- See file "art_style_constraints.md"
 
 ### 7.2 Audio Design
 
