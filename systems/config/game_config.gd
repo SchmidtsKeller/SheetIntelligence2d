@@ -1,0 +1,147 @@
+class_name GameConfig
+extends Resource
+## The single source of truth for every gameplay number (GDD §5).
+##
+## The defaults below are the documented values from the design document; the
+## shipped instance is `res://systems/config/game_config.tres`, which can be
+## tuned in the editor without touching code. No gameplay code hard-codes any
+## of these numbers.
+##
+## Gameplay code does not read the properties directly either: it asks
+## [method PerkService.get_stat] with the matching [StatIds] constant, so perks
+## can change the effective value. Every numeric property here is a stat.
+
+@export_group("Match Rules")
+## Length of a round in seconds. At timeout the higher score wins the round.
+@export_range(10.0, 600.0, 1.0, "suffix:s") var round_duration: float = 180.0
+## Rounds per match ("Best of 5"). Players swap roles after every round.
+@export_range(1, 9, 2) var match_rounds: int = 5
+## NPC sheep per round. The disguised Monster comes on top.
+@export_range(1, 30) var flock_size: int = 10
+## Sheepherder points for every NPC sheep alive at the end of the round.
+@export var herder_points_per_surviving_sheep: int = 1
+## Sheepherder points for every NPC sheep they shot (a penalty).
+@export var herder_points_per_shot_sheep: int = -2
+## Monster points for every NPC sheep it ate. Shot sheep give it nothing.
+@export var monster_points_per_eaten_sheep: int = 1
+
+@export_group("Sheepherder")
+## Patrol speed.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var herder_move_speed: float = 180.0
+## Bullets per round. Cannot be replenished.
+@export_range(0, 10) var firearm_ammo: int = 3
+## Automatic reload after each shot.
+@export_range(0.0, 30.0, 0.1, "suffix:s") var firearm_reload_time: float = 4.0
+## Full opening angle of the flashlight cone.
+@export_range(1.0, 360.0, 1.0, "suffix:°") var flashlight_cone_angle_deg: float = 60.0
+## Length of the flashlight cone. Solid obstacles block it.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var flashlight_cone_length: float = 350.0
+## Time between two bell rings.
+@export_range(0.0, 120.0, 0.1, "suffix:s") var bell_cooldown: float = 12.0
+## Sheep within this distance walk toward the Sheepherder when the bell rings.
+@export_range(0.0, 4000.0, 1.0, "suffix:px") var bell_radius: float = 400.0
+
+@export_group("Monster")
+## Walking speed in sheep form; the same as the NPC sheep for seamless mimicry.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var monster_move_speed: float = 180.0
+## Speed while sprinting (1.5× base). Sheep form only.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var monster_sprint_speed: float = 270.0
+## Seconds of sprinting a full stamina meter allows.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var monster_sprint_stamina: float = 3.0
+## Stamina regained per second while not sprinting, relative to the drain
+## (0.5 means 6.0 s from empty to full).
+@export_range(0.0, 10.0, 0.05, "suffix:×") var monster_sprint_refill_rate: float = 0.5
+## Speed in spider form. Faster than sprinting; the spider cannot sprint.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var spider_move_speed: float = 300.0
+## Length of the eating animation. The Monster cannot move or abort meanwhile.
+@export_range(0.0, 10.0, 0.05, "suffix:s") var eat_duration: float = 1.0
+## Time between two attacks. Starts when the eating animation ends.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var eat_cooldown: float = 5.0
+## Center-to-center distance to eat a sheep or kill the Sheepherder.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var melee_range: float = 48.0
+## Sheep eaten to unlock the one-attack kill on the Sheepherder.
+@export_range(0, 30) var herder_kill_threshold: int = 5
+## Sheep eaten to evolve into the unkillable spider.
+@export_range(0, 30) var spider_evolution_threshold: int = 10
+
+@export_group("NPC Sheep")
+## One speed for wandering and for walking to the bell.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var sheep_move_speed: float = 180.0
+## Shortest time a sheep stands still with its head lowered.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var sheep_graze_duration_min: float = 3.0
+## Longest time a sheep stands still with its head lowered.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var sheep_graze_duration_max: float = 6.0
+
+@export_group("Perks")
+## Cone angle with the Wide Flashlight perk (+50 % lit area).
+@export_range(1.0, 360.0, 1.0, "suffix:°") var perk_wide_flashlight_angle_deg: float = 90.0
+## Cone length with the Long Flashlight perk (+50 % lit area).
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var perk_long_flashlight_length: float = 429.0
+## Reload time with the Faster Weapon Reload perk.
+@export_range(0.0, 30.0, 0.1, "suffix:s") var perk_faster_reload_time: float = 2.0
+## Bullets per round with the Spare Bullet perk.
+@export_range(0, 10) var perk_spare_bullet_ammo: int = 4
+## Eating animation length with the Faster Consumption perk.
+@export_range(0.0, 10.0, 0.05, "suffix:s") var perk_faster_consumption_duration: float = 0.5
+## Longest time the Monster can stay invisible.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var invisibility_max_duration: float = 5.0
+## Drain of the invisibility meter while standing still.
+@export_range(0.0, 10.0, 0.1, "suffix:×") var invisibility_drain_still: float = 1.0
+## Drain of the invisibility meter while moving.
+@export_range(0.0, 10.0, 0.1, "suffix:×") var invisibility_drain_moving: float = 3.0
+## Cooldown of the invisibility perk.
+@export_range(0.0, 300.0, 0.5, "suffix:s") var invisibility_cooldown: float = 30.0
+## How long the Allied Bat disrupts the flashlight.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var bat_disruption_duration: float = 10.0
+## Fraction by which the bat shrinks both the cone's length and its angle
+## (about 42 % each, which cuts the lit area by 80 %).
+@export_range(0.0, 1.0, 0.01) var bat_cone_shrink: float = 0.42
+## Cooldown of the Allied Bat perk.
+@export_range(0.0, 300.0, 0.5, "suffix:s") var bat_cooldown: float = 30.0
+
+@export_group("Audio")
+## Hearing range of quiet sounds (sheep moving through grass).
+@export_range(0.0, 4000.0, 1.0, "suffix:px") var hearing_range_quiet: float = 400.0
+## Hearing range of loud sounds (bleating, Monster eating, dog barking).
+@export_range(0.0, 4000.0, 1.0, "suffix:px") var hearing_range_loud: float = 800.0
+
+@export_group("View")
+## The widest stretch of world a player may ever see. Not from the GDD: this
+## is the view-fairness rule, see [ViewRules] and the README.
+@export_range(100.0, 8000.0, 1.0, "suffix:px") var view_max_world_width: float = 1600.0
+## The tallest stretch of world a player may ever see.
+@export_range(100.0, 8000.0, 1.0, "suffix:px") var view_max_world_height: float = 900.0
+
+
+## The value of [param stat] as a float. Fails loudly for a name that is not
+## a numeric property of this config.
+func get_number(stat: StringName) -> float:
+	var value: Variant = get(stat)
+	if value is float or value is int:
+		return float(value)
+	push_error("GameConfig has no numeric value named '%s'." % stat)
+	return 0.0
+
+
+## Whether [param stat] names a numeric property of this config.
+func has_number(stat: StringName) -> bool:
+	var value: Variant = get(stat)
+	return value is float or value is int
+
+
+## The names of all numeric gameplay values, in declaration order.
+func get_number_names() -> Array[StringName]:
+	var names: Array[StringName] = []
+	for property: Dictionary in get_property_list():
+		var usage: int = property["usage"]
+		if usage & PROPERTY_USAGE_SCRIPT_VARIABLE == 0 or usage & PROPERTY_USAGE_STORAGE == 0:
+			continue
+		var type: int = property["type"]
+		if type == TYPE_FLOAT or type == TYPE_INT:
+			names.append(StringName(property["name"]))
+	return names
+
+
+## The largest world area a player may see at once.
+func get_view_max_world_size() -> Vector2:
+	return Vector2(view_max_world_width, view_max_world_height)

@@ -1,1 +1,213 @@
 # Hide in Sheep Clothing
+
+An asymmetric 1v1 social deduction game for the browser. One player is the **Sheepherder**, who protects a flock and hunts an impostor with a flashlight and three bullets. The other is the **Monster**, disguised as a sheep, who eats the flock from the inside.
+
+- Game design and technical overview: [game_design_technical_overview_document.md](game_design_technical_overview_document.md) (the "GDD")
+- Workflow for contributors and agents: [CLAUDE.md](CLAUDE.md)
+- Task order and dependencies: roadmap issue [#4](https://github.com/SchmidtsKeller/SheetIntelligence2d/issues/4)
+
+## Requirements
+
+- **Godot 4.7** (strictly this version, GDD §9.1). The standard build is enough; the project uses GDScript only, because C# projects cannot be exported to the Web.
+
+## Run the project
+
+Open the folder in the Godot 4.7 editor and press **F5**, or from a terminal:
+
+```bash
+godot --path .
+```
+
+The game starts in the boot screen, which checks the services and hands over to the lobby. Lobby, round and results are placeholder screens for now; their buttons walk through the scene flow.
+
+## Run the tests
+
+```bash
+tools/run_tests.sh
+```
+
+On Windows:
+
+```powershell
+tools\run_tests.ps1
+```
+
+Both use the executable named by the `GODOT` environment variable, or `godot` from the `PATH`. On Windows, point `GODOT` at the `*_console.exe` so the output appears in the terminal. The exit code is 0 when all tests pass.
+
+| Option | Effect |
+|:--|:--|
+| `--filter=<text>` | Run only tests whose file path or method name contains the text |
+| `--quiet` | Print only failures and the summary |
+
+The script imports the project and then runs the test scene. The two steps by hand:
+
+```bash
+godot --headless --path . --import
+```
+
+```bash
+godot --headless --path . res://tests/test_runner.tscn
+```
+
+The import is needed once after cloning and whenever a `class_name` is added: scripts find each other's classes through the import cache in `.godot/`, which is not in the repository.
+
+### Writing a test
+
+A test file is a script named `test_*.gd` anywhere below `tests/` that extends `TestCase`. Every method starting with `test_` is one test:
+
+```gdscript
+extends TestCase
+
+func test_bell_reaches_sheep_inside_the_radius() -> void:
+	var swarm: StubSwarmService = autofree(StubSwarmService.new())
+	watch_signals(swarm)
+
+	swarm.ring_bell(Vector2.ZERO, 400.0)
+
+	assert_signal_emitted_with(swarm, &"bell_rung", [Vector2.ZERO, 400.0])
+```
+
+`TestCase` ([tests/framework/test_case.gd](tests/framework/test_case.gd)) provides the assertions, signal watching, `autofree`, `before_each` / `after_each` hooks and `await wait_frames()`. A test fails if an assertion fails, if it makes no assertion, or if the engine reports an error that the test did not announce with `expect_error()`. That last rule is what catches script errors, which would otherwise pass silently in a headless run.
+
+The harness lives in the repository and has no dependencies, so it cannot fall behind the engine version. GUT and gdUnit4 are the usual choices; they were not evaluated against Godot 4.7 for this project. The assertion names follow GUT's, so switching later is mostly a change of the base class.
+
+## Architecture
+
+The code follows two rules from GDD §9.2: **separation of concerns** through service contracts, and **one source of truth** for every number and name.
+
+```text
+res://
+├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
+├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
+├── entities/         Sheepherder, Monster, NPC sheep, companions
+├── systems/          Game config, scene flow, view rule; later lighting, AI, swarm
+├── ui/               Screens, lobby, HUD
+├── assets/           Sprites, shaders, audio
+├── tests/            Test harness (framework/) and tests (unit/)
+└── tools/            Developer scripts
+```
+
+### Service contracts
+
+Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
+
+| Contract | Responsibility |
+|:--|:--|
+| `InputService` | Movement and aim vectors, action signals; unifies keyboard/mouse and touch; role-aware; action locks |
+| `NetworkService` | The connection between the two devices: lifecycle, host/guest, pairing codes, the `MultiplayerPeer` |
+| `SwarmService` | The NPC flock: spawning, bell, deaths, living count, flock neighbours |
+| `CombatService` | Firearm (ammo, reload, shots), the Monster's attack, evolution, all kill events |
+| `PerkService` | Perk selection and the modifier-aware stat lookup |
+| `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
+
+Every contract has a stub in `services/stubs/` that is registered by default. A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+
+### Service registry
+
+`Services` (autoload, [services/services.gd](services/services.gd)) maps each contract to its current implementation:
+
+```gdscript
+var speed: float = Services.perks.get_stat(StatIds.HERDER_MOVE_SPEED)
+Services.audio.play_event(AudioEvents.BELL, global_position)
+Services.resolve(SwarmService)            # the same, by contract
+Services.replace(InputService, fake)      # swap an implementation, e.g. in a test
+```
+
+- Asking for a contract without an implementation is a programming error and fails loudly.
+- Implementations become children of the registry, named after their **contract**. Their node path (`/root/Services/NetworkService`) is the same on both devices whatever the implementation, which RPCs rely on.
+- [services/service_bootstrap.gd](services/service_bootstrap.gd) is the composition root: the only place that names concrete implementations. A task that delivers a real service changes one line there.
+
+**Rule:** gameplay, UI and entity code never reference a concrete service class, only the contract.
+
+### Game configuration and stats
+
+[systems/config/game_config.gd](systems/config/game_config.gd) holds every number of GDD §5 with the documented default; the shipped instance `game_config.tres` can be tuned in the editor. A test compares both against the GDD table.
+
+**Rule:** no gameplay code contains a gameplay number, and none reads `GameConfig` directly. It asks the stat lookup:
+
+```gdscript
+var cone_angle: float = Services.perks.get_stat(StatIds.FLASHLIGHT_CONE_ANGLE_DEG)
+var bullets: int = Services.perks.get_stat_int(StatIds.FIREARM_AMMO)
+```
+
+`get_stat` returns the base value with all active modifiers applied. That is how *Wide Flashlight*, *Spare Bullet* or the bat change behaviour later without any change to the code that uses the number. A stat id is the name of its `GameConfig` property; a test keeps `StatIds` and `GameConfig` identical.
+
+### Shared vocabulary
+
+`abstractions/types/` names everything two systems have to agree on, so nobody types a string or a magic number twice:
+
+| Class | Contents |
+|:--|:--|
+| `GameEnums` | `Role`, `RoundOutcome`, `RoundEndReason`, `SheepPhase`, `DeathCause`, `MonsterForm`, `HearingRange` |
+| `PerkIds` | The eight perks and the pool of each role |
+| `AudioEvents` | The sound events and their hearing-range class |
+| `StatIds` | The stats of the lookup |
+| `InputActions` | The input actions and the action set of each role |
+| `PhysicsLayers` | The 2D physics layers as bit masks |
+| `Groups` | The node groups |
+
+### Scene flow
+
+`SceneFlow` (autoload, [systems/flow/scene_flow_controller.gd](systems/flow/scene_flow_controller.gd)) knows which screen is shown and which may follow:
+
+```text
+boot → lobby → round → results ─┬→ round   (next round)
+                 │              └→ lobby   (match over)
+                 └→ lobby                  (disconnect)
+```
+
+`SceneFlow.go_to(SceneFlowController.Screen.ROUND)` changes the scene and refuses transitions the flow does not allow. Each screen is a scene in `ui/screens/`; a task replaces a placeholder by setting `SceneFlow.screen_scenes[...]`.
+
+## Project settings
+
+### Display and the view-fairness rule
+
+- Base viewport **1280 × 720**, stretch mode `canvas_items`, aspect `expand`, Compatibility renderer (required for the Web).
+- `expand` lets the UI use the whole screen on any device, which the touch controls need. On its own it would also show more of the world on wider screens, and the Monster sees everything in view. So the amount of visible world is capped separately: every gameplay camera takes its zoom from `ViewRules.camera_zoom()` ([systems/view/view_rules.gd](systems/view/view_rules.gd)), which fits the view into **1600 × 900 world pixels** (`GameConfig.view_max_world_*`). A 16:9 screen sees exactly that; any other shape sees less along one axis and never more.
+
+### Input actions
+
+Declared in the InputMap and named in `InputActions`. Only the `InputService` implementation reads them.
+
+| Action | Default | Role |
+|:--|:--|:--|
+| `move_left` / `move_right` / `move_up` / `move_down` | `A` `D` `W` `S` and arrow keys | both |
+| `aim_left` / `aim_right` / `aim_up` / `aim_down` | none: the mouse aims on PC, the right virtual joystick on touch | Sheepherder |
+| `shoot` | left mouse button | Sheepherder |
+| `bell` | `Space` | Sheepherder |
+| `graze` (hold) | `C` | Monster |
+| `bleat` | `F` | Monster |
+| `eat` | `E` | Monster |
+| `sprint` (hold) | `Shift` | Monster |
+| `perk` | `Q` | Monster |
+
+The bindings are a proposal. `Ctrl`, `Alt` and the function keys are avoided because browsers use them.
+
+### Physics layers and groups
+
+| 2D physics layer | Name | Used for |
+|:-:|:--|:--|
+| 1 | `world` | Obstacles and arena borders; blocks movement |
+| 2 | `sheepherder` | The Sheepherder's body |
+| 3 | `sheep` | NPC sheep and the disguised Monster alike |
+| 4 | `companions` | Shepherd Dog, Allied Bat |
+| 5 | `hitbox` | Hit areas for firearm rays and melee attacks |
+
+| Group | Members |
+|:--|:--|
+| `sheepherder` | The Sheepherder character |
+| `sheep_like` | NPC sheep and the Monster, in either form |
+| `companions` | Shepherd Dog, Allied Bat |
+| `dynamic_entities` | Everything the vision system may hide |
+| `obstacles` | Solid props that block movement and line of sight |
+| `static_scenery` | Static map elements that stay faintly visible in darkness |
+
+NPC sheep and the Monster share every layer and group they are in, so neither can be used to tell them apart (GDD §3.2, "No Built-in Tell").
+
+## Code conventions
+
+- **Static typing everywhere.** Every variable, parameter and return value has a type. The project setting `debug/gdscript/warnings/untyped_declaration` is set to *Error*, so untyped code does not compile.
+- Naming follows the [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html): `snake_case` for files, functions and variables; `PascalCase` for classes and nodes; `CONSTANT_CASE` for constants and enum values; a leading `_` for private members; signals in the past tense (`sheep_died`).
+- Contracts are named `<Thing>Service`, stubs `Stub<Thing>Service`, tests `tests/unit/test_<subject>.gd`.
+- Public classes, methods and signals carry `##` documentation comments.
+- Commit the `.uid` files Godot creates next to scripts; they keep references stable when files move.
