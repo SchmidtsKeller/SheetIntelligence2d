@@ -98,6 +98,18 @@ Otherwise the network itself becomes a tell. For a hosting Sheepherder the NPC s
 
 The phase event feeds `SwarmService.sheep_phase_changed` on both devices, for game logic. What a sheep is *shown* doing comes from the snapshots alone.
 
+**Perks** (see [SessionPerkService](../services/perks/session_perk_service.gd)). Both players' selections and the lock are synced state (`perks.sheepherder`, `perks.monster`, `perks.locked`), so both devices apply the same modifiers. A device asks only for the role its player plays; a device on its own plays both.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `perks.select_request` | Either device, to the host | `[role, perk_id]` |
+| `perks.activate_request` | Either device, to the host | `[role]` |
+| `perks.end_request` | Either device, to the host | `[role]` |
+| `perks.started` | Host | `[role]` |
+| `perks.ended` | Host | `[role, cooldown]` |
+
+The meter of a running perk is kept on both devices for the HUD, but only the host ends it.
+
 ## Session
 
 `Services.session` answers what every system needs to know:

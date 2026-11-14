@@ -127,6 +127,24 @@ func test_effects_are_hidden_with_their_entity() -> void:
 	assert_false((effects[0] as CanvasItem).visible, "the muzzle flash behind the wall")
 
 
+func test_a_cloaked_monster_is_seen_only_by_its_own_player_faded() -> void:
+	var monster: SheepBody = _sheep(Vector2(200.0, 0.0))
+	VisionTarget.of(monster).cloaked = true
+
+	await _decide_as(GameEnums.Role.SHEEPHERDER)
+	assert_eq(_shown(monster), 0.0, "inside the cone, yet invisible")
+
+	await _decide_as(GameEnums.Role.MONSTER, monster)
+	assert_almost_eq(_shown(monster), VisionTarget.CLOAKED_ALPHA, 0.001, "its player sees it faded")
+
+	await _decide_as(GameEnums.Role.NONE)
+	assert_eq(_shown(monster), 0.0, "nobody else sees it")
+
+	VisionTarget.of(monster).cloaked = false
+	await _decide_as(GameEnums.Role.SHEEPHERDER)
+	assert_eq(_shown(monster), 1.0, "visible again")
+
+
 func test_without_a_role_everything_is_shown() -> void:
 	var sheep: SheepBody = _sheep(Vector2(310.0, 0.0))
 	await _decide_as(GameEnums.Role.NONE)

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_6gwwe"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_wbkh3"]
+
+[sub_resource type="Resource" id="Resource_4byt4"]
+script = ExtResource("1_6gwwe")
+stat = &"eat_duration"
+value_stat = &"perk_faster_consumption_duration"
+
+[resource]
+script = ExtResource("2_wbkh3")
+id = &"faster_consumption"
+role = 2
+display_name = "Faster Consumption"
+description = "Eating takes half the time, so you are open to a shot for half as long."
+modifiers = Array[ExtResource("1_6gwwe")]([SubResource("Resource_4byt4")])

@@ -64,6 +64,16 @@ func test_nonsense_values_are_kept_in_range() -> void:
 	assert_eq(options.port, LaunchOptions.DEFAULT_PORT)
 
 
+func test_perks_are_given_by_id() -> void:
+	assert_eq(LaunchOptions.parse([]).perks, [])
+	var options: LaunchOptions = LaunchOptions.parse(
+		["--perk=wide_flashlight, invisibility", "--perk=spare_bullet", "--perk="]
+	)
+
+	assert_eq(options.perks, [PerkIds.WIDE_FLASHLIGHT, PerkIds.INVISIBILITY, PerkIds.SPARE_BULLET])
+	assert_false(options.wants_session(), "a perk alone connects nothing")
+
+
 func test_arguments_of_other_tools_are_ignored() -> void:
 	var options: LaunchOptions = LaunchOptions.parse(["--filter=session", "--quiet"])
 

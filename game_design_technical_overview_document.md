@@ -115,7 +115,9 @@ Before each round begins, each player selects **1 Perk** from their respective p
 ### 4.2 Monster Perks (Choose 1)
 
 - **Faster Consumption (Passive):** Halves the eating/killing animation duration (vulnerability window **1.0s → 0.5s**).
-- **Temporary Invisibility (Active):** Turns the Monster invisible for up to **5 seconds** (30-second cooldown). The duration meter drains slowly while standing still, and drains very rapidly while moving. Invisibility also hides the Monster from the Shepherd Dog, and the Monster cannot eat while invisible. Bullets still hit the Monster while it is invisible.
+- **Temporary Invisibility (Active):** Turns the Monster invisible for up to **5 seconds**. The duration meter drains slowly while standing still, and drains very rapidly while moving. Pressing the perk button again ends it early, and the rest of the meter is lost. The **30-second cooldown** starts when the invisibility ends. It can't be used in spider form or during the eating animation.
+  * While invisible, the Monster can still be heard, it is still solid, and bullets still hit it. It cannot eat, it is hidden from the Shepherd Dog, and the NPC sheep no longer treat it as one of the flock.
+  * The Monster's own player sees their character semi-transparent while it is invisible.
 - **Allied Bat (Companion / Active):** Commands an allied bat to fly toward the Sheepherder, harassing them and shrinking their flashlight cone's length and angle by about **42%** each for **10 seconds**, which cuts the lit area by **80%** (30-second cooldown). The bat enters from a random position on the map edge nearest the Sheepherder.
 
 ---
@@ -148,7 +150,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Spider Evolution Threshold | `10 Sheep Eaten` | Transforms into unkillable spider monster |
 | **NPC Sheep** | Movement Speed | `180 px/s` | One speed for wandering and walking to the bell; same as the Monster |
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
-| **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD) |
+| **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD, from when it ends); can be ended early |
 | | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%` (`30.0s` CD) |
 | **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass |
 | | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking |

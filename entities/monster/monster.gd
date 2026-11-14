@@ -12,7 +12,7 @@ extends Node2D
 ##
 ## On the device of the Monster's player the sheep is steered from
 ## [InputService]: a [SheepPlayerDriver] moves it, grazes and bleats, and this
-## node adds the sprint and the attack. The attack is asked of
+## node adds the sprint, the attack and the perk button. The attack is asked of
 ## [CombatService], whose host decides it; what it reports is shown here on
 ## both devices: the eating, the spider form and the Monster's death.
 
@@ -118,6 +118,8 @@ func _ready() -> void:
 	combat.monster_shot.connect(_on_monster_shot)
 	# The flock treats the Monster's sheep as one of its own.
 	Services.swarm.register_neighbour(_body)
+	# Its active perk (invisibility) acts on the sheep, on both devices.
+	Services.perks.register_character(GameEnums.Role.MONSTER, _body)
 	if controlled_locally:
 		_take_control()
 
@@ -131,6 +133,7 @@ func _exit_tree() -> void:
 	combat.monster_form_changed.disconnect(_on_form_changed)
 	combat.monster_shot.disconnect(_on_monster_shot)
 	Services.swarm.unregister_neighbour(_body)
+	Services.perks.unregister_character(_body)
 	if Services.input.action_pressed.is_connected(_on_action_pressed):
 		Services.input.action_pressed.disconnect(_on_action_pressed)
 
@@ -220,8 +223,11 @@ func _take_control() -> void:
 
 
 func _on_action_pressed(action: StringName) -> void:
-	if action == InputActions.EAT:
-		Services.combat.request_eat()
+	match action:
+		InputActions.EAT:
+			Services.combat.request_eat()
+		InputActions.PERK:
+			Services.perks.use_perk(GameEnums.Role.MONSTER)
 
 
 ## The other device hears the Monster bleat like any sheep.
