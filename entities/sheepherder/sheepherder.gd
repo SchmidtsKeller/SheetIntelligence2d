@@ -26,6 +26,15 @@ const EVENT_PUSH: StringName = &"sheepherder.push"
 var entity_id: int = -1
 ## Whether this device moves the Sheepherder.
 var controlled_locally: bool = true
+## Whether a bot plays the Sheepherder (offline): they are moved on this
+## device, but through their own [member input] and without a camera.
+var is_bot: bool = false
+## The controls the Sheepherder listens to when moved on this device. Defaults
+## to [code]Services.input[/code], the player's; a bot's Sheepherder has a
+## [BotInput].
+var input: InputService:
+	get:
+		return input if input != null else Services.input
 ## The session that carries the bell and push events. Defaults to
 ## [code]Services.session[/code].
 var session: GameSession:
@@ -52,6 +61,9 @@ static func build(
 	if for_session != null:
 		herder.session = for_session
 	herder.controlled_locally = owner_id == herder.session.messenger.get_local_id()
+	if BotInput.is_bot_data(data):
+		herder.is_bot = true
+		herder.input = BotInput.new(GameEnums.Role.SHEEPHERDER)
 	herder.position = Vector2(data.get("x", 0.0), data.get("y", 0.0))
 	return herder
 
@@ -67,7 +79,8 @@ func _ready() -> void:
 	Services.combat.shot_fired.connect(_on_shot_fired)
 	Services.combat.sheepherder_killed.connect(_on_killed)
 	if controlled_locally:
-		Services.input.action_pressed.connect(_on_action_pressed)
+		input.action_pressed.connect(_on_action_pressed)
+	if controlled_locally and not is_bot:
 		_camera.enabled = true
 		_camera.make_current()
 		get_viewport().size_changed.connect(_update_zoom)
@@ -83,15 +96,19 @@ func _exit_tree() -> void:
 		Services.combat.shot_fired.disconnect(_on_shot_fired)
 	if Services.combat.sheepherder_killed.is_connected(_on_killed):
 		Services.combat.sheepherder_killed.disconnect(_on_killed)
-	if Services.input.action_pressed.is_connected(_on_action_pressed):
-		Services.input.action_pressed.disconnect(_on_action_pressed)
+	if input.action_pressed.is_connected(_on_action_pressed):
+		input.action_pressed.disconnect(_on_action_pressed)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE and is_bot and is_instance_valid(input):
+		input.free()
 
 
 func _physics_process(delta: float) -> void:
 	_bell_cooldown_left = maxf(_bell_cooldown_left - delta, 0.0)
 	if not controlled_locally or not _alive:
 		return
-	var input: InputService = Services.input
 	var speed: float = Services.perks.get_stat(StatIds.HERDER_MOVE_SPEED)
 	var wish: Vector2 = input.get_move_vector() * speed
 	velocity = wish
@@ -184,7 +201,7 @@ func _on_action_pressed(action: StringName) -> void:
 		InputActions.SHOOT:
 			# Aim where the player points right now, not where the last physics
 			# step left the Sheepherder facing.
-			var aim: Vector2 = Services.input.get_aim_direction(global_position)
+			var aim: Vector2 = input.get_aim_direction(global_position)
 			rotation = aim.angle()
 			Services.combat.request_shot(global_position, aim)
 		InputActions.BELL:

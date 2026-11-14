@@ -13,17 +13,29 @@ extends Node
 ## can do neither, like the Monster's spider form.
 var mimicry_enabled: bool = true
 
+## The controls to follow. Defaults to [code]Services.input[/code], the
+## player's; a bot's sheep follows a [BotInput].
+var input: InputService:
+	get:
+		return input if input != null else Services.input
+
 
 func _ready() -> void:
 	# Run before the sheep, so input reaches it in the same physics step.
 	process_physics_priority = -1
-	Services.input.action_pressed.connect(_on_action_pressed)
-	Services.input.action_released.connect(_on_action_released)
+	input.action_pressed.connect(_on_action_pressed)
+	input.action_released.connect(_on_action_released)
+
+
+func _exit_tree() -> void:
+	if input.action_pressed.is_connected(_on_action_pressed):
+		input.action_pressed.disconnect(_on_action_pressed)
+		input.action_released.disconnect(_on_action_released)
 
 
 func _physics_process(_delta: float) -> void:
 	if is_instance_valid(body):
-		body.set_move_input(Services.input.get_move_vector())
+		body.set_move_input(input.get_move_vector())
 
 
 func _on_action_pressed(action: StringName) -> void:

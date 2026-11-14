@@ -53,6 +53,11 @@ var last_end_message: String = ""
 
 var _network: NetworkService
 var _active: bool = false
+## The transport that stands in for [member _network] during an offline
+## session on a build whose own transport needs a second device, and the one
+## it replaced. Both [code]null[/code] otherwise.
+var _offline_network: NetworkService = null
+var _replaced_network: NetworkService = null
 var _random: RandomNumberGenerator = RandomNumberGenerator.new()
 
 ## The screen change in progress; 0 when both devices are settled.
@@ -96,6 +101,11 @@ func configure(config: GameConfig) -> void:
 func bind_network(network: NetworkService) -> void:
 	if _network == network:
 		return
+	if _offline_network != null:
+		# Another transport is chosen: the stand-in and what it replaced are history.
+		_offline_network.queue_free()
+		_offline_network = null
+		_replaced_network = null
 	if _network != null:
 		_network.session_started.disconnect(_on_network_session_started)
 		_network.session_ended.disconnect(_on_network_session_ended)
@@ -113,13 +123,42 @@ func bind_network(network: NetworkService) -> void:
 
 
 ## Starts a session as the host. See [method NetworkService.host_session].
+## A running offline session ends first: the player wants company now.
 func host(options: Dictionary = {}) -> Error:
+	_leave_offline()
 	return _network.host_session(options)
 
 
 ## Joins a session as the guest. See [method NetworkService.join_session].
+## A running offline session ends first.
 func join(options: Dictionary = {}) -> Error:
+	_leave_offline()
 	return _network.join_session(options)
+
+
+## Starts a session of this device alone, on every build: where the transport
+## needs a second device (the Web build pairs with codes), an offline one
+## stands in until the session ends, and then the real one is back. The
+## character nobody plays is a bot's (see [RoundStage]).
+func play_offline() -> Error:
+	if _active:
+		return ERR_ALREADY_IN_USE
+	if _network != null and not _network.is_offline():
+		if _network.get_connection_state() != NetworkService.ConnectionState.DISCONNECTED:
+			return ERR_ALREADY_IN_USE
+		var offline: StubNetworkService = StubNetworkService.new()
+		offline.name = "OfflineNetwork"
+		add_child(offline)
+		var replaced: NetworkService = _network
+		bind_network(offline)
+		_offline_network = offline
+		_replaced_network = replaced
+	return _network.host_session()
+
+
+## Whether this device plays alone: an offline session is running.
+func is_offline() -> bool:
+	return _active and _network.is_offline()
 
 
 ## Leaves the session.
@@ -281,7 +320,25 @@ func _end(reason: NetworkService.DisconnectReason, message: String) -> void:
 	_reset_transition()
 	if was_active:
 		_return_to_lobby()
+	_restore_network()
 	session_ended.emit(reason, message)
+
+
+func _leave_offline() -> void:
+	if _offline_network != null and _network == _offline_network:
+		leave()
+
+
+## After an offline session: the transport it stood in for is back.
+func _restore_network() -> void:
+	if _offline_network == null or _network != _offline_network:
+		return
+	var offline: NetworkService = _offline_network
+	var replaced: NetworkService = _replaced_network
+	_offline_network = null
+	_replaced_network = null
+	bind_network(replaced)
+	offline.queue_free()
 
 
 ## A round cannot go on without the other player.

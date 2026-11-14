@@ -12,7 +12,8 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_screen")
 title = "Lobby"
-description = "Placeholder. Pairing, role indicator and perk selection will be here."
+description = "Placeholder. Pairing, role indicator and perk selection will be here.
+Go to Round without a session to play against the computer."
 
 [node name="PairingPanel" type="Control" parent="."]
 layout_mode = 1

@@ -6,6 +6,9 @@ extends Control
 ## connect. Once connected, a line shows the round trip of a ping through the
 ## multiplayer API.
 ##
+## Without a second device, the player can start a match against the computer
+## in either role instead (see [method GameSession.play_offline]).
+##
 ## Shown only where the transport needs pairing codes: the Web build.
 
 enum Step {
@@ -17,6 +20,9 @@ enum Step {
 	CONNECTED,
 	FAILED,
 }
+
+const OFFLINE_HERDER: String = "Sheepherder vs. computer"
+const OFFLINE_MONSTER: String = "Monster vs. computer"
 
 const EVENT_PING: StringName = &"pairing.ping"
 const EVENT_PONG: StringName = &"pairing.pong"
@@ -127,10 +133,16 @@ func _go_to(step: Step) -> void:
 		Step.CHOOSE:
 			_show(
 				"Play together",
-				"Both devices must be in the same Wi-Fi. One hosts, the other joins."
+				(
+					"Both devices must be in the same Wi-Fi. One hosts, the other joins.
+"
+					+ "No second device? Play against the computer."
+				)
 			)
 			_add_button("Host a game", _host)
 			_add_button("Join a game", _join)
+			_add_button(OFFLINE_HERDER, play_offline.bind(GameEnums.Role.SHEEPHERDER))
+			_add_button(OFFLINE_MONSTER, play_offline.bind(GameEnums.Role.MONSTER))
 		Step.HOST_CODE:
 			_show_code(
 				"Host",
@@ -181,6 +193,19 @@ func _host() -> void:
 	_go_to(Step.HOST_CODE)
 
 
+## Starts a match on this device alone, against the computer: this player is
+## [param role] in the first round, and the roles swap after every round.
+func play_offline(role: GameEnums.Role) -> void:
+	browser.close()
+	var session: GameSession = Services.session
+	var error: Error = session.play_offline()
+	if error != OK:
+		_fail("Could not start the match (%s)." % error_string(error))
+		return
+	session.assign_roles(role)
+	session.request_screen(SceneFlowController.Screen.ROUND)
+
+
 func _join() -> void:
 	var error: Error = Services.session.join()
 	if error != OK:
@@ -228,6 +253,9 @@ func _on_copy_finished(copied: bool) -> void:
 
 
 func _on_session_started() -> void:
+	if Services.session.is_offline():
+		# Nobody to pair with: the round screen follows at once.
+		return
 	browser.close()
 	_round_trip_ms = -1
 	_go_to(Step.CONNECTED)
