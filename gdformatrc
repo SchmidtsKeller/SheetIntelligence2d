@@ -1,0 +1,10 @@
+# Settings of gdformat (gdtoolkit), the GDScript formatter checked in CI.
+# Format locally with:  gdformat $(git ls-files '*.gd')
+
+# The GDScript style guide's limit.
+line_length: 100
+
+excluded_directories: !!set
+  .git: null
+  .godot: null
+  build: null

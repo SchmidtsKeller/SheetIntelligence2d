@@ -1,0 +1,132 @@
+name: CI
+
+# Every pull request and every push to main is checked, tested and exported
+# for the Web. Pushes to main are also deployed to GitHub Pages.
+# See docs/web-build.md.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A newer push to a pull request replaces the running check; a deployment
+  # from main is never cut short.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The engine version is strict (GDD §9.1). Change it here and nowhere else.
+  GODOT_VERSION: 4.7-stable
+  GDTOOLKIT_VERSION: 4.5.0
+
+jobs:
+  lint:
+    name: GDScript format and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install gdtoolkit
+        run: pipx install "gdtoolkit==${GDTOOLKIT_VERSION}"
+
+      - name: Check formatting (gdformat)
+        run: git ls-files -z '*.gd' | xargs -0 gdformat --diff
+
+      - name: Lint (gdlint)
+        run: git ls-files -z '*.gd' | xargs -0 gdlint
+
+  test:
+    name: Import check and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          version: ${{ env.GODOT_VERSION }}
+
+      - name: Import the project (scripts parse, resources load)
+        run: tools/check_import.sh
+
+      - name: Run the unit tests
+        run: tools/run_tests.sh
+
+  export-web:
+    name: Web export
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          web-templates: "true"
+
+      - name: Export the Web build
+        run: tools/export_web.sh
+
+      - name: Upload the Web build
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-build
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14
+
+  pages-status:
+    name: Check GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: read
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Is GitHub Pages enabled for this repository?
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" --silent 2> /dev/null; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Not deployed::GitHub Pages is not enabled for this repository. Enable it under Settings > Pages with the source 'GitHub Actions' to deploy main automatically."
+          fi
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [lint, test, export-web, pages-status]
+    if: needs.pages-status.outputs.enabled == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download the Web build
+        uses: actions/download-artifact@v8
+        with:
+          name: web-build
+          path: build/web
+
+      - name: Package the site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
