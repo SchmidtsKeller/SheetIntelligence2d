@@ -1,6 +1,6 @@
-# Image Generation Specification: "Giant Scary Monster"
+# Image Generation Specification: "Giant Scary Monster" (GSM)
 
-This document outlines the precise prompt elements and stylistic constraints required to generate the Phase 2 "Giant Scary Monster" from *Hide in Sheep Clothing*.
+This document outlines the precise prompt elements and stylistic constraints required to generate the Phase 2 "Giant Scary Monster" (GSM) from *Hide in Sheep Clothing*.
 
 ## 1. Core Concept & Perspective
 
