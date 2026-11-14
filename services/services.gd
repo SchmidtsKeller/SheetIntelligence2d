@@ -46,6 +46,11 @@ var session: GameSession:
 	get:
 		return resolve(GameSession) as GameSession
 
+## The match: the phases of a round, its timer, the results and the tally.
+var match_flow: MatchFlow:
+	get:
+		return resolve(MatchFlow) as MatchFlow
+
 
 func _enter_tree() -> void:
 	if config != null:

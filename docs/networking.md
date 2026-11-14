@@ -144,7 +144,7 @@ session.get_local_role()       # GameEnums.Role
 session.roles_changed          # signal, both devices
 ```
 
-**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1) and swaps them with `swap_roles()` after every round. The assignment is synced state, so both devices always agree.
+**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1), and the match flow swaps them after every round, when the results screen is up. The assignment is synced state, so both devices always agree.
 
 **Screens.** `session.request_screen(SceneFlowController.Screen.ROUND)` on the host takes both devices along: both load the scene, each reports when it is ready, and only then `screen_entered` is emitted on both. Start a round on `screen_entered`, not in `_ready`, so neither device starts ahead of the other.
 
@@ -157,6 +157,32 @@ session.state.set_value(&"round.number", 3)        # host only
 session.state.get_value(&"round.number", 1)        # both devices
 session.state.value_changed.connect(_on_value)     # both devices
 ```
+
+## Round and match state
+
+The host's [MatchFlow](../systems/match/match_flow.gd) (`Services.match_flow`) decides the phase of the round, when the time is up, who won and how the match stands. The guest decides none of it; it only shows what the host published. All of it is synced state, so a device can never miss a step:
+
+| Key | Value |
+|:--|:--|
+| `match.phase` | `[sequence, phase, round number, the host's clock when the phase began, its duration]`; a duration of −1 means the phase has no end of its own |
+| `match.score` | The whole match so far: the number of rounds, and for every round played the host's role and the round's record (`MatchScore.to_data()`) |
+
+The score is published before the phase `RESOLVED`, so whoever reacts to the phase finds the round's record already there.
+
+**The timer is not sent.** A phase carries the moment it began, on the host's clock, and how long it lasts; each device counts down from that by itself. The guest therefore has to know how far its clock is from the host's. It asks every `GameConfig.net_clock_sync_interval` (0.5 s):
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `match.clock_ping` | The guest, to the host | `[the guest's clock]` |
+| `match.clock_pong` | The host, to the guest | `[the guest's clock from the ping, the host's clock]` |
+
+From the last 16 answers, [ClockSync](../systems/match/clock_sync.gd) takes the one with the shortest round trip, the one least held up on the way. The estimate is off by at most half of that round trip, and only by as much as the two directions differ. Both timers agree within 0.1 s; the two-instance check measures a few milliseconds on a good connection.
+
+**Same tick.** Whatever can end a round is reported by the host's combat service, and the flow notes it at once, in that order: the first lethal event decides. The flow itself runs last in the frame (`process_priority` 100) and only then looks at the timer and ends the round. So a kill in the tick in which the time runs out counts, and of a shot and a kill that land in the same tick the one the host resolved first wins. The guest's requests are events and arrive in order, so "first" always means the order in which the host received them.
+
+**Gameplay input** is switched on both devices by the phase: on in `ACTIVE`, off in every other phase of a match. The combat service is started when the round's characters are in place and ended on both devices the moment the round is decided, so nothing can be shot or eaten after that. The rules count only what the combat service reports during `ACTIVE`.
+
+**Disconnect.** When the session ends, the flow drops the match on the remaining device: the phase goes back to `IDLE`, the score is emptied, combat ends, input is enabled again and `match_aborted` is emitted. The session takes that device to the lobby as it does from any round.
 
 ## How to add a replicated entity
 
@@ -214,6 +240,8 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 **Automated check with two instances.** `tools/test_two_instances.sh` starts a host and a guest, lets them run a scripted scenario against each other and fails if either saw something unexpected: connection, roles and swap, 30 events in order in both directions, smooth movement of the other box, the screen change with its handshake, and the guest's return to the lobby when the host leaves. It accepts the network flags, e.g. `tools/test_two_instances.sh --net-latency=80 --net-jitter=40 --net-loss=10`.
 
 `tools/test_two_instances.sh monster` does the same for a round's lethal part, in the [Monster sandbox](../entities/monster/sandbox/monster_sandbox.tscn) with scripted players and a shortened cooldown: the guest's Monster walks, sprints, grazes, bleats, eats sheep until it is the spider, takes a bullet and kills the host's Sheepherder. Both instances check that they saw the same thing, and the host that the Monster moved without jumps. It accepts the network flags as well.
+
+`tools/test_two_instances.sh match` plays a whole Best of 5 on the real round and results screens, with scripted players and short rounds. Every round ends another way: the Monster kills the Sheepherder, the Sheepherder shoots the Monster, the time runs out with nothing done, it runs out at 5 to 5 points, and the Monster kills after the Sheepherder has wasted every bullet. Both instances check the roles of every round, each round's record and the match result against the script, that no button did anything in a countdown, and that both end in the lobby without a match. The host also compares the guest's timer with its own (within 0.1 s) and the guest's record of the match with its own. It accepts the network flags as well.
 
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
 
