@@ -84,7 +84,7 @@ Several times per second each device sends one snapshot with the state of every 
 
 Otherwise the network itself becomes a tell. For a hosting Sheepherder the NPC sheep are simulated on their own device and would move perfectly, while the Monster arrives over the network. So an entity that must be indistinguishable sets `NetTransform2D.delayed_visual`: its visible part is then drawn from the same buffer, with the same delay, on the device that simulates it as on the other one. The character a player controls themself is exempt on their own device, where its picture has to follow the input.
 
-**Sheep** use [SheepNetSync](../entities/sheep/sheep_net_sync.gd), a `NetTransform2D` for a `SheepBody`. It goes one step further than `delayed_visual`: on both devices the sheep's picture, its walk animation and its grazing all come from the buffered state, so the animation cannot run ahead of the picture either. Grazing travels in the snapshot as a flag instead of as an event, which shows it at the matching moment and repairs itself after lost packets. The flock (#13) spawns every NPC sheep with it. The Monster (#16) must use the same component for its sheep body, with `live_on_owner = true` so that it follows the input on the Monster's own device and is shown delayed everywhere else.
+**Sheep** use [SheepNetSync](../entities/sheep/sheep_net_sync.gd), a `NetTransform2D` for a `SheepBody`. It goes one step further than `delayed_visual`: on both devices the sheep's picture, its walk animation and its grazing all come from the buffered state, so the animation cannot run ahead of the picture either. Grazing travels in the snapshot as a flag instead of as an event, which shows it at the matching moment and repairs itself after lost packets. The flock (#13) spawns every NPC sheep with it. The [Monster](../entities/monster/monster.gd) uses the same component for its sheep body, with `live_on_owner = true` so that it follows the input on the Monster's own device and is shown delayed everywhere else. [no-tell-audit.md](no-tell-audit.md) lists what is compared between the two.
 
 **Flock events** (all decided by the host, see [FlockSwarmService](../services/swarm/flock_swarm_service.gd)):
 
@@ -97,6 +97,39 @@ Otherwise the network itself becomes a tell. For a hosting Sheepherder the NPC s
 | `flock.bell_request` | Either device, to the host | `[origin, radius]` |
 
 The phase event feeds `SwarmService.sheep_phase_changed` on both devices, for game logic. What a sheep is *shown* doing comes from the snapshots alone.
+
+**Combat events** (see [SessionCombatService](../services/combat/session_combat_service.gd)):
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `combat.shot_request` | Either device, to the host | `[origin, direction]` |
+| `combat.shot` | Host | `[origin, end_position, result, sheep_id, ammo_left, reload_time]` |
+| `combat.eat_request` | Either device, to the host | `[monster_position]` |
+| `combat.eat` | Host | `[target, target_id, target_position, monster_position, duration, cooldown]` |
+
+A request carries where the player's own character was when they pressed the button, because that device is the one that knows. The host decides against its own state of everything else. The Monster's player sees the others `net_interpolation_delay` in the past, so the host accepts an attack from the other device if the target can have been in reach that long ago. The result event carries the durations, so both devices count the same lock and cooldown even while a perk changes them.
+
+Everything that follows from an attack (the dead sheep, the blood, the eaten count, the unlocked kill, the spider) is derived from `combat.eat` on both devices in the same order; nothing of it is sent separately.
+
+**Monster events:**
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `monster.bleat` | The Monster's device, to the other | `[entity_id]` |
+
+The Monster's grazing travels in its snapshots like a sheep's, and its eating animation starts from `combat.eat`.
+
+**Perks** (see [SessionPerkService](../services/perks/session_perk_service.gd)). Both players' selections and the lock are synced state (`perks.sheepherder`, `perks.monster`, `perks.locked`), so both devices apply the same modifiers. A device asks only for the role its player plays; a device on its own plays both.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `perks.select_request` | Either device, to the host | `[role, perk_id]` |
+| `perks.activate_request` | Either device, to the host | `[role]` |
+| `perks.end_request` | Either device, to the host | `[role]` |
+| `perks.started` | Host | `[role]` |
+| `perks.ended` | Host | `[role, cooldown]` |
+
+The meter of a running perk is kept on both devices for the HUD, but only the host ends it.
 
 ## Session
 
@@ -179,6 +212,8 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 ```
 
 **Automated check with two instances.** `tools/test_two_instances.sh` starts a host and a guest, lets them run a scripted scenario against each other and fails if either saw something unexpected: connection, roles and swap, 30 events in order in both directions, smooth movement of the other box, the screen change with its handshake, and the guest's return to the lobby when the host leaves. It accepts the network flags, e.g. `tools/test_two_instances.sh --net-latency=80 --net-jitter=40 --net-loss=10`.
+
+`tools/test_two_instances.sh monster` does the same for a round's lethal part, in the [Monster sandbox](../entities/monster/sandbox/monster_sandbox.tscn) with scripted players and a shortened cooldown: the guest's Monster walks, sprints, grazes, bleats, eats sheep until it is the spider, takes a bullet and kills the host's Sheepherder. Both instances check that they saw the same thing, and the host that the Monster moved without jumps. It accepts the network flags as well.
 
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
 

@@ -66,6 +66,15 @@ signal bell_rung(origin: Vector2, radius: float)
 ## (center to center), or -1 if there is none.
 @abstract func find_nearest_living_sheep(position: Vector2, max_distance: float) -> int
 
+## The sheep closest to [param position] within [param max_distance] (center
+## to center) that the Monster can eat: a living sheep, or the body of a sheep
+## the Sheepherder shot (GDD §3.2). -1 if there is none.
+@abstract func find_nearest_edible_sheep(position: Vector2, max_distance: float) -> int
+
+## Whether the sheep with [param sheep_id] is a body on the ground: shot and
+## not eaten.
+@abstract func is_sheep_corpse(sheep_id: int) -> bool
+
 ## Makes [param body] a flock neighbour: NPC sheep steer around and along with
 ## it exactly as with each other. Used for the Monster's sheep, so the flock
 ## creates no behavioural tell.

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_uxkr2"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_5abmy"]
+
+[sub_resource type="Resource" id="Resource_smc0l"]
+script = ExtResource("1_uxkr2")
+stat = &"firearm_reload_time"
+value_stat = &"perk_faster_reload_time"
+
+[resource]
+script = ExtResource("2_5abmy")
+id = &"faster_reload"
+role = 1
+display_name = "Faster Weapon Reload"
+description = "The firearm reloads in half the time."
+modifiers = Array[ExtResource("1_uxkr2")]([SubResource("Resource_smc0l")])

@@ -27,13 +27,16 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	registry.register(InputService, DeviceInputService.new())
 	registry.register(NetworkService, create_network_service(config))
 	registry.register(CombatService, SessionCombatService.new())
-	registry.register(PerkService, StubPerkService.new(config))
+	var perks: SessionPerkService = SessionPerkService.new(config, PerkCatalog.load_default())
+	perks.launch_perks = LaunchOptions.from_command_line().perks
+	registry.register(PerkService, perks)
 	registry.register(AudioService, StubAudioService.new(config))
 
 	var session: GameSession = GameSession.new()
 	session.configure(config)
 	registry.register(GameSession, session)
 	session.bind_network(registry.resolve(NetworkService) as NetworkService)
+	perks.setup(session)
 
 	# The flock replicates through the session, so it comes after it.
 	var swarm: FlockSwarmService = FlockSwarmService.new()

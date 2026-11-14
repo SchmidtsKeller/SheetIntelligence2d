@@ -35,6 +35,7 @@ var session: GameSession:
 		return session
 
 var _bell_cooldown_left: float = 0.0
+var _alive: bool = true
 
 @onready var _camera: Camera2D = $Camera
 @onready var _vision_target: VisionTarget = $VisionTarget
@@ -64,6 +65,7 @@ func _ready() -> void:
 	messenger.subscribe(EVENT_BELL, _on_bell)
 	messenger.subscribe(EVENT_PUSH, _on_push)
 	Services.combat.shot_fired.connect(_on_shot_fired)
+	Services.combat.sheepherder_killed.connect(_on_killed)
 	if controlled_locally:
 		Services.input.action_pressed.connect(_on_action_pressed)
 		_camera.enabled = true
@@ -79,13 +81,15 @@ func _exit_tree() -> void:
 	messenger.unsubscribe(EVENT_PUSH, _on_push)
 	if Services.combat.shot_fired.is_connected(_on_shot_fired):
 		Services.combat.shot_fired.disconnect(_on_shot_fired)
+	if Services.combat.sheepherder_killed.is_connected(_on_killed):
+		Services.combat.sheepherder_killed.disconnect(_on_killed)
 	if Services.input.action_pressed.is_connected(_on_action_pressed):
 		Services.input.action_pressed.disconnect(_on_action_pressed)
 
 
 func _physics_process(delta: float) -> void:
 	_bell_cooldown_left = maxf(_bell_cooldown_left - delta, 0.0)
-	if not controlled_locally:
+	if not controlled_locally or not _alive:
 		return
 	var input: InputService = Services.input
 	var speed: float = Services.perks.get_stat(StatIds.HERDER_MOVE_SPEED)
@@ -94,6 +98,17 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_sheep(wish)
 	rotation = input.get_aim_direction(global_position).angle()
+
+
+## Whether the Sheepherder is alive. The Monster's attack kills them at once
+## (GDD §3.2); a dead Sheepherder neither moves nor shoots nor rings the bell.
+func is_alive() -> bool:
+	return _alive
+
+
+func _on_killed(_position: Vector2) -> void:
+	_alive = false
+	velocity = Vector2.ZERO
 
 
 # --- Aim and flashlight ----------------------------------------------------------
@@ -132,7 +147,7 @@ func ring_bell() -> bool:
 
 
 func can_ring_bell() -> bool:
-	return _bell_cooldown_left <= 0.0
+	return _alive and _bell_cooldown_left <= 0.0
 
 
 ## Seconds until the bell can ring again; 0 when ready.
@@ -163,6 +178,8 @@ func _on_bell(payload: Array, _sender_id: int) -> void:
 
 
 func _on_action_pressed(action: StringName) -> void:
+	if not _alive:
+		return
 	match action:
 		InputActions.SHOOT:
 			# Aim where the player points right now, not where the last physics

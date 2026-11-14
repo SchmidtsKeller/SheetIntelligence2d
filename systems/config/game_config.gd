@@ -143,7 +143,7 @@ extends Resource
 @export_range(0.0, 10.0, 0.1, "suffix:×") var invisibility_drain_still: float = 1.0
 ## Drain of the invisibility meter while moving.
 @export_range(0.0, 10.0, 0.1, "suffix:×") var invisibility_drain_moving: float = 3.0
-## Cooldown of the invisibility perk.
+## Cooldown of the invisibility perk. It starts when the invisibility ends.
 @export_range(0.0, 300.0, 0.5, "suffix:s") var invisibility_cooldown: float = 30.0
 ## How long the Allied Bat disrupts the flashlight.
 @export_range(0.0, 60.0, 0.1, "suffix:s") var bat_disruption_duration: float = 10.0

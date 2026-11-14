@@ -27,7 +27,9 @@ The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbo
 
 The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn](entities/sheepherder/sandbox/sheepherder_sandbox.tscn), **F6**) puts you in the arena as the Sheepherder, among a round's sheep that stand still: walk with WASD, aim with the mouse, ring the bell with Space and shoot with the left mouse button.
 
-The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden).
+The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden). Its perk picker gives the player whose view is shown a perk (Q uses the Monster's invisibility); the Monster's view shows nothing of the Sheepherder's perk.
+
+The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/monster/sandbox/monster_sandbox.tscn), **F6**) is a round without rules: you are the Monster among a round's flock, with a Sheepherder who only stands there. Walk with WASD, sprint with Shift, graze with C, bleat with F and eat with E; the status line shows stamina, the eaten count and the attack's cooldown, and a button lets the Sheepherder shoot at you. Started twice with `-- --host` and `-- --join`, it is the same round between two players.
 
 ### Two instances on one computer
 
@@ -41,7 +43,9 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance check are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+
+Until the lobby has a perk selection, `--perk=<id>[,<id>]` selects perks for the roles an instance plays, e.g. `godot --path . -- --join --perk=long_flashlight,invisibility`. The ids are those in [PerkIds](abstractions/types/perk_ids.gd).
 
 ## Run the tests
 
@@ -125,7 +129,7 @@ res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
 ├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
-├── systems/          Game config, scene flow, view rule, arena, session, input, flock, seeded randomness; later lighting
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, vision, perks, seeded randomness
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -147,7 +151,7 @@ Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
 | `PerkService` | Perk selection and the modifier-aware stat lookup |
 | `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
 
-Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input and the flock are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input, the flock, combat and perks are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
 
 ### Service registry
 
@@ -186,7 +190,7 @@ var bullets: int = Services.perks.get_stat_int(StatIds.FIREARM_AMMO)
 | Class | Contents |
 |:--|:--|
 | `GameEnums` | `Role`, `RoundOutcome`, `RoundEndReason`, `SheepPhase`, `DeathCause`, `MonsterForm`, `HearingRange` |
-| `PerkIds` | The eight perks and the pool of each role |
+| `PerkIds` | The ids of the eight perks; which role's pool each is in comes from the perk catalog |
 | `AudioEvents` | The sound events and their hearing-range class |
 | `StatIds` | The stats of the lookup |
 | `InputActions` | The input actions and the action set of each role |
@@ -232,6 +236,22 @@ Services.swarm.register_neighbour(monster_body)             # the flock treats i
 
 The flock sandbox ([systems/flock/sandbox/flock_sandbox.tscn](systems/flock/sandbox/flock_sandbox.tscn), **F6**) shows a round's flock in the arena, with one more sheep in the Monster's slot that can be steered with the Monster's keys. A click rings the bell there; the buttons start a new flock, switch the debug overlay (activity, target and steering per sheep, the reach of the last bell), run a time lapse and kill a sheep.
 
+### The Monster
+
+The [Monster](entities/monster/monster.gd) (GDD §3.2) has no body of its own. It is one node inside the shared sheep body, spawned in the slot the flock leaves free:
+
+```gdscript
+Monster.register(Services.session)                                   # both devices, before the round
+Services.session.entities.spawn(Monster.KIND, owner_id, Monster.spawn_data(round_seed, arena))   # host
+Services.combat.begin_round(sheepherder, Monster.of(body).get_body())
+```
+
+- **Disguise.** Same scene, same replication and same layer as an NPC sheep, steered through the same motion model, grazing and bleat. Whatever would tell it apart on the Sheepherder's device is a bug: [docs/no-tell-audit.md](docs/no-tell-audit.md) is the checklist, and `tests/unit/test_monster_no_tell.gd` works through it.
+- **Sprint.** Hold to move at `monster_sprint_speed` while the stamina lasts ([MonsterStamina](entities/monster/monster_stamina.gd)). An empty meter ends the sprint until the button is let go of; it refills whenever the Monster is not sprinting.
+- **Eating.** `Services.combat.request_eat()` asks the host, which looks for something within `melee_range`: a living sheep, the body of a shot one, or the Sheepherder once `herder_kill_threshold` sheep are eaten. The Monster is locked for `eat_duration`, and the cooldown starts when that ends. Other systems can forbid the attack with `add_eat_blocker()` and ask `is_eating()`.
+- **Evolution.** Every eaten sheep counts, also the body of one the Sheepherder shot (which gives no points: `get_eaten_alive_count()`). At `spider_evolution_threshold` the Monster becomes the [spider](entities/monster/spider_visual.gd) when it has finished eating: faster, without sprint or mimicry, and bullets do nothing to it.
+- **For the HUD:** `get_stamina_ratio()`, `is_sprinting()` and `get_form()` on the Monster; `get_eaten_count()`, `get_eat_cooldown_remaining()`, `can_kill_sheepherder()` and `is_monster_killable()` on the combat service.
+
 ### Vision
 
 What a player sees is decided on their own device by the [VisionSystem](systems/vision/vision_system.gd) (GDD §3.1, §3.2). It changes only what is drawn, never the simulation or what is sent.
@@ -239,10 +259,26 @@ What a player sees is decided on their own device by the [VisionSystem](systems/
 - **Sheepherder:** heavy darkness, in which static scenery stays faintly visible. Entities and blood are seen only where the [flashlight](entities/sheepherder/flashlight_light.gd) lights them: inside the cone and not in an obstacle's shadow.
 - **Monster:** no darkness. Entities are seen unless an obstacle hides them; all of the ground is seen, including blood and the Sheepherder's light.
 - **Everybody** always sees their own character.
+- **The invisible Monster** (a cloaked `VisionTarget`) is seen by nobody else; its own player sees it faded.
 
 **Rule:** anything that may be hidden (a character, a sheep, a companion, a mark on the ground) has a [VisionTarget](systems/vision/vision_target.gd) child that names the part to fade, and its root is in the group `dynamic_entities`. Effects that belong to it (a muzzle flash, an eating effect) are attached to that target with `attach()`, so they are never seen when the entity is not. There are no rules per entity type.
 
 The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
+
+### Perks
+
+`Services.perks` is the `SessionPerkService` ([services/perks/session_perk_service.gd](services/perks/session_perk_service.gd)): the stat lookup with its modifiers, both players' perk choice and the active perks (GDD §4).
+
+- **Data.** Every perk is a [PerkDefinition](systems/perks/perk_definition.gd) resource in [systems/perks/definitions/](systems/perks/definitions), listed in the [catalog](systems/perks/perk_catalog.tres): its role, kind, name, description and icon. A passive perk lists [modifiers](systems/perks/perk_modifier.gd) that set a stat to the configured value of another (Wide Flashlight sets `flashlight_cone_angle_deg` to `perk_wide_flashlight_angle_deg`), so every number stays in the game config. An active perk names a [PerkEffect](systems/perks/perk_effect.gd) script, such as [InvisibilityEffect](systems/perks/effects/invisibility_effect.gd). A new perk is a new resource in the catalog, plus an effect script if it is active.
+- **Round.** Each player selects one perk from their role's pool; the host locks both selections at round start and clears them after the round. Lock before `CombatService.begin_round`, which reads the magazine size.
+- **Both devices** know both perks and apply the same modifiers, so every stat has the same value on both. Keeping the Sheepherder's choice off the Monster's screen is up to what is drawn there.
+- **Active perks** are triggered with the `perk` action (`Services.perks.use_perk(role)`, which ends a running invisibility early). The host decides when one starts and ends; `is_perk_active`, `get_perk_charge` and `get_perk_cooldown_remaining` are what the HUD shows. A character registers itself with `register_character`, so its perk can act on it.
+
+```gdscript
+Services.perks.select_perk(GameEnums.Role.MONSTER, PerkIds.INVISIBILITY)   # the player's device
+Services.perks.lock_selection()                                           # host, at round start
+Services.perks.use_perk(GameEnums.Role.MONSTER)                           # the perk button
+```
 
 ### Scene flow
 

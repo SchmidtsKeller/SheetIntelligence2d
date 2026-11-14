@@ -1,0 +1,34 @@
+class_name PerkDefinition
+extends Resource
+## One perk of the game (GDD §4): what the lobby shows and what the perk does.
+##
+## A passive perk lists its [member modifiers]. An active perk names an
+## [member effect] script, which runs when its player presses the perk button.
+
+## How the perk is used, as the GDD sorts them.
+enum Kind {
+	## Works on its own for the whole round.
+	PASSIVE,
+	## Triggered by its player with the perk button.
+	ACTIVE,
+	## Brings a companion (#19).
+	COMPANION,
+}
+
+## The id (see [PerkIds]).
+@export var id: StringName
+## The role whose pool the perk is in.
+@export var role: GameEnums.Role = GameEnums.Role.NONE
+@export var kind: Kind = Kind.PASSIVE
+@export var display_name: String = ""
+@export_multiline var description: String = ""
+@export var icon: Texture2D
+## Stat changes for the whole round, applied when the selection is locked.
+@export var modifiers: Array[PerkModifier] = []
+## A [PerkEffect] script for a perk that is triggered with the perk button.
+@export var effect: GDScript
+
+
+## Whether the perk is triggered with the perk button.
+func is_triggered() -> bool:
+	return effect != null

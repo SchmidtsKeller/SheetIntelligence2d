@@ -36,7 +36,8 @@ signal ammo_depleted
 
 # --- Deaths ------------------------------------------------------------------
 
-## An NPC sheep was killed by a shot or by the Monster.
+## A living NPC sheep was killed by a shot or by the Monster. Not emitted when
+## the Monster eats the body of a sheep that was shot before.
 @warning_ignore("unused_signal")
 signal sheep_killed(sheep_id: int, cause: GameEnums.DeathCause, position: Vector2)
 
@@ -52,7 +53,8 @@ signal sheepherder_killed(position: Vector2)
 
 ## The Monster started eating. It can neither move nor abort for
 ## [param duration] seconds. [param target_id] is the sheep id, or -1 when the
-## target is the Sheepherder.
+## target is the Sheepherder. [param target] tells a living sheep from the
+## body of a shot one, which gives no points and does not alarm the dog.
 @warning_ignore("unused_signal")
 signal eat_started(target: EatTarget, target_id: int, duration: float)
 
@@ -60,12 +62,12 @@ signal eat_started(target: EatTarget, target_id: int, duration: float)
 @warning_ignore("unused_signal")
 signal eat_finished(target: EatTarget, target_id: int, cooldown: float)
 
-## Blood appeared on the ground where a sheep was eaten or shot. It stays for
-## the whole round (GDD §3.1, §3.2).
+## Blood appeared on the ground where a living sheep was eaten or shot. It
+## stays for the whole round (GDD §3.1, §3.2).
 @warning_ignore("unused_signal")
 signal blood_spilled(position: Vector2)
 
-## The number of sheep the Monster has eaten changed.
+## The number of sheep the Monster has eaten changed, bodies included.
 @warning_ignore("unused_signal")
 signal eaten_count_changed(eaten: int)
 
@@ -73,7 +75,8 @@ signal eaten_count_changed(eaten: int)
 @warning_ignore("unused_signal")
 signal sheepherder_kill_unlocked
 
-## The Monster changed form (10 sheep eaten: spider, GDD §2.1).
+## The Monster changed form (10 sheep eaten: spider, GDD §2.1). The spider
+## appears when the eating animation of the last sheep ends.
 @warning_ignore("unused_signal")
 signal monster_form_changed(form: GameEnums.MonsterForm)
 
@@ -96,8 +99,12 @@ enum ShotResult {
 ## What the Monster's melee attack is aimed at.
 enum EatTarget {
 	NONE,
+	## A living NPC sheep.
 	SHEEP,
 	SHEEPHERDER,
+	## The body of a sheep the Sheepherder shot. Counts toward the evolution
+	## like a living sheep, but gives no points (GDD §2.3, §3.2).
+	SHEEP_BODY,
 }
 
 # --- Round lifecycle ---------------------------------------------------------
@@ -143,8 +150,9 @@ enum EatTarget {
 # --- Monster -----------------------------------------------------------------
 
 ## Asks to attack what is in melee range of the Monster: the Sheepherder if
-## the kill is unlocked, otherwise the nearest living sheep. Returns whether
-## the request was accepted locally; the result arrives as [signal eat_started].
+## the kill is unlocked, otherwise the nearest sheep, living or the body of a
+## shot one. Returns whether the request was accepted locally; the result
+## arrives as [signal eat_started].
 @abstract func request_eat() -> bool
 
 ## Whether an attack would be accepted right now: something is in range, the
@@ -164,8 +172,14 @@ enum EatTarget {
 ## Removes a blocker added with [method add_eat_blocker].
 @abstract func remove_eat_blocker(source: StringName) -> void
 
-## How many sheep the Monster has eaten this round. Shot sheep never count.
+## How many sheep the Monster has eaten this round, toward its evolution.
+## The eaten bodies of shot sheep count; a shot sheep that was left lying does
+## not (GDD §2.1, §3.2).
 @abstract func get_eaten_count() -> int
+
+## How many of the eaten sheep were alive when the Monster ate them. Only
+## these give the Monster points (GDD §2.3).
+@abstract func get_eaten_alive_count() -> int
 
 ## The Monster's current form.
 @abstract func get_monster_form() -> GameEnums.MonsterForm
