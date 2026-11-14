@@ -149,7 +149,9 @@ func test_flock_behaves_for_a_whole_round() -> void:
 			has_grazed[sheep_id] = has_grazed.get(sheep_id, false) or body.is_grazing()
 			has_walked[sheep_id] = has_walked.get(sheep_id, false) or body.get_speed() > 100.0
 			if not play_area.has_point(position):
-				problems.append("sheep %d left the field at %s (tick %d)" % [sheep_id, position, tick])
+				problems.append(
+					"sheep %d left the field at %s (tick %d)" % [sheep_id, position, tick]
+				)
 			for footprint: PackedVector2Array in footprints:
 				if Geometry2D.is_point_in_polygon(position, footprint):
 					problems.append("sheep %d is inside an obstacle at %s" % [sheep_id, position])
@@ -219,10 +221,14 @@ func test_bell_calls_exactly_the_sheep_within_its_radius() -> void:
 	assert_gt(inside.size(), 0, "the test needs sheep inside the radius")
 	assert_gt(outside.size(), 0, "and outside of it")
 	for sheep_id: int in inside:
-		assert_eq(_swarm.get_agent(sheep_id).activity, FlockAgent.Activity.BELL, "sheep %d" % sheep_id)
+		assert_eq(
+			_swarm.get_agent(sheep_id).activity, FlockAgent.Activity.BELL, "sheep %d" % sheep_id
+		)
 		assert_eq(_swarm.get_agent(sheep_id).target, origin)
 	for sheep_id: int in outside:
-		assert_ne(_swarm.get_agent(sheep_id).activity, FlockAgent.Activity.BELL, "sheep %d" % sheep_id)
+		assert_ne(
+			_swarm.get_agent(sheep_id).activity, FlockAgent.Activity.BELL, "sheep %d" % sheep_id
+		)
 	assert_signal_emitted_with(_swarm, &"bell_rung", [origin, radius])
 
 
@@ -463,7 +469,9 @@ func test_grazing_death_bleats_and_the_bell_reach_the_guest() -> void:
 
 	# Death.
 	watch_signals(guest_swarm)
-	assert_false(guest_swarm.kill_sheep(ids[0], GameEnums.DeathCause.SHOT), "the guest decides nothing")
+	assert_false(
+		guest_swarm.kill_sheep(ids[0], GameEnums.DeathCause.SHOT), "the guest decides nothing"
+	)
 	host_swarm.kill_sheep(ids[0], GameEnums.DeathCause.SHOT)
 	assert_false(guest_swarm.is_sheep_alive(ids[0]))
 	assert_eq(guest_swarm.get_living_count(), _flock_size - 1)
@@ -511,7 +519,10 @@ func test_guest_sheep_move_smoothly_over_a_bad_connection() -> void:
 	host_swarm.spawn_flock(ROUND_SEED)
 	# The spawns take their time over this line.
 	var arrival_deadline_msec: int = Time.get_ticks_msec() + 2000
-	while guest_swarm.get_living_count() < _flock_size and Time.get_ticks_msec() < arrival_deadline_msec:
+	while (
+		guest_swarm.get_living_count() < _flock_size
+		and Time.get_ticks_msec() < arrival_deadline_msec
+	):
 		await get_tree().process_frame
 	var ids: Array[int] = guest_swarm.get_living_sheep_ids()
 	assert_eq(ids.size(), _flock_size, "the flock arrives, if a little late")

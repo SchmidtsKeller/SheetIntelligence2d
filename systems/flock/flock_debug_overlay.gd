@@ -48,7 +48,15 @@ func _draw() -> void:
 			draw_circle(agent.target, 5.0, color)
 		if not agent.steering.is_zero_approx():
 			draw_line(position, position + agent.steering * STEERING_LENGTH, Color.CYAN, 3.0)
-		var text: String = "%d %s %.1f" % [sheep_id, ACTIVITY_NAMES[agent.activity], agent.time_left]
+		var text: String = (
+			"%d %s %.1f" % [sheep_id, ACTIVITY_NAMES[agent.activity], agent.time_left]
+		)
 		draw_string(
-			font, position + Vector2(-30.0, -38.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, color
+			font,
+			position + Vector2(-30.0, -38.0),
+			text,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			FONT_SIZE,
+			color
 		)

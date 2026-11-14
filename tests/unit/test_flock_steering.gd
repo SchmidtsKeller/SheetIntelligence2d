@@ -83,7 +83,9 @@ func test_obstacle_avoidance_adds_up_over_obstacles() -> void:
 	]
 
 	# Exactly between two squares: their pushes cancel.
-	var push: Vector2 = FlockSteering.obstacle_avoidance(Vector2(50.0, 150.0), [SQUARE, other], 60.0)
+	var push: Vector2 = FlockSteering.obstacle_avoidance(
+		Vector2(50.0, 150.0), [SQUARE, other], 60.0
+	)
 
 	assert_almost_eq(push, Vector2.ZERO)
 

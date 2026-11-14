@@ -66,7 +66,7 @@ func _process(_delta: float) -> void:
 		grazing += int(agent.activity == FlockAgent.Activity.GRAZE)
 		called += int(agent.activity == FlockAgent.Activity.BELL)
 	_status.text = (
-		"Round seed %d | %d sheep alive | %d walking, %d grazing, %d following the bell | speed ×%s"
+		"Seed %d | %d sheep alive | %d walking, %d grazing, %d following the bell | speed ×%s"
 		% [_round_seed, _swarm.get_living_count(), walking, grazing, called, SPEEDS[_speed_index]]
 	)
 
