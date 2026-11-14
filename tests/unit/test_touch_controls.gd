@@ -137,7 +137,9 @@ func test_controls_do_not_overlap() -> void:
 		for first: int in controls.size():
 			for second: int in range(first + 1, controls.size()):
 				assert_false(
-					controls[first].get_global_rect().intersects(controls[second].get_global_rect()),
+					controls[first].get_global_rect().intersects(
+						controls[second].get_global_rect()
+					),
 					"%s and %s" % [controls[first].name, controls[second].name]
 				)
 
