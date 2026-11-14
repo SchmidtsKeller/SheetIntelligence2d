@@ -184,7 +184,105 @@ func test_offline_session_is_a_session_of_one() -> void:
 	session.leave()
 
 
+func test_playing_offline_needs_no_second_device_even_where_codes_pair() -> void:
+	var session: GameSession = _pairing_session()
+	var pairing: FakeNetworkService = session.get_child(-1) as FakeNetworkService
+
+	assert_eq(session.play_offline(), OK)
+
+	assert_true(session.is_active())
+	assert_true(session.is_offline())
+	assert_true(session.is_host())
+	assert_false(session.has_remote_player())
+	assert_false(session.requires_pairing_codes(), "an offline transport stands in")
+	assert_eq(pairing.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
+	session.leave()
+
+
+func test_after_playing_offline_the_pairing_transport_is_back() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+
+	session.leave()
+
+	assert_false(session.is_active())
+	assert_false(session.is_offline())
+	assert_true(session.requires_pairing_codes())
+	assert_eq(session.host(), OK, "the pairing transport hosts again")
+	assert_eq(session.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+
+
+func test_hosting_ends_the_offline_session_first() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+	watch_signals(session)
+
+	assert_eq(session.host(), OK)
+
+	_assert_pairing_after_offline(session)
+
+
+func test_joining_ends_the_offline_session_first() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+	watch_signals(session)
+
+	assert_eq(session.join(), OK)
+
+	_assert_pairing_after_offline(session)
+
+
+func test_playing_offline_twice_is_refused() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+
+	assert_eq(session.play_offline(), ERR_ALREADY_IN_USE)
+	session.leave()
+
+
+func test_playing_offline_is_refused_while_pairing() -> void:
+	var session: GameSession = _pairing_session()
+	session.host()
+
+	assert_eq(session.play_offline(), ERR_ALREADY_IN_USE)
+	assert_false(session.is_offline())
+	session.leave()
+
+
+func test_an_offline_transport_plays_offline_by_itself() -> void:
+	var session: GameSession = add_child_autofree(GameSession.new())
+	var network: StubNetworkService = add_child_autofree(StubNetworkService.new())
+	session.scene_flow = _pair.host_flow
+	session.bind_network(network)
+
+	assert_eq(session.play_offline(), OK)
+
+	assert_true(session.is_offline())
+	assert_eq(session.get_child_count(), 3, "no stand-in: messenger, state and entities only")
+	session.leave()
+
+
 # --- Roles -----------------------------------------------------------------------
+
+
+func _assert_pairing_after_offline(session: GameSession) -> void:
+	assert_signal_emit_count(session, &"session_ended", 1)
+	assert_false(session.is_active())
+	assert_true(session.requires_pairing_codes())
+	assert_eq(session.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+	session.leave()
+
+
+## A session bound to a transport that pairs with codes, like the Web build's.
+## The transport is the session's last child.
+func _pairing_session() -> GameSession:
+	var session: GameSession = add_child_autofree(GameSession.new())
+	var network: FakeNetworkService = FakeNetworkService.new()
+	network.pairing = true
+	session.add_child(network)
+	session.scene_flow = _pair.host_flow
+	session.bind_network(network)
+	return session
 
 
 func test_roles_are_assigned_when_the_session_starts() -> void:
