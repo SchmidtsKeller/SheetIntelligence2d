@@ -12,15 +12,6 @@ extends Node
 ## the pool of their role. The Sheepherder's choice must never reach the
 ## Monster player's screen (GDD §4).
 
-## How a modifier changes a stat. Applied in this order: the last
-## [constant OVERRIDE] replaces the base value, then all [constant ADD] values
-## are added, then all [constant MULTIPLY] factors are applied.
-enum ModifierOp {
-	ADD,
-	MULTIPLY,
-	OVERRIDE,
-}
-
 ## The effective value of [param stat] may have changed.
 @warning_ignore("unused_signal")
 signal stat_changed(stat: StringName)
@@ -33,6 +24,15 @@ signal perk_selected(role: GameEnums.Role, perk_id: StringName)
 ## The active perk of [param role] was triggered, ran out or became ready.
 @warning_ignore("unused_signal")
 signal active_perk_state_changed(role: GameEnums.Role)
+
+## How a modifier changes a stat. Applied in this order: the last
+## [constant OVERRIDE] replaces the base value, then all [constant ADD] values
+## are added, then all [constant MULTIPLY] factors are applied.
+enum ModifierOp {
+	ADD,
+	MULTIPLY,
+	OVERRIDE,
+}
 
 # --- Stat lookup -------------------------------------------------------------
 

@@ -10,29 +10,6 @@ extends Node
 ## This service reports what happened. Who wins because of it is decided by
 ## the round rules, which listen to these signals.
 
-## What a shot did.
-enum ShotResult {
-	## The request was refused: reloading, empty, or the round is not running.
-	REJECTED,
-	## The bullet left the map without hitting anything.
-	MISSED,
-	## The bullet was stopped by a solid obstacle.
-	HIT_OBSTACLE,
-	## The bullet killed an NPC sheep.
-	HIT_SHEEP,
-	## The bullet hit the Monster in its sheep form.
-	HIT_MONSTER,
-	## The bullet hit the Monster in its spider form and had no effect.
-	HIT_SPIDER,
-}
-
-## What the Monster's melee attack is aimed at.
-enum EatTarget {
-	NONE,
-	SHEEP,
-	SHEEPHERDER,
-}
-
 # --- Firearm -----------------------------------------------------------------
 
 ## A shot was fired and resolved. The bullet travelled from [param origin] to
@@ -99,6 +76,29 @@ signal sheepherder_kill_unlocked
 ## The Monster changed form (10 sheep eaten: spider, GDD §2.1).
 @warning_ignore("unused_signal")
 signal monster_form_changed(form: GameEnums.MonsterForm)
+
+## What a shot did.
+enum ShotResult {
+	## The request was refused: reloading, empty, or the round is not running.
+	REJECTED,
+	## The bullet left the map without hitting anything.
+	MISSED,
+	## The bullet was stopped by a solid obstacle.
+	HIT_OBSTACLE,
+	## The bullet killed an NPC sheep.
+	HIT_SHEEP,
+	## The bullet hit the Monster in its sheep form.
+	HIT_MONSTER,
+	## The bullet hit the Monster in its spider form and had no effect.
+	HIT_SPIDER,
+}
+
+## What the Monster's melee attack is aimed at.
+enum EatTarget {
+	NONE,
+	SHEEP,
+	SHEEPHERDER,
+}
 
 # --- Round lifecycle ---------------------------------------------------------
 

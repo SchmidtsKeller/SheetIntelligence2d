@@ -1,6 +1,8 @@
 extends TestCase
 ## The scene flow walks boot → lobby → round → results and refuses shortcuts.
 
+# An alias for an enum type, so it is named like a type.
+# gdlint: ignore=constant-name
 const Screen = SceneFlowController.Screen
 
 var _flow: SceneFlowController

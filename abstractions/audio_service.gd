@@ -8,16 +8,16 @@ extends Node
 ## audible whether or not its source is visible: hearing is how players track
 ## what the fog of war hides.
 
+## A positional event was played. For debugging and tests; gameplay must not
+## depend on it.
+@warning_ignore("unused_signal")
+signal event_played(event_id: StringName, world_position: Vector2)
+
 ## Volume buses.
 const BUS_MASTER: StringName = &"Master"
 const BUS_EFFECTS: StringName = &"Effects"
 const BUS_AMBIENCE: StringName = &"Ambience"
 const BUS_UI: StringName = &"UI"
-
-## A positional event was played. For debugging and tests; gameplay must not
-## depend on it.
-@warning_ignore("unused_signal")
-signal event_played(event_id: StringName, world_position: Vector2)
 
 ## Plays a one-shot event at [param world_position]. It is inaudible beyond
 ## the hearing range of its range class (GDD §5).

@@ -10,13 +10,6 @@ extends Node
 ## reported. Gameplay code can also lock single actions (e.g. no movement
 ## while eating); the service itself knows no gameplay rule.
 
-## How the player currently controls the game. Drives which controls and
-## hints the UI shows.
-enum Scheme {
-	KEYBOARD_MOUSE,
-	TOUCH,
-}
-
 ## An ability action of the current role went down. Not emitted while the
 ## action is locked or gameplay input is disabled.
 @warning_ignore("unused_signal")
@@ -39,6 +32,13 @@ signal gameplay_enabled_changed(enabled: bool)
 ## The control scheme changed (device switch or debug override).
 @warning_ignore("unused_signal")
 signal scheme_changed(scheme: Scheme)
+
+## How the player currently controls the game. Drives which controls and
+## hints the UI shows.
+enum Scheme {
+	KEYBOARD_MOUSE,
+	TOUCH,
+}
 
 ## Movement input with a length of 0..1: analog on touch and gamepad, 8-way on
 ## the keyboard. [constant Vector2.ZERO] while movement is locked or gameplay

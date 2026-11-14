@@ -10,6 +10,26 @@ extends Node
 ## A session always has exactly one host and at most one guest. The host is
 ## authoritative for the flock, combat and the round state.
 
+## The connection state changed. Emitted before the more specific signals.
+@warning_ignore("unused_signal")
+signal connection_state_changed(state: ConnectionState)
+
+## The session is established and [method get_multiplayer_peer] is usable.
+@warning_ignore("unused_signal")
+signal session_started
+
+## The session ended, or an attempt to start one failed.
+## [param message] is a readable explanation for the player, e.g. a hint about
+## Wi-Fi networks that block traffic between devices.
+@warning_ignore("unused_signal")
+signal session_ended(reason: DisconnectReason, message: String)
+
+## This device produced a pairing code the other device has to read (the
+## host's offer or the guest's answer). Only for transports where
+## [method requires_pairing_codes] is [code]true[/code].
+@warning_ignore("unused_signal")
+signal pairing_code_ready(code: String)
+
 enum ConnectionState {
 	## No session. The initial state and the state after any failure.
 	DISCONNECTED,
@@ -33,26 +53,6 @@ enum DisconnectReason {
 	## A pairing code could not be read or does not belong to this session.
 	INVALID_PAIRING_CODE,
 }
-
-## The connection state changed. Emitted before the more specific signals.
-@warning_ignore("unused_signal")
-signal connection_state_changed(state: ConnectionState)
-
-## The session is established and [method get_multiplayer_peer] is usable.
-@warning_ignore("unused_signal")
-signal session_started
-
-## The session ended, or an attempt to start one failed.
-## [param message] is a readable explanation for the player, e.g. a hint about
-## Wi-Fi networks that block traffic between devices.
-@warning_ignore("unused_signal")
-signal session_ended(reason: DisconnectReason, message: String)
-
-## This device produced a pairing code the other device has to read (the
-## host's offer or the guest's answer). Only for transports where
-## [method requires_pairing_codes] is [code]true[/code].
-@warning_ignore("unused_signal")
-signal pairing_code_ready(code: String)
 
 ## Starts a session as the host. [param options] are transport-specific (e.g.
 ## a port for the localhost transport). Returns [constant OK] when the attempt

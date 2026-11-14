@@ -12,6 +12,12 @@ extends Node
 ## screen is a scene; later tasks replace the placeholder scenes by setting
 ## [member screen_scenes].
 
+## A transition was accepted and the scene change is about to happen.
+signal screen_changing(from: Screen, to: Screen)
+
+## The current screen changed.
+signal screen_changed(screen: Screen)
+
 enum Screen {
 	## A scene outside the flow, e.g. a sandbox started on its own. Any screen
 	## can be entered from here.
@@ -29,12 +35,6 @@ const TRANSITIONS: Dictionary[Screen, Array] = {
 	Screen.ROUND: [Screen.RESULTS, Screen.LOBBY],
 	Screen.RESULTS: [Screen.ROUND, Screen.LOBBY],
 }
-
-## A transition was accepted and the scene change is about to happen.
-signal screen_changing(from: Screen, to: Screen)
-
-## The current screen changed.
-signal screen_changed(screen: Screen)
 
 ## The scene shown for each screen.
 var screen_scenes: Dictionary[Screen, String] = {
