@@ -35,6 +35,11 @@ var _panel: PairingPanel
 
 
 func before_each() -> void:
+	# A session left open by an earlier test is closed first: replacing the
+	# transport ends the session but would leave the old transport connected,
+	# and later tests could not host again.
+	if Services.session.get_connection_state() != NetworkService.ConnectionState.DISCONNECTED:
+		Services.session.leave()
 	_network = FakeNetworkService.new()
 	_network.pairing = true
 	_original_network = Services.replace(NetworkService, _network)
