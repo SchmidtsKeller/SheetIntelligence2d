@@ -4,12 +4,12 @@ extends TestCase
 # --- All stubs -----------------------------------------------------------------
 
 
-func test_bootstrap_registers_a_stub_for_every_contract() -> void:
+func test_bootstrap_registers_an_implementation_for_every_contract() -> void:
 	var registry: ServiceRegistry = add_child_autofree(ServiceRegistry.new())
 
 	ServiceBootstrap.register_defaults(registry, GameConfig.new())
 
-	assert_is(registry.resolve(InputService), StubInputService)
+	assert_is(registry.resolve(InputService), DeviceInputService, "input is real by now")
 	assert_is(registry.resolve(NetworkService), StubNetworkService)
 	assert_is(registry.resolve(SwarmService), StubSwarmService)
 	assert_is(registry.resolve(CombatService), StubCombatService)

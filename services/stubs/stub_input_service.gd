@@ -4,38 +4,34 @@ extends InputService
 ##
 ## Tests and sandbox scenes drive it by hand through the [code]simulate_*[/code]
 ## methods and the public fields. It honours role, gameplay switch and locks
-## exactly as the contract describes, so code written against it behaves the
-## same with the real implementation.
+## exactly as the real implementation does, because both use [InputGate].
 
 ## The movement input to report.
 var move_vector: Vector2 = Vector2.ZERO
 ## The aim direction to report.
 var aim_direction: Vector2 = Vector2.RIGHT
 
-var _role: GameEnums.Role = GameEnums.Role.NONE
-var _gameplay_enabled: bool = true
+var _gate: InputGate = InputGate.new()
 var _scheme: Scheme = Scheme.KEYBOARD_MOUSE
-var _held: Dictionary[StringName, bool] = {}
-var _locks: Dictionary[StringName, Array] = {}
+
+
+func _init() -> void:
+	_gate.action_pressed.connect(action_pressed.emit)
+	_gate.action_released.connect(action_released.emit)
 
 
 ## Presses [param action] as if the player did. Returns whether it was reported.
 func simulate_press(action: StringName) -> bool:
-	if not _is_reportable(action) or _held.has(action):
-		return false
-	_held[action] = true
-	action_pressed.emit(action)
-	return true
+	return _gate.press(action)
 
 
 ## Releases [param action] as if the player did.
 func simulate_release(action: StringName) -> void:
-	if _held.erase(action):
-		action_released.emit(action)
+	_gate.release(action)
 
 
 func get_move_vector() -> Vector2:
-	if not _gameplay_enabled or is_locked(InputActions.MOVE):
+	if not _gate.allows_movement():
 		return Vector2.ZERO
 	return move_vector.limit_length(1.0)
 
@@ -47,56 +43,41 @@ func get_aim_direction(_aim_origin: Vector2) -> Vector2:
 
 
 func is_action_held(action: StringName) -> bool:
-	return _held.has(action)
+	return _gate.is_held(action)
 
 
 func set_role(role: GameEnums.Role) -> void:
-	if role == _role:
-		return
-	_role = role
-	_release_unreportable()
-	role_changed.emit(role)
+	if _gate.set_role(role):
+		role_changed.emit(role)
 
 
 func get_role() -> GameEnums.Role:
-	return _role
+	return _gate.get_role()
 
 
 func set_gameplay_enabled(enabled: bool) -> void:
-	if enabled == _gameplay_enabled:
-		return
-	_gameplay_enabled = enabled
-	_release_unreportable()
-	gameplay_enabled_changed.emit(enabled)
+	if _gate.set_gameplay_enabled(enabled):
+		gameplay_enabled_changed.emit(enabled)
 
 
 func is_gameplay_enabled() -> bool:
-	return _gameplay_enabled
+	return _gate.is_gameplay_enabled()
 
 
 func add_lock(action: StringName, source: StringName) -> void:
-	var sources: Array = _locks.get_or_add(action, [])
-	if not sources.has(source):
-		sources.append(source)
-	_release_unreportable()
+	_gate.add_lock(action, source)
 
 
 func remove_lock(action: StringName, source: StringName) -> void:
-	if not _locks.has(action):
-		return
-	var sources: Array = _locks[action]
-	sources.erase(source)
-	if sources.is_empty():
-		_locks.erase(action)
+	_gate.remove_lock(action, source)
 
 
 func clear_locks(source: StringName) -> void:
-	for action: StringName in _locks.keys():
-		remove_lock(action, source)
+	_gate.clear_locks(source)
 
 
 func is_locked(action: StringName) -> bool:
-	return _locks.has(action)
+	return _gate.is_locked(action)
 
 
 func get_scheme() -> Scheme:
@@ -116,17 +97,3 @@ func _set_scheme(scheme: Scheme) -> void:
 		return
 	_scheme = scheme
 	scheme_changed.emit(scheme)
-
-
-func _is_reportable(action: StringName) -> bool:
-	return (
-		_gameplay_enabled
-		and not is_locked(action)
-		and InputActions.abilities_for(_role).has(action)
-	)
-
-
-func _release_unreportable() -> void:
-	for action: StringName in _held.keys():
-		if not _is_reportable(action):
-			simulate_release(action)
