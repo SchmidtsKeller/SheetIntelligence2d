@@ -14,6 +14,8 @@ extends RefCounted
 ## [br][code]--net-latency=<ms>[/code], [code]--net-jitter=<ms>[/code] and
 ## [code]--net-loss=<percent>[/code] simulate a bad connection for incoming
 ## messages.
+## [br][code]--perk=<id>[,<id>][/code] selects these perks for the roles this
+## instance plays, until the lobby has a perk selection.
 ##
 ## The Web build ignores these: it only connects through pairing codes.
 
@@ -37,6 +39,8 @@ var sim_latency: float = 0.0
 var sim_jitter: float = 0.0
 ## Simulated share of lost snapshots, 0..1.
 var sim_loss: float = 0.0
+## Perks to select by themselves (see [PerkIds]).
+var perks: Array[StringName] = []
 
 
 ## The options this instance of the game was started with.
@@ -69,6 +73,9 @@ static func parse(arguments: PackedStringArray) -> LaunchOptions:
 				options.sim_jitter = maxf(value.to_float(), 0.0) / 1000.0
 			"--net-loss":
 				options.sim_loss = clampf(value.to_float() / 100.0, 0.0, 1.0)
+			"--perk":
+				for perk_id: String in value.split(",", false):
+					options.perks.append(StringName(perk_id.strip_edges()))
 	return options
 
 
