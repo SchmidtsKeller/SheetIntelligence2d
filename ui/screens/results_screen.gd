@@ -56,14 +56,13 @@ func _refresh() -> void:
 	var you: MatchScore.Player = _flow.get_local_player()
 	_round_label.text = "Round %d of %d" % [score.get_rounds_played(), score.get_rounds_total()]
 	_headline_label.text = "%s\n%s" % [result.get_headline(), result.get_reason_text()]
-	_details_label.text = "\n".join(
-		[
-			describe_sheepherder(result, _who_played(score, GameEnums.Role.SHEEPHERDER, you)),
-			describe_monster(result, _who_played(score, GameEnums.Role.MONSTER, you)),
-			"",
-			describe_standing(score, you),
-		]
-	)
+	var details: PackedStringArray = [
+		describe_sheepherder(result, _who_played(score, GameEnums.Role.SHEEPHERDER, you)),
+		describe_monster(result, _who_played(score, GameEnums.Role.MONSTER, you)),
+		"",
+		describe_standing(score, you),
+	]
+	_details_label.text = "\n".join(details)
 	_match_label.text = describe_match(score, you)
 
 

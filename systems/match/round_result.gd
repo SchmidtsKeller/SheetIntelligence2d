@@ -92,8 +92,7 @@ func get_reason_text() -> String:
 			return "The Sheepherder was killed."
 		GameEnums.RoundEndReason.TIMEOUT:
 			return (
-				"Time ran out: %d to %d points."
-				% [get_sheepherder_points(), get_monster_points()]
+				"Time ran out: %d to %d points." % [get_sheepherder_points(), get_monster_points()]
 			)
 		GameEnums.RoundEndReason.ABORTED:
 			return "The round was stopped."

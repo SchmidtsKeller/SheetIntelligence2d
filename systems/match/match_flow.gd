@@ -400,9 +400,7 @@ func _read_settings() -> RoundSettings:
 	settings.herder_points_per_surviving_sheep = perks.get_stat_int(
 		StatIds.HERDER_POINTS_PER_SURVIVING_SHEEP
 	)
-	settings.herder_points_per_shot_sheep = perks.get_stat_int(
-		StatIds.HERDER_POINTS_PER_SHOT_SHEEP
-	)
+	settings.herder_points_per_shot_sheep = perks.get_stat_int(StatIds.HERDER_POINTS_PER_SHOT_SHEEP)
 	settings.monster_points_per_eaten_sheep = perks.get_stat_int(
 		StatIds.MONSTER_POINTS_PER_EATEN_SHEEP
 	)

@@ -485,18 +485,10 @@ func _round_problems(index: int) -> Array[String]:
 			)
 		)
 	if result.get_sheepherder_points() != expected[3] or result.get_monster_points() != expected[4]:
-		problems.append(
-			(
-				"round %d ended %d to %d, not %d to %d"
-				% [
-					number,
-					result.get_sheepherder_points(),
-					result.get_monster_points(),
-					expected[3],
-					expected[4],
-				]
-			)
-		)
+		var herder_points: int = result.get_sheepherder_points()
+		var monster_points: int = result.get_monster_points()
+		var points: Array = [number, herder_points, monster_points, expected[3], expected[4]]
+		problems.append("round %d ended %d to %d, not %d to %d" % points)
 	if result.ammo_depleted != (number == 5):
 		problems.append("round %d has the wrong word on the empty magazine" % number)
 	return problems
@@ -508,10 +500,8 @@ func _host_problems() -> Array[String]:
 	if _timer_reports < expected_reports:
 		problems.append("the guest's timer was compared only %d times" % _timer_reports)
 	if _timer_worst_difference > TIMER_TOLERANCE:
-		problems.append(
-			"the timers were up to %.3f s apart, more than %.1f s"
-			% [_timer_worst_difference, TIMER_TOLERANCE]
-		)
+		var apart: Array = [_timer_worst_difference, TIMER_TOLERANCE]
+		problems.append("the timers were up to %.3f s apart, more than %.1f s" % apart)
 	var tally: MatchScore = MatchScore.from_data(_guest_score)
 	if tally.get_rounds_played() != EXPECTED_ROUNDS.size():
 		problems.append("the guest counted %d rounds" % tally.get_rounds_played())
