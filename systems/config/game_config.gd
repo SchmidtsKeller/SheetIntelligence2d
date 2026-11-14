@@ -112,6 +112,17 @@ extends Resource
 ## Hearing range of loud sounds (bleating, Monster eating, dog barking).
 @export_range(0.0, 4000.0, 1.0, "suffix:px") var hearing_range_loud: float = 800.0
 
+@export_group("Network")
+## State snapshots each device sends per second.
+@export_range(1, 60) var net_tick_rate: int = 20
+## How far in the past replicated entities are shown, so that late packets
+## still arrive in time for smooth motion.
+@export_range(0.0, 1.0, 0.01, "suffix:s") var net_interpolation_delay: float = 0.1
+## How long an entity keeps its last course when no packet arrives.
+@export_range(0.0, 1.0, 0.01, "suffix:s") var net_max_extrapolation: float = 0.1
+## A joining device gives up after this time.
+@export_range(1.0, 60.0, 0.5, "suffix:s") var net_connect_timeout: float = 10.0
+
 @export_group("View")
 ## The widest stretch of world a player may ever see. Not from the GDD: this
 ## is the view-fairness rule, see [ViewRules] and the README.

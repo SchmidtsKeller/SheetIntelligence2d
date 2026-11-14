@@ -41,6 +41,11 @@ var audio: AudioService:
 	get:
 		return resolve(AudioService) as AudioService
 
+## The session: who is host, who plays which role, events and replication.
+var session: GameSession:
+	get:
+		return resolve(GameSession) as GameSession
+
 
 func _enter_tree() -> void:
 	if config != null:
@@ -50,3 +55,10 @@ func _enter_tree() -> void:
 		push_error("Services: could not load the game configuration from %s." % CONFIG_PATH)
 		config = GameConfig.new()
 	ServiceBootstrap.register_defaults(self, config)
+	service_replaced.connect(_on_service_replaced)
+
+
+## The session always talks to the transport that is currently registered.
+func _on_service_replaced(contract: Script, implementation: Node, _previous: Node) -> void:
+	if contract == NetworkService and has_service(GameSession):
+		session.bind_network(implementation as NetworkService)

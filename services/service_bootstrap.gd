@@ -25,11 +25,27 @@ static func core_contracts() -> Array[Script]:
 ## read their numbers from.
 static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> void:
 	registry.register(InputService, StubInputService.new())
-	registry.register(NetworkService, StubNetworkService.new())
+	registry.register(NetworkService, create_network_service(config))
 	registry.register(SwarmService, StubSwarmService.new())
 	registry.register(CombatService, StubCombatService.new(config))
 	registry.register(PerkService, StubPerkService.new(config))
 	registry.register(AudioService, StubAudioService.new(config))
+
+	var session: GameSession = GameSession.new()
+	session.configure(config)
+	registry.register(GameSession, session)
+	session.bind_network(registry.resolve(NetworkService) as NetworkService)
+
+
+## The transport for this run: the desktop dev transport when the command
+## line asks to host or join a session, otherwise the offline loopback.
+static func create_network_service(config: GameConfig) -> NetworkService:
+	var options: LaunchOptions = LaunchOptions.from_command_line()
+	if options.wants_session() and not OS.has_feature("web") and EnetNetworkService.is_available():
+		var enet: EnetNetworkService = EnetNetworkService.new()
+		enet.connect_timeout = config.net_connect_timeout
+		return enet
+	return StubNetworkService.new()
 
 
 ## The core contracts that have no implementation in [param registry].

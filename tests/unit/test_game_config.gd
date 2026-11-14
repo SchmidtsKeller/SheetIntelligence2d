@@ -56,6 +56,10 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"sheep_acceleration": 900.0,
 	&"sheep_turn_rate_deg": 540.0,
+	&"net_tick_rate": 20,
+	&"net_interpolation_delay": 0.1,
+	&"net_max_extrapolation": 0.1,
+	&"net_connect_timeout": 10.0,
 	&"view_max_world_width": 1600.0,
 	&"view_max_world_height": 900.0,
 }
@@ -90,9 +94,10 @@ func test_every_config_value_is_covered_by_this_test() -> void:
 func test_integer_parameters_are_stored_as_integers() -> void:
 	var config: GameConfig = GameConfig.new()
 
-	for number_name: StringName in GDD_DEFAULTS:
-		var expected_type: int = typeof(GDD_DEFAULTS[number_name])
-		assert_eq(typeof(config.get(number_name)), expected_type, "type of '%s'" % number_name)
+	for defaults: Dictionary in [GDD_DEFAULTS, PROJECT_DEFAULTS]:
+		for number_name: StringName in defaults:
+			var expected_type: int = typeof(defaults[number_name])
+			assert_eq(typeof(config.get(number_name)), expected_type, "type of '%s'" % number_name)
 
 
 func test_stat_ids_and_config_values_are_the_same_set() -> void:
