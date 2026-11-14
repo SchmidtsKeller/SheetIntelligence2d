@@ -56,14 +56,17 @@ func test_every_definition_is_complete() -> void:
 		for modifier: PerkModifier in perk.modifiers:
 			assert_has(stats, modifier.stat, "'%s' changes a known stat" % perk.id)
 			assert_has(stats, modifier.value_stat, "'%s' takes a known value" % perk.id)
-		if perk.is_triggered():
+		if perk.effect != null:
 			assert_is(perk.effect.new(), PerkEffect, "'%s' has a perk effect" % perk.id)
 
 
-func test_only_invisibility_is_triggered_for_now() -> void:
-	# The bat gets its effect with the companions (#19).
+func test_invisibility_and_the_bat_are_triggered_and_the_dog_runs_all_round() -> void:
+	var triggered: Array[StringName] = [PerkIds.INVISIBILITY, PerkIds.ALLIED_BAT]
 	for perk: PerkDefinition in _catalog.perks:
-		assert_eq(perk.is_triggered(), perk.id == PerkIds.INVISIBILITY, String(perk.id))
+		assert_eq(perk.is_triggered(), triggered.has(perk.id), String(perk.id))
+	var dog: PerkDefinition = _catalog.get_perk(PerkIds.SHEPHERD_DOG)
+	assert_not_null(dog.effect, "the dog has an effect for the whole round")
+	assert_false(dog.triggered)
 	assert_eq(_catalog.get_perk(PerkIds.INVISIBILITY).kind, PerkDefinition.Kind.ACTIVE)
 	assert_eq(_catalog.get_perk(PerkIds.SHEPHERD_DOG).kind, PerkDefinition.Kind.COMPANION)
 	assert_eq(_catalog.get_perk(PerkIds.ALLIED_BAT).kind, PerkDefinition.Kind.COMPANION)

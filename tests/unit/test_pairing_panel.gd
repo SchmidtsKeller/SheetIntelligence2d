@@ -8,9 +8,20 @@ class FakeBrowser:
 	extends PairingBrowser
 
 	var calls: PackedStringArray = []
+	## How the player answers the camera question: "granted", "denied", or ""
+	## for not yet.
+	var camera: String = "granted"
 
 	func is_available() -> bool:
 		return true
+
+	func request_camera() -> void:
+		calls.append("camera")
+		if not camera.is_empty():
+			camera_answered.emit(camera == "granted")
+
+	func release_camera() -> void:
+		calls.append("release camera")
 
 	func qr_rows(_text: String) -> PackedStringArray:
 		return ["101", "010", "101"]
@@ -82,7 +93,7 @@ func test_the_host_shows_its_code_and_connects_with_the_answer() -> void:
 	assert_eq(qr.texture.get_size(), Vector2(3 + 2 * PairingPanel.QR_QUIET_ZONE, 11))
 	_press("Copy code")
 	_press("Scan answer")
-	assert_eq(_browser.calls, PackedStringArray(["copy OFFER", "scan"]))
+	assert_eq(_browser.calls, PackedStringArray(["camera", "release camera", "copy OFFER", "scan"]))
 
 	_browser.code_entered.emit("ANSWER")
 
@@ -110,7 +121,7 @@ func test_the_guest_reads_the_offer_then_shows_its_answer() -> void:
 	assert_eq(_panel.get_step(), PairingPanel.Step.JOIN_READ)
 	assert_eq(_button_texts(), ["Scan code", "Enter code", "Cancel"])
 	_press("Enter code")
-	assert_eq(_browser.calls, PackedStringArray(["enter"]))
+	assert_eq(_browser.calls, PackedStringArray(["camera", "enter"]))
 
 	_browser.code_entered.emit("OFFER")
 	assert_eq(_panel.get_step(), PairingPanel.Step.JOIN_CODE)
@@ -119,6 +130,42 @@ func test_the_guest_reads_the_offer_then_shows_its_answer() -> void:
 
 	assert_eq(_button_texts(), ["Copy answer", "Cancel"])
 	assert_true(_qr().visible)
+	assert_eq(_browser.calls[-1], "release camera", "once the answer is made")
+
+
+func test_the_camera_is_asked_for_before_the_session_starts() -> void:
+	_browser.camera = ""
+	_press("Host a game")
+	assert_eq(_panel.get_step(), PairingPanel.Step.CAMERA)
+	assert_eq(_network.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
+	assert_eq(_button_texts(), ["Cancel"])
+
+	_browser.camera_answered.emit(true)
+
+	assert_eq(_panel.get_step(), PairingPanel.Step.HOST_CODE)
+	assert_eq(_network.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+
+
+func test_cancel_while_asking_for_the_camera_turns_it_off() -> void:
+	_browser.camera = ""
+	_press("Join a game")
+
+	_press("Cancel")
+	_browser.camera_answered.emit(true)
+
+	assert_eq(_panel.get_step(), PairingPanel.Step.CHOOSE, "a late answer changes nothing")
+	assert_eq(_network.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
+	assert_has(_browser.calls, "close")
+
+
+func test_without_the_camera_a_failure_suggests_it() -> void:
+	_browser.camera = "denied"
+	_press("Join a game")
+	assert_eq(_panel.get_step(), PairingPanel.Step.JOIN_READ, "the code can still be pasted")
+
+	_network.simulate_ended(NetworkService.DisconnectReason.CONNECTION_FAILED, "No way through.")
+
+	assert_true(_labels().has("No way through.\n" + PairingPanel.CAMERA_HINT))
 
 
 func test_a_failed_connection_says_why_and_starts_over() -> void:

@@ -10,9 +10,14 @@ extends Control
 ## in either role instead (see [method GameSession.play_offline]).
 ##
 ## Shown only where the transport needs pairing codes: the Web build.
+##
+## The camera is on from Host or Join until this device's code is made: then
+## browsers put the device's real addresses into the code instead of hidden
+## names that the other device often cannot resolve (docs/pairing.md).
 
 enum Step {
 	CHOOSE,
+	CAMERA,
 	HOST_CODE,
 	JOIN_READ,
 	JOIN_CODE,
@@ -33,6 +38,7 @@ const QR_QUIET_ZONE: int = 4
 ## texts, and along the short side across them.
 const QR_LONG_SHARE: float = 0.45
 const QR_SHORT_SHARE: float = 0.8
+const CAMERA_HINT: String = "Allowing the camera on both devices can help them find each other."
 
 ## The browser side. Tests set a fake before the panel enters the tree.
 var browser: PairingBrowser
@@ -40,6 +46,9 @@ var browser: PairingBrowser
 var _step: Step = Step.CHOOSE
 var _code: String = ""
 var _failure: String = ""
+## Whether the player chose to host (or to join) and is asked for the camera.
+var _hosting_next: bool = false
+var _camera_allowed: bool = false
 var _round_trip_ms: int = -1
 var _ping_left: float = 0.0
 var _background: ColorRect
@@ -71,6 +80,7 @@ func _ready() -> void:
 	browser.code_entered.connect(_on_code_entered)
 	browser.failed.connect(_show_problem)
 	browser.copy_finished.connect(_on_copy_finished)
+	browser.camera_answered.connect(_on_camera_answered)
 	var messenger: NetMessenger = session.messenger
 	messenger.register_event(EVENT_PING, NetMessenger.SenderRule.ANYONE)
 	messenger.register_event(EVENT_PONG, NetMessenger.SenderRule.ANYONE)
@@ -134,15 +144,23 @@ func _go_to(step: Step) -> void:
 			_show(
 				"Play together",
 				(
-					"Both devices must be in the same Wi-Fi. One hosts, the other joins.
-"
+					"Both devices must be in the same Wi-Fi. One hosts, the other joins.\n"
 					+ "No second device? Play against the computer."
 				)
 			)
-			_add_button("Host a game", _host)
-			_add_button("Join a game", _join)
+			_add_button("Host a game", _ask_for_camera.bind(true))
+			_add_button("Join a game", _ask_for_camera.bind(false))
 			_add_button(OFFLINE_HERDER, play_offline.bind(GameEnums.Role.SHEEPHERDER))
 			_add_button(OFFLINE_MONSTER, play_offline.bind(GameEnums.Role.MONSTER))
+		Step.CAMERA:
+			_show(
+				"Camera",
+				(
+					"Allow the camera, so the two devices can find each other directly."
+					+ " It also reads the other device's code."
+				)
+			)
+			_add_button("Cancel", _cancel)
 		Step.HOST_CODE:
 			_show_code(
 				"Host",
@@ -185,6 +203,22 @@ func _go_to(step: Step) -> void:
 		_first_button.grab_focus.call_deferred()
 
 
+func _ask_for_camera(hosting: bool) -> void:
+	_hosting_next = hosting
+	_go_to(Step.CAMERA)
+	browser.request_camera()
+
+
+func _on_camera_answered(granted: bool) -> void:
+	if _step != Step.CAMERA:
+		return
+	_camera_allowed = granted
+	if _hosting_next:
+		_host()
+	else:
+		_join()
+
+
 func _host() -> void:
 	var error: Error = Services.session.host()
 	if error != OK:
@@ -222,7 +256,8 @@ func _cancel() -> void:
 
 
 func _fail(message: String) -> void:
-	_failure = message
+	browser.release_camera()
+	_failure = message if _camera_allowed else message + "\n" + CAMERA_HINT
 	_go_to(Step.FAILED)
 
 
@@ -230,6 +265,7 @@ func _fail(message: String) -> void:
 
 
 func _on_code_ready(code: String) -> void:
+	browser.release_camera()
 	_code = code
 	_go_to(Step.HOST_CODE if _step == Step.HOST_CODE else Step.JOIN_CODE)
 

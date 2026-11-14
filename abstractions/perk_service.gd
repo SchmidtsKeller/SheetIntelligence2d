@@ -126,3 +126,6 @@ func use_perk(role: GameEnums.Role) -> bool:
 
 ## Forgets [param character] again, e.g. when it leaves the round.
 @abstract func unregister_character(character: Node2D) -> void
+
+## The character registered for [param role], or [code]null[/code].
+@abstract func get_character(role: GameEnums.Role) -> Node2D

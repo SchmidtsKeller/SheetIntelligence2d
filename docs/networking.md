@@ -131,6 +131,13 @@ The Monster's grazing travels in its snapshots like a sheep's, and its eating an
 
 The meter of a running perk is kept on both devices for the HUD, but only the host ends it.
 
+**Companions** are entities owned by the host: it simulates them, and the guest shows them through their `NetTransform2D`. The kinds are registered when the selection is locked, on both devices, so they are known before the host spawns one.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `companion.dog_bark` | Host | `[entity_id]` |
+| `companion.bat_arrived` | Host | `[entity_id]`; both devices shrink the cone for the disruption time |
+
 ## Session
 
 `Services.session` answers what every system needs to know:
@@ -219,6 +226,8 @@ godot --path . -- --join
 
 The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (see below).
 
+ENet has a packet throttle: while round trips take longer than before, it drops unreliable packets on the sending device, to relieve a congested line. The dev transport switches it off (`EnetNetworkService._switch_off_packet_throttle`). The connection is polled once per frame, so a round trip measures 1 or 2 frames depending on how the frames of the two instances fall, and ENet took that for congestion: in about one session in five the throttle closed within seconds, most snapshots were never sent, and the other device showed everything standing still and jumping. Snapshots are still unreliable and can get lost on a real network; `--net-loss` tests that.
+
 | Flag | Effect |
 |:--|:--|
 | `--net-latency=<ms>` | Delay every incoming message |
@@ -243,6 +252,8 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 
 `tools/test_two_instances.sh match` plays a whole Best of 5 on the real round and results screens, with scripted players and short rounds. Every round ends another way: the Monster kills the Sheepherder, the Sheepherder shoots the Monster, the time runs out with nothing done, it runs out at 5 to 5 points, and the Monster kills after the Sheepherder has wasted every bullet. Both instances check the roles of every round, each round's record and the match result against the script, that no button did anything in a countdown, and that both end in the lobby without a match. The host also compares the guest's timer with its own (within 0.1 s) and the guest's record of the match with its own. It accepts the network flags as well.
 
+`tools/test_two_instances.sh companions` checks the companion perks the same way, with `--perk=shepherd_dog,allied_bat`. The host's Sheepherder has the dog, and the guest's Monster eats a sheep near it and then sends the bat. Both instances check four things: the dog stayed near the Sheepherder, they heard its bark, the cone was shrunk for the disruption time, and the cooldown started when the bat left.
+
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
 
 ## The Web build: WebRTC with pairing codes
@@ -250,10 +261,10 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 [WebRtcNetworkService](../services/network/web_rtc_network_service.gd) connects two browsers in the same network without any server (GDD §9.4). WebRTC is built into Web exports only; desktop builds would need a plugin, so they use ENet.
 
 1. The host creates a `WebRTCMultiplayerPeer` server and an offer. Once the browser has found all its addresses (ICE candidates, `GATHERING_STATE_COMPLETE`, or after 3 s), the transport emits `pairing_code_ready` with a [PairingCode](../services/network/pairing_code.gd).
-2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way.
+2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way. The answer says that the guest waits for the host to start the encryption (`a=setup:passive`), so the handshake starts only once the host has the answer ([pairing.md](pairing.md#who-starts-the-encryption)).
 3. The host hands over the answer, and the devices connect. `session_started` follows when the data channels are open.
 
-A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 15 s after the answer was read, the message says so and mentions networks that block traffic between devices.
+A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 30 s after the answer was read, the message says so and mentions networks that block traffic between devices. Browsers hide the device's addresses behind `.local` names unless the page uses or may use the camera, so the pairing screens turn it on until the code is made ([pairing.md](pairing.md#hidden-addresses)).
 
 The transfer channels are those of the dev transport: `WebRTCMultiplayerPeer` is created with a reliable channel 1 for events and an unreliable ordered channel 2 for snapshots.
 

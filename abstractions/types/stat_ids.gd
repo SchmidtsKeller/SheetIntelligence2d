@@ -89,6 +89,13 @@ const BAT_DISRUPTION_DURATION: StringName = &"bat_disruption_duration"
 const BAT_CONE_SHRINK: StringName = &"bat_cone_shrink"
 const BAT_COOLDOWN: StringName = &"bat_cooldown"
 
+# --- Companions --------------------------------------------------------------
+const DOG_MOVE_SPEED: StringName = &"dog_move_speed"
+const DOG_FOLLOW_DISTANCE_MIN: StringName = &"dog_follow_distance_min"
+const DOG_FOLLOW_DISTANCE_MAX: StringName = &"dog_follow_distance_max"
+const BAT_FLIGHT_SPEED: StringName = &"bat_flight_speed"
+const BAT_ORBIT_RADIUS: StringName = &"bat_orbit_radius"
+
 # --- Audio -------------------------------------------------------------------
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"

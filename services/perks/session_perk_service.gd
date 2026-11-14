@@ -44,7 +44,7 @@ var _session: GameSession
 var _modifiers: Dictionary[int, Modifier] = {}
 var _next_handle: int = 1
 var _characters: Dictionary[GameEnums.Role, Node2D] = {}
-## The effects of the selected active perks while the selection is locked.
+## The effects of the selected perks while the selection is locked.
 var _effects: Dictionary[GameEnums.Role, PerkEffect] = {}
 
 
@@ -207,7 +207,7 @@ func end_perk(role: GameEnums.Role) -> bool:
 
 func is_perk_active(role: GameEnums.Role) -> bool:
 	var effect: PerkEffect = _effects.get(role)
-	return effect != null and effect.running
+	return effect != null and effect.triggered and effect.running
 
 
 func get_perk_cooldown_remaining(role: GameEnums.Role) -> float:
@@ -216,23 +216,30 @@ func get_perk_cooldown_remaining(role: GameEnums.Role) -> float:
 
 
 func get_perk_charge(role: GameEnums.Role) -> float:
-	var effect: PerkEffect = _effects.get(role)
-	return effect.charge if effect != null and effect.running else 0.0
+	if not is_perk_active(role):
+		return 0.0
+	return (_effects[role] as PerkEffect).charge
 
 
 func register_character(role: GameEnums.Role, character: Node2D) -> void:
 	_characters[role] = character
+	_start_for_round(role)
 
 
 func unregister_character(character: Node2D) -> void:
 	for role: GameEnums.Role in _characters.keys():
 		if _characters[role] == character:
 			_characters.erase(role)
+			_stop_for_round(role)
+
+
+func get_character(role: GameEnums.Role) -> Node2D:
+	return _get_character(role)
 
 
 func _may_start(role: GameEnums.Role) -> bool:
 	var effect: PerkEffect = _effects.get(role)
-	if effect == null or effect.running or effect.cooldown_left > 0.0:
+	if effect == null or not effect.triggered or effect.running or effect.cooldown_left > 0.0:
 		return false
 	effect.character = _get_character(role)
 	return effect.can_start()
@@ -244,6 +251,9 @@ func _may_end(role: GameEnums.Role) -> bool:
 
 
 func _advance_effect(effect: PerkEffect, delta: float) -> void:
+	if effect.running and not effect.triggered:
+		effect.advance(delta)
+		return
 	if effect.running:
 		effect.charge = effect.advance(delta)
 		if effect.charge <= 0.0 and _session.messenger.is_host():
@@ -353,11 +363,39 @@ func _apply_selection() -> void:
 			continue
 		for modifier: PerkModifier in perk.modifiers:
 			add_modifier(modifier.stat, modifier.op, get_base_stat(modifier.value_stat), perk.id)
-		if perk.is_triggered():
-			var effect: PerkEffect = perk.effect.new() as PerkEffect
-			effect.role = role
-			effect.perks = self
-			_effects[role] = effect
+		if perk.effect == null:
+			continue
+		var effect: PerkEffect = perk.effect.new() as PerkEffect
+		effect.role = role
+		effect.perks = self
+		effect.session = _session
+		effect.triggered = perk.is_triggered()
+		_effects[role] = effect
+		effect.setup()
+		_start_for_round(role)
+
+
+## Starts an effect that runs for the whole round (not triggered), once the
+## round has the character it belongs to. On both devices.
+func _start_for_round(role: GameEnums.Role) -> void:
+	var effect: PerkEffect = _effects.get(role)
+	var character: Node2D = _get_character(role)
+	if effect == null or effect.triggered or effect.running or character == null:
+		return
+	effect.character = character
+	effect.running = true
+	effect.charge = 1.0
+	effect.start()
+
+
+## Stops a round-long effect whose character left the round.
+func _stop_for_round(role: GameEnums.Role) -> void:
+	var effect: PerkEffect = _effects.get(role)
+	if effect == null or effect.triggered or not effect.running:
+		return
+	effect.running = false
+	effect.charge = 0.0
+	effect.stop()
 
 
 ## Takes back every effect and modifier on this device.

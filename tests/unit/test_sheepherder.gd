@@ -57,6 +57,15 @@ func test_the_sheepherder_is_a_solid_character() -> void:
 	assert_true(herder.get_camera().enabled, "its player's camera follows it")
 
 
+func test_the_companions_find_it_through_the_perk_service() -> void:
+	var herder: Sheepherder = _spawn()
+	assert_eq(Services.perks.get_character(GameEnums.Role.SHEEPHERDER), herder)
+
+	remove_child(herder)
+
+	assert_null(Services.perks.get_character(GameEnums.Role.SHEEPHERDER))
+
+
 func test_it_walks_at_the_sheepherder_speed() -> void:
 	var herder: Sheepherder = _spawn()
 	_input.move_vector = Vector2.RIGHT

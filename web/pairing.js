@@ -13,9 +13,14 @@
 	// Frames are scaled to at most this many pixels on their long side before
 	// they are searched for a code: enough for a dense code, fast on phones.
 	var SCAN_SIZE = 960;
+	var CAMERA = { video: { facingMode: { ideal: "environment" } }, audio: false };
 
 	var overlay = null;
 	var stream = null;
+	// The camera kept on from requestCamera until releaseCamera, and a count of
+	// the requests, so that a camera arriving after its release is let go.
+	var held = null;
+	var requests = 0;
 
 	// The modules of a QR code for `text` (Base32, so alphanumeric mode), one
 	// row of "0" and "1" per line; "" if it does not fit into a QR code.
@@ -38,6 +43,39 @@
 			rows.push(line);
 		}
 		return rows.join("\n");
+	}
+
+	// Turns the camera on and keeps it on until releaseCamera; the scanner uses
+	// it too. While the page has the camera permission (Chrome) or uses the
+	// camera (Firefox), browsers put the device's real addresses into WebRTC
+	// connection data instead of hidden .local names, which other devices often
+	// cannot resolve (docs/pairing.md). Calls back("camera", "granted"),
+	// back("camera", "denied") or back("camera", "unavailable").
+	function requestCamera(back) {
+		releaseCamera();
+		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+			back("camera", "unavailable");
+			return;
+		}
+		var request = requests;
+		navigator.mediaDevices.getUserMedia(CAMERA).then(function (camera) {
+			if (request !== requests) {
+				stop(camera);
+				return;
+			}
+			held = camera;
+			back("camera", "granted");
+		}, function () {
+			back("camera", "denied");
+		});
+	}
+
+	function releaseCamera() {
+		requests++;
+		if (held) {
+			stop(held);
+			held = null;
+		}
 	}
 
 	// Shows the camera and calls back("code", text) when it sees a QR code,
@@ -84,13 +122,13 @@
 			}
 			requestAnimationFrame(look);
 		};
-		navigator.mediaDevices
-			.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
+		var opening = held && held.active ? Promise.resolve(held) : navigator.mediaDevices.getUserMedia(CAMERA);
+		opening
 			.then(function (camera) {
 				if (finished) {
-					camera.getTracks().forEach(function (track) {
-						track.stop();
-					});
+					if (camera !== held) {
+						stop(camera);
+					}
 					return;
 				}
 				stream = camera;
@@ -179,11 +217,18 @@
 		return overlay;
 	}
 
+	function stop(camera) {
+		camera.getTracks().forEach(function (track) {
+			track.stop();
+		});
+	}
+
+	// Closes the scanner or a field; the held camera stays on.
 	function close() {
 		if (stream) {
-			stream.getTracks().forEach(function (track) {
-				track.stop();
-			});
+			if (stream !== held) {
+				stop(stream);
+			}
 			stream = null;
 		}
 		if (overlay) {
@@ -220,10 +265,15 @@
 	}
 
 	window.SheepPairing = {
+		requestCamera: requestCamera,
+		releaseCamera: releaseCamera,
 		qrMatrix: qrMatrix,
 		scan: scan,
 		copy: copy,
 		enter: enter,
-		close: close,
+		close: function () {
+			close();
+			releaseCamera();
+		},
 	};
 })();

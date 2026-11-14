@@ -4,9 +4,11 @@ How two devices connect in the Web build (GDD §9.4), and what was measured whil
 
 ## How players pair
 
-1. One player taps **Host a game**. Their device shows a QR code: the *offer*.
-2. The other player taps **Join a game** and reads the offer with **Scan code** (camera) or **Enter code** (paste the text code, e.g. sent through a messenger). Their device then shows its own QR code: the *answer*.
+1. One player taps **Host a game** and allows the camera. Their device shows a QR code: the *offer*.
+2. The other player taps **Join a game**, allows the camera, and reads the offer with **Scan code** (camera) or **Enter code** (paste the text code, e.g. sent through a messenger). Their device then shows its own QR code: the *answer*.
 3. The host reads the answer with **Scan answer** or **Enter answer**, and the devices connect.
+
+The camera is asked for on both devices, even for text codes, because browsers only put a device's real addresses into its code while the page uses the camera or may use it ([see below](#connecting-in-a-real-network)). It stays on until the device's code is made. A player who declines can still pair; if the connection then fails, the message suggests allowing the camera.
 
 Both devices must be in the same network, and the network must let devices reach each other: guest Wi-Fi with client isolation does not work. There is no STUN or TURN server, so nothing leaves the local network.
 
@@ -35,7 +37,27 @@ Godot cannot use the camera on the Web, has no QR support, and its text fields d
 
 The libraries ship with the game; see [web/vendor/README.md](../web/vendor/README.md).
 
+- **The camera for addresses** (see below) is opened with the scanner's settings and kept on until GDScript releases it once the code is made. The scanner uses it if it is still on, so a phone opens its camera only once.
+
 **Clipboard from GDScript** was not used. Godot 4.7.2's Web `clipboard_get()` starts an asynchronous read and returns the text it cached before, so it lags one call behind; `clipboard_set()` gives no result back (see `platform/web/display_server_web.cpp`). Both work better in JavaScript, where the result of the clipboard API is known.
+
+## Connecting in a real network
+
+Pairing between two Windows PCs on a phone's hotspot (Chrome and Firefox) failed with *Not connected* or *Connecting took too long* (#56). A guest page that logged the WebRTC state and statistics showed two separate causes.
+
+### Hidden addresses
+
+- Unless the page may use the camera or microphone, Chrome and Firefox write a random `<uuid>.local` name (mDNS) into each candidate instead of the device's address. The other device has to resolve that name through multicast DNS.
+- In that network, it could not: the guest got no usable candidate for the host, and the host none for the guest. With the host's real address written into the same code, the connection checks succeeded within a second, in both directions and through both Windows firewalls.
+- **Chrome** shows real addresses while the page has the camera or microphone permission (also a one-time one).
+- **Firefox** shows them only while the page is using the camera or microphone, or if the permission was saved with *Remember this decision* (`MediaManager::IsActivelyCapturingOrHasAPermission`, checked when the browser starts looking for addresses).
+- So **Host** and **Join** turn the camera on, and it stays on until the device's code is made. A code with real addresses is longer, because it lists every interface (see the table below).
+
+### Who starts the encryption
+
+- After the connection checks, the two devices set up encryption (DTLS). By default the answering device, the guest, starts it (`a=setup:active` in its answer) as soon as its checks succeed, which can be long before the host has read the answer.
+- Chrome keeps such early handshake messages and uses them once the answer is in (libwebrtc `dtls_transport.cc`, `cached_client_hello_`). Firefox as host did not: the guest's next retry came late, and the host gave up after 15 s.
+- The guest now answers with `a=setup:passive` ([RFC 5763](https://www.rfc-editor.org/rfc/rfc5763#section-5) lets the answering side choose), so the host starts the handshake the moment it reads the answer. After reading the answer, the host now waits 30 s for the connection instead of 15 s.
 
 ## Measurements
 
@@ -74,6 +96,7 @@ These are clean synthetic frames. A real camera adds blur, glare and moiré, so 
 - The offer is ready about 0.4 s after **Host a game** (gathering finishes quickly without STUN).
 - Text codes: offer and answer exchanged, connected, session with roles started on both devices; the ping round trip was 35 ms (headless, software rendering).
 - The host read the answer 45 s after the guest made it: still connected. A human scanning in between is no problem.
+- With the camera step and the passive answer (#56, fake cameras): both codes had seven real addresses and no `.local` name; the guest scanned the offer with the camera that was still on; the host read the answer 90 s after the guest made it and connected 83 ms later, as DTLS client, with the guest as DTLS server. Both cameras were off once their codes were made.
 - When the guest closed its browser, the host showed *The other player left the session* within 15 s.
 - Refused codes (random text, the host's own offer, an offer cut in half) were explained on screen; a denied camera too.
 - The only host any page contacted was the one serving the game.
@@ -84,6 +107,7 @@ These are clean synthetic frames. A real camera adds blur, glare and moiré, so 
 |:--|:-:|:-:|:--|
 | Chrome ↔ Chrome, Windows (two instances, one PC) | ✅ | ✅ (fake camera) | Automated, see above |
 | Firefox (PC) ↔ Android Chrome | pending | pending | To be tested by the team |
+| Firefox (PC) ↔ Chrome (PC), phone hotspot | failed before #56; pending | pending | The network from [Connecting in a real network](#connecting-in-a-real-network) |
 | Safari (macOS, iOS) | not tested | not tested | No device available |
 
 ## Testing on devices
@@ -91,11 +115,12 @@ These are clean synthetic frames. A real camera adds blur, glare and moiré, so 
 Camera and clipboard only work in a secure context: `https://` or `localhost`.
 
 - **Deployed build:** the GitHub Pages URL is HTTPS. Use it once the change is on `main`.
-- **Before merging:** download the pull request's `web-build` artifact (or run `tools/export_web.sh`), serve it with `tools/serve_web.sh --lan`, and open `http://localhost:8060` on the computer that serves it. On an Android phone, open `http://<computer's address>:8060` after adding that address in Chrome under `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (then restart Chrome). Without the flag, the phone can still pair with text codes typed in by hand, but neither the camera nor the clipboard works.
+- **Before merging:** download the pull request's `web-build` artifact (or run `tools/export_web.sh`), serve it with `tools/serve_web.sh --lan`, and open `http://localhost:8060` on the computer that serves it. On an Android phone, open `http://<computer's address>:8060` after adding that address in Chrome under `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (then restart Chrome). In Firefox on another computer, set `media.devices.insecure.enabled` and `media.getusermedia.insecure.enabled` to `true` in `about:config`. Without these, the device can still pair with text codes typed in by hand, but neither the camera nor the clipboard works, and its code holds only a hidden `.local` name.
 
 ## Known limits
 
 - Safari is untested.
 - The connection needs a network in which the devices reach each other directly; there is no fallback through a server.
+- Without the camera, a code holds only a hidden `.local` name, and pairing works only where the network resolves it (multicast DNS).
 - On a phone held upright, the Godot screens (including this one) are drawn small, because the 1280 × 720 base view is fitted to the screen's width. The HTML parts (camera, fields) are not affected. Layout for phones is part of the lobby (#20) and the art pass (#22).
 - A guest that never gets read by the host waits until its player cancels.

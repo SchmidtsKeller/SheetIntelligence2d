@@ -100,3 +100,7 @@ func register_character(_role: GameEnums.Role, _character: Node2D) -> void:
 
 func unregister_character(_character: Node2D) -> void:
 	pass
+
+
+func get_character(_role: GameEnums.Role) -> Node2D:
+	return null
