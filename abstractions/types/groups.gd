@@ -19,7 +19,11 @@ const OBSTACLES: StringName = &"obstacles"
 ## Static map elements that stay faintly visible in darkness (GDD §3.1).
 const STATIC_SCENERY: StringName = &"static_scenery"
 
+## The arena of the running round. There is at most one.
+const ARENA: StringName = &"arena"
+
 const ALL: Array[StringName] = [
+	ARENA,
 	SHEEPHERDER,
 	SHEEP_LIKE,
 	COMPANIONS,

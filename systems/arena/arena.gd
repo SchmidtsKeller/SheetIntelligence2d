@@ -63,6 +63,7 @@ var _footprint_radii: PackedFloat32Array = []
 
 
 func _ready() -> void:
+	add_to_group(Groups.ARENA)
 	_build_ground()
 	_scatter_ground_details()
 	_build_borders()

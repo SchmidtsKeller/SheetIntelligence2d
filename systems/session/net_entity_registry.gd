@@ -37,6 +37,7 @@ var max_extrapolation: float = 0.1
 
 var _messenger: NetMessenger
 var _factories: Dictionary[StringName, Callable] = {}
+var _parent_providers: Dictionary[StringName, Callable] = {}
 var _entities: Dictionary[int, Node] = {}
 var _owners: Dictionary[int, int] = {}
 var _transforms: Dictionary[int, NetTransform2D] = {}
@@ -67,8 +68,17 @@ func setup(messenger: NetMessenger) -> void:
 ## [code](entity_id: int, owner_id: int, data: Dictionary) -> Node[/code] and
 ## must build the same node on both devices. Register every kind on both
 ## devices before the host spawns one.
-func register_kind(kind: StringName, factory: Callable) -> void:
+## [br]The optional [param parent_provider], [code]() -> Node[/code], names
+## the node entities of this kind are added to. Without one, or if it returns
+## nothing, they go to [member spawn_root].
+func register_kind(
+	kind: StringName, factory: Callable, parent_provider: Callable = Callable()
+) -> void:
 	_factories[kind] = factory
+	if parent_provider.is_valid():
+		_parent_providers[kind] = parent_provider
+	else:
+		_parent_providers.erase(kind)
 
 
 ## Spawns an entity on both devices and returns its id, or -1 on failure.
@@ -148,7 +158,7 @@ func _send_snapshot() -> void:
 		var transform: NetTransform2D = _transforms[entity_id]
 		if transform.is_authority():
 			payload.append(entity_id)
-			payload.append_array(transform.capture(_time))
+			payload.append(transform.capture(_time))
 	if not payload.is_empty():
 		# The sender's clock travels with the snapshot.
 		_messenger.send_snapshot(_tick, [_time, payload])
@@ -160,12 +170,11 @@ func _on_snapshot(_tick_number: int, message: Array, _sender_id: int) -> void:
 	_clock_offsets.append(_time - sender_time)
 	if _clock_offsets.size() > CLOCK_WINDOW:
 		_clock_offsets.remove_at(0)
-	# Each entity takes four values: id, x, y, rotation.
-	for index: int in range(0, payload.size() - 3, 4):
+	# Each entity takes two entries: its id and the state its component captured.
+	for index: int in range(0, payload.size() - 1, 2):
 		var transform: NetTransform2D = _transforms.get(payload[index])
 		if transform != null:
-			var position: Vector2 = Vector2(payload[index + 1], payload[index + 2])
-			transform.receive(sender_time, position, payload[index + 3])
+			transform.receive(sender_time, payload[index + 1])
 
 
 func _present() -> void:
@@ -206,8 +215,7 @@ func _on_spawn(payload: Array, _sender_id: int) -> void:
 	entity.name = "%s_%d" % [kind, entity_id]
 	_entities[entity_id] = entity
 	_owners[entity_id] = owner_id
-	var parent: Node = spawn_root if is_instance_valid(spawn_root) else self
-	parent.add_child(entity)
+	_parent_of(kind).add_child(entity)
 	# An entity can also disappear with the scene it lives in.
 	entity.tree_exiting.connect(_forget.bind(entity_id))
 	var transform: NetTransform2D = _find_transform(entity)
@@ -238,6 +246,14 @@ func _forget(entity_id: int) -> void:
 	_owners.erase(entity_id)
 	_transforms.erase(entity_id)
 	entity_despawned.emit(entity_id)
+
+
+func _parent_of(kind: StringName) -> Node:
+	if _parent_providers.has(kind):
+		var parent: Node = _parent_providers[kind].call()
+		if is_instance_valid(parent):
+			return parent
+	return spawn_root if is_instance_valid(spawn_root) else self
 
 
 static func _find_transform(entity: Node) -> NetTransform2D:

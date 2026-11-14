@@ -72,6 +72,47 @@ extends Resource
 ## Longest time a sheep stands still with its head lowered.
 @export_range(0.0, 60.0, 0.1, "suffix:s") var sheep_graze_duration_max: float = 6.0
 
+@export_group("Flock")
+## Shortest and longest time a sheep may take for one walk before it gives up.
+@export_range(0.0, 30.0, 0.1, "suffix:s") var flock_walk_time_min: float = 1.5
+@export_range(0.0, 30.0, 0.1, "suffix:s") var flock_walk_time_max: float = 4.0
+## Shortest and longest time a sheep stands between two walks.
+@export_range(0.0, 30.0, 0.1, "suffix:s") var flock_pause_time_min: float = 0.8
+@export_range(0.0, 30.0, 0.1, "suffix:s") var flock_pause_time_max: float = 2.5
+## How likely a sheep grazes after a walk instead of just standing.
+@export_range(0.0, 1.0, 0.01) var flock_graze_chance: float = 0.45
+## Shortest and longest time between two bleats of one sheep.
+@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_min: float = 8.0
+@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_max: float = 25.0
+## How far a sheep walks in one go, at least and at most.
+@export_range(0.0, 1000.0, 1.0, "suffix:px") var flock_wander_distance_min: float = 80.0
+@export_range(0.0, 1000.0, 1.0, "suffix:px") var flock_wander_distance_max: float = 240.0
+## Walking sheep steer away from others that are closer than this.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var flock_separation_radius: float = 72.0
+## A sheep farther than this from the middle of the flock heads back.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var flock_cohesion_radius: float = 280.0
+## How much a sheep that starts to walk leans toward where the others walk.
+@export_range(0.0, 2.0, 0.05) var flock_alignment_weight: float = 0.35
+## How strongly walking sheep keep apart from each other, compared to the pull
+## of where they want to go (1).
+@export_range(0.0, 10.0, 0.05) var flock_separation_weight: float = 1.6
+## How strongly a sheep that starts to walk is drawn back to the flock.
+@export_range(0.0, 10.0, 0.05) var flock_cohesion_weight: float = 2.5
+## How strongly walking sheep keep clear of obstacles.
+@export_range(0.0, 10.0, 0.05) var flock_obstacle_weight: float = 2.2
+## How strongly walking sheep keep clear of the borders.
+@export_range(0.0, 10.0, 0.05) var flock_border_weight: float = 2.2
+## Walking sheep steer away from obstacles closer than this.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var flock_obstacle_margin: float = 60.0
+## Walking sheep steer away from the borders when closer than this.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var flock_border_margin: float = 70.0
+## The room a sheep needs around its center where it wants to walk to.
+@export_range(0.0, 200.0, 1.0, "suffix:px") var flock_body_clearance: float = 28.0
+## Sheep that follow the bell stop this far from where it rang.
+@export_range(0.0, 1000.0, 1.0, "suffix:px") var bell_stop_distance: float = 110.0
+## How long sheep follow the bell before they return to normal behaviour.
+@export_range(0.0, 60.0, 0.1, "suffix:s") var bell_follow_time: float = 6.0
+
 @export_group("Sheep Motion")
 ## How fast a sheep speeds up to its walking speed and slows down again. Not
 ## from the GDD: NPC sheep and the Monster's sheep share it, so both move alike.

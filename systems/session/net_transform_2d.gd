@@ -59,10 +59,11 @@ func capture(time: float) -> Array:
 	return [position.x, position.y, rotation]
 
 
-## Other device: takes the transform from a snapshot sent at [param time].
-func receive(time: float, position: Vector2, rotation: float) -> void:
+## Other device: takes what [method capture] produced on the owning device,
+## from a snapshot sent at [param time].
+func receive(time: float, state: Array) -> void:
 	if not _is_authority:
-		_buffer.push(time, position, rotation)
+		_buffer.push(time, Vector2(state[0], state[1]), state[2])
 
 
 ## Shows the entity as it was at [param render_time]. Called every frame.

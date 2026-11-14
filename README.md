@@ -121,7 +121,7 @@ res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
 ├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
-├── systems/          Game config, scene flow, view rule, arena, seeded randomness; later lighting, AI, swarm
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, seeded randomness; later lighting
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -143,7 +143,7 @@ Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
 | `PerkService` | Perk selection and the modifier-aware stat lookup |
 | `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
 
-Every contract has a stub in `services/stubs/` that is registered by default. A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input and the flock are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
 
 ### Service registry
 
@@ -208,6 +208,25 @@ Its size comes from the config, and the borders are built from it.
 Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it.
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
+
+### The flock
+
+`Services.swarm` is the `FlockSwarmService` ([services/swarm/flock_swarm_service.gd](services/swarm/flock_swarm_service.gd)): the ten NPC sheep of a round (GDD §3.3). The host simulates them; the guest gets the same sheep through the session.
+
+```gdscript
+Services.swarm.spawn_flock(round_seed)                      # host, once the arena is in the tree
+Services.swarm.ring_bell(origin, Services.perks.get_stat(StatIds.BELL_RADIUS))   # either device
+Services.swarm.kill_sheep(sheep_id, GameEnums.DeathCause.SHOT)                   # host
+Services.swarm.register_neighbour(monster_body)             # the flock treats it as one of its own
+```
+
+- **Behaviour.** Each sheep has a [FlockAgent](systems/flock/flock_agent.gd) that strings together plain segments: walk a short way, stand, graze, and bleat now and then. Where a walk leads is decided when it starts: somewhere nearby, leaning toward where the others are heading and back toward the flock when the sheep has strayed. While walking, the forces in [FlockSteering](systems/flock/flock_steering.gd) keep it apart from the others and clear of obstacles and borders. There is nothing in it a player could not do with a stick and two buttons, which is the point: the Monster has to pass as one of them.
+- **Bell.** Living sheep within the radius walk to where it rang, stop a few steps short and return to normal after `bell_follow_time`. Sheep outside the radius do not react.
+- **Tuning.** Every duration, distance and chance is in the *Flock* group of the game config.
+- **Deterministic start.** Positions, looks and minds follow from the round seed. A round has `flock_size + 1` slots for sheep-like entities; [RoundCast](systems/flock/round_cast.gd) names the slot the flock leaves free for the Monster, so the Monster (#16) and the round (#17) take its position and visual seed from the same place.
+- **The arena** is found through the group `arena`; the sheep live in its entities layer.
+
+The flock sandbox ([systems/flock/sandbox/flock_sandbox.tscn](systems/flock/sandbox/flock_sandbox.tscn), **F6**) shows a round's flock in the arena, with one more sheep in the Monster's slot that can be steered with the Monster's keys. A click rings the bell there; the buttons start a new flock, switch the debug overlay (activity, target and steering per sheep, the reach of the last bell), run a time lapse and kill a sheep.
 
 ### Scene flow
 
@@ -293,6 +312,7 @@ The input sandbox ([systems/input/sandbox/input_sandbox.tscn](systems/input/sand
 | `dynamic_entities` | Everything the vision system may hide |
 | `obstacles` | Solid props that block movement and line of sight |
 | `static_scenery` | Static map elements that stay faintly visible in darkness |
+| `arena` | The arena of the running round |
 
 NPC sheep and the Monster share every layer and group they are in, so neither can be used to tell them apart (GDD §3.2, "No Built-in Tell").
 
