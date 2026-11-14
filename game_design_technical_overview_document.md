@@ -21,16 +21,16 @@
    * **Monster** mimics NPC sheep movement and swarm behaviors (wandering, manually triggering grass-eating animations and bleats, responding to the bell) while isolating and consuming NPC sheep.
 3. **Escalation & Evolution Phases:**
    * **Phase 1 (5 Sheep Eaten):** Once the Monster has eaten **5 sheep**, it unlocks the ability to kill the Sheepherder with a single melee attack.
-   * **Phase 2 (All 10 Sheep Eaten):** If the Monster eats all **10 NPC sheep**, it sheds its disguise and evolves into a **giant spider monster**, becoming completely **unkillable** (immune to the Sheepherder's firearm) while hunting down the Sheepherder.
-   * Only sheep the Monster has eaten count toward both thresholds. Sheep shot by the Sheepherder don't count, so once any sheep is shot, the spider form can't be reached that round.
+   * **Phase 2 (All 10 Sheep Eaten):** If the Monster eats all **10 NPC sheep**, it sheds its disguise and evolves into a **giant scary monster**, becoming completely **unkillable** (immune to the Sheepherder's firearm) while hunting down the Sheepherder.
+   * Only sheep the Monster has eaten count toward both thresholds. Sheep shot by the Sheepherder don't count, so once any sheep is shot, the "giant scary monster" form can't be reached that round.
 4. **Round Resolution & Scoring:** The round ends when a win condition is met or the 180-second timer expires. Points are tallied based on sheep casualties/survival.
 
 ### 2.2 Win & Loss Conditions
 
-- **Sheepherder Victory:** Successfully shoots and hits the Monster with their firearm (prior to the Monster reaching its unkillable spider evolution).
+- **Sheepherder Victory:** Successfully shoots and hits the Monster with their firearm (prior to the Monster reaching its unkillable "giant scary monster" evolution).
 - **Monster Victory:**
   * Consumes at least **5 NPC sheep** to unlock the lethal melee attack, then successfully eats/kills the Sheepherder.
-  * *Escalation Path:* Eats all **10 NPC sheep** to evolve into the unkillable spider monster, then hunts and eats the Sheepherder.
+  * *Escalation Path:* Eats all **10 NPC sheep** to evolve into the unkillable "giant scary monster", then hunts and eats the Sheepherder.
   * *Ammo Depletion Scenario:* If the Sheepherder has used all bullets (**3**, or **4** with the *Spare Bullet* perk), the Monster can no longer be killed and can freely hunt the flock until the round concludes. It can still only kill the Sheepherder after eating **5 sheep**.
 - **Timeout & Draw Conditions:**
   * Round duration is **180 seconds**.
@@ -60,7 +60,7 @@
   * Equipped with a single-shot firearm with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
   * **Reloading:** Reloads automatically after each shot, using a long reload timer. Once all bullets are expended, the weapon is permanently empty for the rest of the round.
-  * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). Shooting the Monster before it evolves into the spider results in an instant Sheepherder victory.
+  * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). Shooting the Monster before it evolves into the "giant scary monster" results in an instant Sheepherder victory.
 - **Sheepherder Base Abilities:**
   * **Bell:** Ringing the bell triggers a behavioral phase shift in the flock, causing nearby sheep to walk toward the Sheepherder.
 
@@ -76,7 +76,7 @@
   * Line-of-sight obstacles block its view the same way they block the Sheepherder's flashlight: dynamic entities behind them are hidden.
 - **Movement:**
   * *PC/Mobile Controls:* Directional movement matching PC/Mobile inputs, at the same speed as the NPC sheep.
-  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. Not available in spider form.
+  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. Not available in "giant scary monster" form.
 - **Abilities & Progression:**
   * **Graze (Mimicry Action):** Hold a dedicated button (PC/Mobile) to lower the head and eat grass, matching NPC sheep idle cycles. The Monster can't move while grazing.
   * **Bleat (Mimicry Action):** Press a dedicated button (PC/Mobile) to bleat like an NPC sheep.
@@ -85,7 +85,7 @@
     * *Cooldown:* Default **5.0 seconds** between consumptions.
     * *Evidence:* Blood from killed sheep remains permanently on the ground as physical evidence (no blood appears on the Monster's wool).
   * **Phase 1 Evolution (5 Sheep Eaten):** Unlocks a one-attack kill on the Sheepherder, using the same melee proximity attack as on sheep. The Sheepherder dies instantly when the attack lands (so they can't shoot back), and the eating animation still plays.
-  * **Phase 2 Evolution (10 Sheep Eaten — Spider Form):** Upon eating all 10 sheep, the Monster transforms into a **giant spider monster**, becoming completely **unkillable** (bullets have no effect) and hunting down the Sheepherder.
+  * **Phase 2 Evolution (10 Sheep Eaten — "giant scary monster" Form):** Upon eating all 10 sheep, the Monster transforms into a **giant scary monster**, becoming completely **unkillable** (bullets have no effect) and hunting down the Sheepherder.
 
 ### 3.3 NPC Sheep (The Flock)
 
@@ -137,12 +137,12 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | **Monster** | Base Movement Speed | `180 px/s` | Same as the NPC sheep movement speed for seamless mimicry |
 | | Sprint Speed | `270 px/s` | `1.5×` base speed while the sprint button is held; sheep form only |
 | | Sprint Stamina | `3.0s` | Drains while sprinting; refills at `0.5×` speed while not sprinting (`6.0s` from empty to full) |
-| | Spider Form Speed | `300 px/s` | Unlocked at 10 sheep eaten; unkillable state; faster than sprinting, no sprint in spider form |
+| | "Giant Scary Monster" Form Speed | `300 px/s` | Unlocked at 10 sheep eaten; unkillable state; faster than sprinting, no sprint in "giant scary monster" form |
 | | Eat Animation Duration | `1.0s` | Movement locked; reduced to `0.5s` with *Faster Consumption*; also plays on the Sheepherder kill |
 | | Eat Ability Cooldown | `5.0s` | Cooldown starts after eating animation completes |
 | | Melee Range | `48 px` | Center-to-center distance to eat a sheep or kill the Sheepherder |
 | | Sheepherder Kill Threshold | `5 Sheep Eaten` | Unlocks the one-attack melee kill on the Sheepherder |
-| | Spider Evolution Threshold | `10 Sheep Eaten` | Transforms into unkillable spider monster |
+| | "Giant Scary Monster" Evolution Threshold | `10 Sheep Eaten` | Transforms into unkillable "giant scary monster" monster |
 | **NPC Sheep** | Movement Speed | `180 px/s` | One speed for wandering and walking to the bell; same as the Monster |
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
 | **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD) |
@@ -169,7 +169,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 
 ### 7.2 Audio Design
 
-- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, spider screech upon full evolution.
+- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, "Giant Scary Monster" screech upon full evolution.
 - **Music & Ambience:** Ambient wind, realistic, minimal, layered night sounds.
 - **Spatial Audio Rules:** Critical for locating entities hidden in the Fog of War. Directional/distance-attenuated audio cues apply to the Shepherd Dog barking, unseen sheep moving through grass, and Monster consumption sounds.
 
@@ -196,7 +196,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
     * Bell cooldown icon.
   * *Monster Only:*
     * Action and cooldown icons for Graze, Bleat, Eat, and the active Perk, plus the sprint stamina meter.
-    * "Evolution Bar" (tracks progress toward the 5-sheep Herder kill unlock and 10-sheep Spider evolution).
+    * "Evolution Bar" (tracks progress toward the 5-sheep Herder kill unlock and 10-sheep "Giant Scary Monster" evolution).
     * Remaining living NPC sheep count.
 - **Mobile HUD:** Identical telemetry to PC, adapted for touchscreens using responsive virtual joysticks (left for movement, right for Sheepherder flashlight aim) and ergonomic action buttons.
 - **End-of-Round / Scoreboard Screen:** Displays round outcome, points earned (+1 per surviving sheep and -2 per shot sheep for the Sheepherder; +1 per eaten sheep for the Monster), and the Best-of-5 round-win standing.
@@ -232,7 +232,7 @@ res://
 │   ├── perk_service.gd
 │   └── audio_service.gd
 ├── services/                 # Concrete implementations & Service Registry
-├── entities/                 # Sheepherder, Monster (Sheep & Spider), NPC Sheep, Companions
+├── entities/                 # Sheepherder, Monster (Sheep & "Giant Scary Monster"), NPC Sheep, Companions
 ├── systems/                  # Lighting/FoW Shaders, NPC & Companion AI, Swarm Boids
 ├── ui/                       # Simplified Lobby, Responsive Mobile/PC HUD
 └── assets/                   # Realistic painterly sprites, shaders, spatial audio
@@ -255,6 +255,6 @@ res://
 - **Godot Multiplayer API:** Use `WebRTCMultiplayerPeer`. A Web build can only be a WebSocket client, so `WebSocketMultiplayerPeer` would require a separate server.
 - **State Synchronization Requirements:**
   * Position and rotation of Sheepherder (including flashlight cone angle).
-  * Position, disguise seed, grazing state, and evolution state (Sheep vs. Spider) of the Monster, plus AI Companions.
+  * Position, disguise seed, grazing state, and evolution state (Sheep vs. "Giant Scary Monster") of the Monster, plus AI Companions.
   * Host-authoritative synchronization of NPC Sheep swarm positions, deterministic visual seeds, and behavioral phases (grazing, bell attraction).
   * Combat and world events (gunshots, bullet count updates, blood decal spawns, sheep consumption, score updates).
