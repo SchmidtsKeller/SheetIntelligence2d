@@ -251,9 +251,8 @@ func test_called_sheep_gather_and_then_go_back_to_normal() -> void:
 
 	var distance_after: float = 0.0
 	for sheep_id: int in called:
-		distance_after += (
-			(_swarm.get_sheep_body(sheep_id) as Node2D).global_position.distance_to(origin)
-		)
+		var body: Node2D = _swarm.get_sheep_body(sheep_id)
+		distance_after += body.global_position.distance_to(origin)
 	assert_gt(called.size(), 3)
 	assert_lt(distance_after / called.size(), distance_before / called.size(), "they came closer")
 	assert_lt(distance_after / called.size(), Services.config.bell_stop_distance + 90.0)

@@ -148,9 +148,7 @@ func _start_walk(position: Vector2, world: FlockWorld) -> void:
 		)
 		if direction.is_zero_approx():
 			continue
-		var distance: float = _between(
-			_settings.wander_distance_min, _settings.wander_distance_max
-		)
+		var distance: float = _between(_settings.wander_distance_min, _settings.wander_distance_max)
 		var candidate: Vector2 = position + direction.normalized() * distance
 		if _is_way_free(position, candidate, world):
 			activity = Activity.WALK
