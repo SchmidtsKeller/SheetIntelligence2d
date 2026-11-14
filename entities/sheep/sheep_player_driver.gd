@@ -9,6 +9,10 @@ extends Node
 ## The sheep to steer.
 @export var body: SheepBody
 
+## Whether graze and bleat are passed on to the sheep. Off for a body that
+## can do neither, like the Monster's spider form.
+var mimicry_enabled: bool = true
+
 
 func _ready() -> void:
 	# Run before the sheep, so input reaches it in the same physics step.
@@ -23,7 +27,7 @@ func _physics_process(_delta: float) -> void:
 
 
 func _on_action_pressed(action: StringName) -> void:
-	if not is_instance_valid(body):
+	if not is_instance_valid(body) or not mimicry_enabled:
 		return
 	match action:
 		InputActions.GRAZE:

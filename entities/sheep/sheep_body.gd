@@ -27,6 +27,9 @@ enum State {
 	IDLE,
 	WALK,
 	GRAZE,
+	## Eating another creature, unable to do anything else. Every sheep body can
+	## do this, but only the Monster ever does (GDD §3.2).
+	DEVOUR,
 	## Shot: the body lies on the ground for the rest of the round.
 	CORPSE,
 	## Eaten: the body disappears once the animation has played.
@@ -36,6 +39,7 @@ enum State {
 const ANIMATION_IDLE: StringName = &"idle"
 const ANIMATION_WALK: StringName = &"walk"
 const ANIMATION_GRAZE: StringName = &"graze"
+const ANIMATION_DEVOUR: StringName = &"devour"
 const ANIMATION_CORPSE: StringName = &"corpse"
 const ANIMATION_EATEN: StringName = &"eaten"
 const ANIMATION_BLEAT: StringName = &"bleat"
@@ -62,12 +66,20 @@ var presented_externally: bool = false:
 		if is_node_ready():
 			_apply_presentation_mode()
 
+## Top speed in pixels per second instead of the sheep speed from the stats;
+## negative for none. Acceleration and turn rate stay those of every sheep.
+## The Monster's player sets it (walk, sprint, spider).
+var speed_override: float = -1.0
+
 var _visual_seed: int = 0
 var _appearance: SheepAppearance
 var _motion: SheepMotion = SheepMotion.new()
 var _move_input: Vector2 = Vector2.ZERO
 var _push_velocity: Vector2 = Vector2.ZERO
 var _grazing: bool = false
+var _devour_left: float = 0.0
+var _devour_duration: float = 0.0
+var _visual_override: Node2D
 ## What is shown, which lags behind the simulation when the sheep is
 ## presented externally.
 var _shown_speed: float = 0.0
@@ -100,10 +112,16 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not is_alive():
 		return
+	if _devour_left > 0.0:
+		_devour_left = maxf(_devour_left - delta, 0.0)
+		if _devour_left == 0.0:
+			_update_state()
 	if simulated:
 		var perks: PerkService = Services.perks
-		var wish: Vector2 = Vector2.ZERO if _grazing else _move_input
-		var max_speed: float = perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+		var wish: Vector2 = Vector2.ZERO if _grazing or is_devouring() else _move_input
+		var max_speed: float = (
+			speed_override if speed_override >= 0.0 else perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+		)
 		var acceleration: float = perks.get_stat(StatIds.SHEEP_ACCELERATION)
 		var turn_rate: float = deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG))
 		velocity = _motion.step(wish, max_speed, acceleration, turn_rate, delta) + _push_velocity
@@ -164,6 +182,19 @@ func bleat() -> bool:
 	return true
 
 
+## Eats another creature for [param duration] seconds. The sheep stops at once
+## and can neither walk nor graze until it is done; nothing aborts it but
+## death (GDD §3.2). Returns [code]false[/code] for a dead sheep.
+func devour(duration: float) -> bool:
+	if not is_alive() or duration <= 0.0:
+		return false
+	_devour_duration = duration
+	_devour_left = duration
+	_motion.speed = 0.0
+	_enter_state(State.DEVOUR)
+	return true
+
+
 ## Moves the sheep by [param push_velocity] during the next physics step, on
 ## top of its own walking, e.g. when the Sheepherder walks into it. The push is
 ## blocked by the same obstacles as walking. Dead sheep cannot be pushed.
@@ -173,6 +204,18 @@ func push(push_velocity: Vector2) -> void:
 
 
 # --- Presentation ----------------------------------------------------------------
+
+
+## Replaces the sheep's look with [param visual], drawn where the sheep is
+## shown and facing the same way; [code]null[/code] brings the sheep back.
+## For the Monster's spider form (GDD §3.2).
+func set_visual_override(visual: Node2D) -> void:
+	if is_instance_valid(_visual_override):
+		_visual_override.queue_free()
+	_visual_override = visual
+	(_facing.get_node(^"Pose") as Node2D).visible = visual == null
+	if visual != null:
+		_facing.add_child(visual)
 
 
 ## Shows the living sheep at [param shown_position], facing [param heading]
@@ -214,6 +257,11 @@ func is_alive() -> bool:
 
 func is_grazing() -> bool:
 	return _grazing and is_alive()
+
+
+## Whether the sheep is in the middle of eating another creature.
+func is_devouring() -> bool:
+	return _devour_left > 0.0 and is_alive()
 
 
 func get_state() -> State:
@@ -289,7 +337,9 @@ func _update_state() -> void:
 	if not is_alive():
 		return
 	var state: State = State.IDLE
-	if _shown_grazing:
+	if _devour_left > 0.0:
+		state = State.DEVOUR
+	elif _shown_grazing:
 		state = State.GRAZE
 	elif _shown_speed > WALK_SPEED_THRESHOLD:
 		state = State.WALK
@@ -308,6 +358,7 @@ func _enter_state(state: State) -> void:
 		_motion.speed = 0.0
 		velocity = Vector2.ZERO
 		_grazing = false
+		_devour_left = 0.0
 		_shown_speed = 0.0
 		_shown_grazing = false
 		if presented_externally:
@@ -331,14 +382,19 @@ func _play_state_animation() -> void:
 			_animation.play(ANIMATION_WALK)
 		State.GRAZE:
 			_animation.play(ANIMATION_GRAZE)
+		State.DEVOUR:
+			var length: float = _animation.get_animation(ANIMATION_DEVOUR).length
+			_animation.play(ANIMATION_DEVOUR, -1.0, length / _devour_duration)
 		State.CORPSE:
 			_animation.play(ANIMATION_CORPSE)
 		State.EATEN:
 			# The sheep vanishes exactly while the Monster eats (GDD §3.2), which
 			# the Faster Consumption perk shortens.
 			var duration: float = Services.perks.get_stat(StatIds.EAT_DURATION)
-			var length: float = _animation.get_animation(ANIMATION_EATEN).length
-			_animation.play(ANIMATION_EATEN, -1.0, length / duration if duration > 0.0 else 1.0)
+			var eaten_length: float = _animation.get_animation(ANIMATION_EATEN).length
+			_animation.play(
+				ANIMATION_EATEN, -1.0, eaten_length / duration if duration > 0.0 else 1.0
+			)
 
 
 func _on_animation_finished(animation_name: StringName) -> void:

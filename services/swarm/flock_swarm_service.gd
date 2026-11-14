@@ -191,15 +191,15 @@ func get_sheep_id(body: Node2D) -> int:
 
 
 func find_nearest_living_sheep(position: Vector2, max_distance: float) -> int:
-	var nearest_id: int = -1
-	var nearest_distance: float = max_distance
-	for sheep_id: int in _bodies:
-		var body: SheepBody = _bodies[sheep_id]
-		var distance: float = position.distance_to(body.global_position)
-		if body.is_alive() and distance <= nearest_distance:
-			nearest_distance = distance
-			nearest_id = sheep_id
-	return nearest_id
+	return _find_nearest(position, max_distance, false)
+
+
+func find_nearest_edible_sheep(position: Vector2, max_distance: float) -> int:
+	return _find_nearest(position, max_distance, true)
+
+
+func is_sheep_corpse(sheep_id: int) -> bool:
+	return _bodies.has(sheep_id) and _bodies[sheep_id].get_state() == SheepBody.State.CORPSE
 
 
 func register_neighbour(body: Node2D) -> void:
@@ -240,6 +240,19 @@ func get_world() -> FlockWorld:
 
 
 # --- Internals -------------------------------------------------------------------
+
+
+func _find_nearest(position: Vector2, max_distance: float, with_corpses: bool) -> int:
+	var nearest_id: int = -1
+	var nearest_distance: float = max_distance
+	for sheep_id: int in _bodies:
+		var body: SheepBody = _bodies[sheep_id]
+		var counts: bool = body.is_alive() or (with_corpses and is_sheep_corpse(sheep_id))
+		var distance: float = position.distance_to(body.global_position)
+		if counts and distance <= nearest_distance:
+			nearest_distance = distance
+			nearest_id = sheep_id
+	return nearest_id
 
 
 func _find_arena() -> Arena:
