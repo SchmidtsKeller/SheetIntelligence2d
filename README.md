@@ -19,7 +19,7 @@ Open the folder in the Godot 4.7 editor and press **F5**, or from a terminal:
 godot --path .
 ```
 
-The game starts in the boot screen, which checks the services and hands over to the lobby. The lobby is a placeholder screen for now; its button starts a match: five rounds with the rules of GDD §2, each followed by the results screen (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against nobody.
+The game starts in the boot screen, which checks the services and hands over to the lobby. The lobby is a placeholder screen for now; its button starts a match: five rounds with the rules of GDD §2, each followed by the results screen (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against the computer (see [Offline match against the computer](#offline-match-against-the-computer)).
 
 The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
 
@@ -324,6 +324,22 @@ flow.request_lobby()                               # host: end the match
 ```
 
 The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round, the role and the timer in a plain line, and the [results screen](ui/screens/results_screen.gd) the record of the round, the standing and the host's buttons; the HUD (#21) and the styled scoreboard (#20) replace them. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+
+### Offline match against the computer
+
+One player can play a whole match on one device, without pairing (#57). In the Web build the lobby offers **Sheepherder vs. computer** and **Monster vs. computer** next to Host and Join; on the desktop, *Go to Round* without a session does the same with a random role. The chosen role is the player's in round 1; the roles swap after every round as usual.
+
+- **Offline session.** `Services.session.play_offline()` starts a session of this device alone on every build. Where the transport needs a second device (WebRTC pairing), an offline transport stands in until the session ends; hosting or joining from the lobby ends the offline session first.
+- **Bots.** The [RoundStage](systems/match/round_stage.gd) spawns the character nobody plays for this device, marked as a bot's: it gets its own [BotInput](systems/bots/bot_input.gd), never `Services.input`, and no camera. A [MonsterBot](systems/bots/monster_bot.gd) or [SheepherderBot](systems/bots/sheepherder_bot.gd) presses its buttons, only while the player may act too.
+- **The bot Monster** hides with the flock's own mind ([FlockAgent](systems/flock/flock_agent.gd)) and is drawn through the same delay as the flock, so it has no built-in tell. It hunts when the attack is ready and the light cannot reach the meal (out of reach, behind an obstacle, or behind the Sheepherder's back), walks away from the blood, and goes for the Sheepherder once it may kill them.
+- **The bot Sheepherder** sees only what its light shows ([BotSenses](systems/bots/bot_senses.gd)) and hears eating roughly where it was. It suspects a sheep it sees eating, running, or standing where it heard eating, shoots the most suspicious one after a reaction time and with an aiming error, keeps near the flock, sweeps its light, rings the bell and runs from the spider. It never knows which sheep is the Monster, so it can shoot the wrong one.
+- **Tuning.** Every bot number is in the *Bots* group of the game config.
+
+**Bot against bot.** [systems/bots/check/bot_match_check.tscn](systems/bots/check/bot_match_check.tscn) gives the player's character a bot as well and plays whole matches faster than real time, printing every round:
+
+```bash
+godot --headless --path . res://systems/bots/check/bot_match_check.tscn -- --speed=6 --matches=2
+```
 
 ### Scene flow
 

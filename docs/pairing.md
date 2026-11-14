@@ -10,6 +10,8 @@ How two devices connect in the Web build (GDD §9.4), and what was measured whil
 
 Both devices must be in the same network, and the network must let devices reach each other: guest Wi-Fi with client isolation does not work. There is no STUN or TURN server, so nothing leaves the local network.
 
+Without a second device, the first step also offers a match against the computer, in either role (see the README, *Offline match against the computer*).
+
 Until the lobby (#20) has its own pairing, the [PairingPanel](../ui/pairing/pairing_panel.gd) in the lobby placeholder does this. Once connected, it shrinks to a line with the round trip time of a ping through Godot's multiplayer API.
 
 ## The pairing code
