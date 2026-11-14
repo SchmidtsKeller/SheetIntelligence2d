@@ -27,7 +27,7 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	registry.register(InputService, DeviceInputService.new())
 	registry.register(NetworkService, create_network_service(config))
 	registry.register(SwarmService, StubSwarmService.new())
-	registry.register(CombatService, StubCombatService.new(config))
+	registry.register(CombatService, SessionCombatService.new())
 	registry.register(PerkService, StubPerkService.new(config))
 	registry.register(AudioService, StubAudioService.new(config))
 
