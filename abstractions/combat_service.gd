@@ -15,7 +15,7 @@ extends Node
 enum ShotResult {
 	## The request was refused: reloading, empty, or the round is not running.
 	REJECTED,
-	## The bullet hit nothing before leaving the arena or reaching its range.
+	## The bullet left the map without hitting anything.
 	MISSED,
 	## The bullet was stopped by a solid obstacle.
 	HIT_OBSTACLE,
@@ -119,8 +119,10 @@ func end_round() -> void
 
 ## Asks to fire from [param origin] along [param direction]. Returns whether
 ## the request was accepted locally; the result arrives as [signal shot_fired].
-## A shot ends at the first sheep-like entity or obstacle (no piercing), and a
-## miss still uses up the bullet.
+## A shot travels until it hits a sheep-like entity or a solid obstacle, or
+## leaves the map (no piercing). The light cone does not limit its range, so
+## targets the Sheepherder cannot see can be hit (GDD §3.1). A miss still uses
+## up the bullet.
 @abstract
 func request_shot(origin: Vector2, direction: Vector2) -> bool
 
