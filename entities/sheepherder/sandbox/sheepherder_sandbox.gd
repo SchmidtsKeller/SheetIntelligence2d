@@ -11,7 +11,6 @@ const CATALOG: SheepAppearanceCatalog = preload(
 const ROUND_SEED: int = 14
 ## Where the Sheepherder starts: this far below the flock's spawn area.
 const START_BELOW_FLOCK: float = 160.0
-const BLOOD_COLOR: Color = Color(0.45, 0.05, 0.05, 0.85)
 
 var _arena: Arena
 var _herder: Sheepherder
@@ -29,7 +28,9 @@ func _ready() -> void:
 	_spawn_sheepherder()
 	Services.input.set_role(GameEnums.Role.SHEEPHERDER)
 	Services.combat.begin_round(_herder, null)
-	Services.combat.blood_spilled.connect(_on_blood_spilled)
+	var blood: BloodDecalSpawner = BloodDecalSpawner.new()
+	blood.decals = _arena.get_decals_layer()
+	add_child(blood)
 	var layer: CanvasLayer = CanvasLayer.new()
 	add_child(layer)
 	_status = Label.new()
@@ -38,7 +39,6 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	Services.combat.blood_spilled.disconnect(_on_blood_spilled)
 	Services.combat.end_round()
 	Services.input.set_role(GameEnums.Role.NONE)
 	Services.replace(SwarmService, _previous_swarm)
@@ -99,15 +99,3 @@ func _spawn_sheepherder() -> void:
 	_herder = Sheepherder.build(-1, local_id, {"x": start.x, "y": start.y})
 	_arena.get_entities_layer().add_child(_herder)
 	_arena.apply_camera_limits(_herder.get_camera())
-
-
-func _on_blood_spilled(at: Vector2) -> void:
-	var splat: Polygon2D = Polygon2D.new()
-	var points: PackedVector2Array = []
-	for index: int in 10:
-		var radius: float = 9.0 if index % 2 == 0 else 6.0
-		points.append(Vector2.from_angle(TAU * index / 10.0) * radius)
-	splat.polygon = points
-	splat.color = BLOOD_COLOR
-	splat.position = at
-	_arena.get_decals_layer().add_child(splat)
