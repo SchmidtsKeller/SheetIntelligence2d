@@ -22,7 +22,9 @@ func test_speed_never_exceeds_the_maximum() -> void:
 	var motion: SheepMotion = SheepMotion.new()
 
 	for _i: int in 120:
-		var velocity: Vector2 = motion.step(Vector2(5.0, 3.0), MAX_SPEED, ACCELERATION, TURN_RATE, STEP)
+		var velocity: Vector2 = motion.step(
+			Vector2(5.0, 3.0), MAX_SPEED, ACCELERATION, TURN_RATE, STEP
+		)
 		assert_lte(velocity.length(), MAX_SPEED + 0.001)
 
 

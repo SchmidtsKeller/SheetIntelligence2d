@@ -12,6 +12,15 @@ extends CharacterBody2D
 ## pushes them aside through [method push] (GDD §3.3). A shot sheep stays as a
 ## body that can still be eaten; an eaten sheep disappears (GDD §3.1, §3.2).
 
+## The sheep entered [param state].
+signal state_changed(state: State)
+
+## The sheep bleated.
+signal bleated
+
+## The living sheep was killed.
+signal died(cause: GameEnums.DeathCause)
+
 ## What the sheep is doing. Bleating is not a state: a sheep can bleat while
 ## standing, walking or grazing.
 enum State {
@@ -23,15 +32,6 @@ enum State {
 	## Eaten: the body disappears once the animation has played.
 	EATEN,
 }
-
-## The sheep entered [param state].
-signal state_changed(state: State)
-
-## The sheep bleated.
-signal bleated()
-
-## The living sheep was killed.
-signal died(cause: GameEnums.DeathCause)
 
 const ANIMATION_IDLE: StringName = &"idle"
 const ANIMATION_WALK: StringName = &"walk"
@@ -82,13 +82,11 @@ func _physics_process(delta: float) -> void:
 	if not is_alive():
 		return
 	var perks: PerkService = Services.perks
-	velocity = _motion.step(
-		Vector2.ZERO if _grazing else _move_input,
-		perks.get_stat(StatIds.SHEEP_MOVE_SPEED),
-		perks.get_stat(StatIds.SHEEP_ACCELERATION),
-		deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG)),
-		delta,
-	) + _push_velocity
+	var wish: Vector2 = Vector2.ZERO if _grazing else _move_input
+	var max_speed: float = perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+	var acceleration: float = perks.get_stat(StatIds.SHEEP_ACCELERATION)
+	var turn_rate: float = deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG))
+	velocity = _motion.step(wish, max_speed, acceleration, turn_rate, delta) + _push_velocity
 	_push_velocity = Vector2.ZERO
 	move_and_slide()
 	_facing.rotation = _motion.heading
@@ -96,6 +94,7 @@ func _physics_process(delta: float) -> void:
 
 
 # --- Look ------------------------------------------------------------------------
+
 
 ## Gives the sheep the look of [param visual_seed]. Can be called before or
 ## after the sheep enters the scene tree.
@@ -115,6 +114,7 @@ func get_appearance() -> SheepAppearance:
 
 
 # --- Steering --------------------------------------------------------------------
+
 
 ## Where the sheep should walk, with a length from 0 (stand) to 1 (full speed).
 ## Stays in effect until changed. Ignored while grazing or dead.
@@ -151,6 +151,7 @@ func push(push_velocity: Vector2) -> void:
 
 
 # --- Death -----------------------------------------------------------------------
+
 
 ## Kills the sheep. [constant GameEnums.DeathCause.SHOT] leaves a body,
 ## [constant GameEnums.DeathCause.EATEN] makes it disappear; the body of a shot
@@ -195,6 +196,7 @@ func get_speed() -> float:
 
 # --- Internals -------------------------------------------------------------------
 
+
 func _build_layers() -> void:
 	if catalog == null:
 		push_error("SheepBody: no appearance catalog is set.")
@@ -202,7 +204,9 @@ func _build_layers() -> void:
 	for slot: SheepAppearanceSlot in catalog.slots:
 		var layer: Sprite2D = Sprite2D.new()
 		layer.name = String(slot.id).to_pascal_case()
-		var anchor: Node2D = _head_anchor if slot.anchor == SheepAppearanceSlot.Anchor.HEAD else _body_anchor
+		var anchor: Node2D = (
+			_head_anchor if slot.anchor == SheepAppearanceSlot.Anchor.HEAD else _body_anchor
+		)
 		anchor.add_child(layer)
 		_layers.append(layer)
 
@@ -222,7 +226,9 @@ func _apply_appearance() -> void:
 		var tint_index: int = _appearance.tint_indices[slot_index]
 		layer.texture = part.texture
 		layer.position = part.offset
-		layer.self_modulate = part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE
+		layer.self_modulate = (
+			part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE
+		)
 	_visual.scale = Vector2(_appearance.length_permille, _appearance.width_permille) / 1000.0
 
 
@@ -238,7 +244,9 @@ func _update_state() -> void:
 		_enter_state(state)
 	if _state == State.WALK:
 		var max_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
-		_animation.speed_scale = maxf(_motion.speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
+		_animation.speed_scale = (
+			maxf(_motion.speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
+		)
 
 
 func _enter_state(state: State) -> void:
