@@ -55,7 +55,7 @@ var _sheep_radius: float = 0.0
 static func register(for_session: GameSession, parent_provider: Callable = Callable()) -> void:
 	var parent: Callable = parent_provider
 	if not parent.is_valid():
-		parent = Monster._entities_layer_of_arena.bind(for_session)
+		parent = Monster.find_entities_layer.bind(for_session)
 	for_session.entities.register_kind(KIND, Monster.build.bind(for_session), parent)
 
 
@@ -102,7 +102,9 @@ static func of(body: Node) -> Monster:
 	return body.get_node_or_null(NODE_NAME) as Monster if body != null else null
 
 
-static func _entities_layer_of_arena(for_session: GameSession) -> Node:
+## Where the sheep live: the y-sorted entity layer of the arena in the scene
+## tree of [param for_session]; [code]null[/code] without an arena.
+static func find_entities_layer(for_session: GameSession) -> Node:
 	if not for_session.is_inside_tree():
 		return null
 	var arena: Arena = for_session.get_tree().get_first_node_in_group(Groups.ARENA) as Arena
