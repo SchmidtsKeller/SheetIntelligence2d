@@ -40,6 +40,11 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	registry.register(SwarmService, swarm)
 	swarm.setup(session, registry.resolve(PerkService) as PerkService)
 
+	# The match runs on the session and on the services above.
+	var match_flow: MatchFlow = MatchFlow.new()
+	registry.register(MatchFlow, match_flow)
+	match_flow.setup(session)
+
 
 ## The transport for this run: the desktop dev transport when the command
 ## line asks to host or join a session, otherwise the offline loopback.
