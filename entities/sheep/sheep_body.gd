@@ -48,12 +48,30 @@ const MIN_WALK_ANIMATION_SPEED: float = 0.4
 ## Everything this sheep can look like.
 @export var catalog: SheepAppearanceCatalog
 
+## Whether this device simulates the sheep. A sheep that is simulated on the
+## other device does not walk by itself; it is put where it belongs.
+var simulated: bool = true
+
+## Whether something else decides where and how the sheep is shown, by calling
+## [method present]. Replicated sheep are shown a moment in the past on every
+## device, also on the one that simulates them, so that no sheep looks more
+## current than another (see docs/networking.md, uniform presentation).
+var presented_externally: bool = false:
+	set(value):
+		presented_externally = value
+		if is_node_ready():
+			_apply_presentation_mode()
+
 var _visual_seed: int = 0
 var _appearance: SheepAppearance
 var _motion: SheepMotion = SheepMotion.new()
 var _move_input: Vector2 = Vector2.ZERO
 var _push_velocity: Vector2 = Vector2.ZERO
 var _grazing: bool = false
+## What is shown, which lags behind the simulation when the sheep is
+## presented externally.
+var _shown_speed: float = 0.0
+var _shown_grazing: bool = false
 var _state: State = State.IDLE
 var _layers: Array[Sprite2D] = []
 var _move_emitter: int = -1
@@ -72,6 +90,7 @@ var _graze_emitter: int = -1
 func _ready() -> void:
 	_build_layers()
 	_apply_appearance()
+	_apply_presentation_mode()
 	_animation.animation_finished.connect(_on_animation_finished)
 	_move_emitter = Services.audio.start_emitter(AudioEvents.GRASS_MOVE, self)
 	_graze_emitter = Services.audio.start_emitter(AudioEvents.GRAZE, self)
@@ -81,16 +100,17 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not is_alive():
 		return
-	var perks: PerkService = Services.perks
-	var wish: Vector2 = Vector2.ZERO if _grazing else _move_input
-	var max_speed: float = perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
-	var acceleration: float = perks.get_stat(StatIds.SHEEP_ACCELERATION)
-	var turn_rate: float = deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG))
-	velocity = _motion.step(wish, max_speed, acceleration, turn_rate, delta) + _push_velocity
-	_push_velocity = Vector2.ZERO
-	move_and_slide()
-	_facing.rotation = _motion.heading
-	_update_state()
+	if simulated:
+		var perks: PerkService = Services.perks
+		var wish: Vector2 = Vector2.ZERO if _grazing else _move_input
+		var max_speed: float = perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+		var acceleration: float = perks.get_stat(StatIds.SHEEP_ACCELERATION)
+		var turn_rate: float = deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG))
+		velocity = _motion.step(wish, max_speed, acceleration, turn_rate, delta) + _push_velocity
+		_push_velocity = Vector2.ZERO
+		move_and_slide()
+	if not presented_externally:
+		_show(_motion.heading, _motion.speed, _grazing)
 
 
 # --- Look ------------------------------------------------------------------------
@@ -128,7 +148,9 @@ func set_grazing(grazing: bool) -> bool:
 	if not is_alive():
 		return false
 	_grazing = grazing
-	_update_state()
+	if not presented_externally:
+		_shown_grazing = grazing
+		_update_state()
 	return true
 
 
@@ -148,6 +170,20 @@ func bleat() -> bool:
 func push(push_velocity: Vector2) -> void:
 	if is_alive():
 		_push_velocity += push_velocity
+
+
+# --- Presentation ----------------------------------------------------------------
+
+
+## Shows the living sheep at [param shown_position], facing [param heading]
+## (radians), as if walking at [param speed] and grazing or not. Only for a
+## sheep that is [member presented_externally]; its animation and sounds
+## follow what is shown, not the simulation.
+func present(shown_position: Vector2, heading: float, speed: float, grazing: bool) -> void:
+	if not is_alive():
+		return
+	_facing.global_position = shown_position
+	_show(heading, speed, grazing)
 
 
 # --- Death -----------------------------------------------------------------------
@@ -232,20 +268,37 @@ func _apply_appearance() -> void:
 	_visual.scale = Vector2(_appearance.length_permille, _appearance.width_permille) / 1000.0
 
 
+func _apply_presentation_mode() -> void:
+	# A sheep that is shown from outside is drawn where it is told, not where
+	# its body is.
+	_facing.top_level = presented_externally
+	if presented_externally:
+		_facing.global_position = global_position
+	else:
+		_facing.position = Vector2.ZERO
+
+
+func _show(heading: float, speed: float, grazing: bool) -> void:
+	_facing.rotation = heading
+	_shown_speed = speed
+	_shown_grazing = grazing
+	_update_state()
+
+
 func _update_state() -> void:
 	if not is_alive():
 		return
 	var state: State = State.IDLE
-	if _grazing:
+	if _shown_grazing:
 		state = State.GRAZE
-	elif _motion.speed > WALK_SPEED_THRESHOLD:
+	elif _shown_speed > WALK_SPEED_THRESHOLD:
 		state = State.WALK
 	if state != _state:
 		_enter_state(state)
 	if _state == State.WALK:
 		var max_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
 		_animation.speed_scale = (
-			maxf(_motion.speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
+			maxf(_shown_speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
 		)
 
 
@@ -255,6 +308,11 @@ func _enter_state(state: State) -> void:
 		_motion.speed = 0.0
 		velocity = Vector2.ZERO
 		_grazing = false
+		_shown_speed = 0.0
+		_shown_grazing = false
+		if presented_externally:
+			# The body lies where the sheep died, not where it was last shown.
+			_facing.global_position = global_position
 		_voice.stop()
 		_collision.set_deferred(&"disabled", true)
 		_hit_shape.set_deferred(&"disabled", true)

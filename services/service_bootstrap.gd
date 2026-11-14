@@ -26,7 +26,6 @@ static func core_contracts() -> Array[Script]:
 static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> void:
 	registry.register(InputService, DeviceInputService.new())
 	registry.register(NetworkService, create_network_service(config))
-	registry.register(SwarmService, StubSwarmService.new())
 	registry.register(CombatService, StubCombatService.new(config))
 	registry.register(PerkService, StubPerkService.new(config))
 	registry.register(AudioService, StubAudioService.new(config))
@@ -35,6 +34,11 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	session.configure(config)
 	registry.register(GameSession, session)
 	session.bind_network(registry.resolve(NetworkService) as NetworkService)
+
+	# The flock replicates through the session, so it comes after it.
+	var swarm: FlockSwarmService = FlockSwarmService.new()
+	registry.register(SwarmService, swarm)
+	swarm.setup(session, registry.resolve(PerkService) as PerkService)
 
 
 ## The transport for this run: the desktop dev transport when the command
