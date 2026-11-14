@@ -25,6 +25,20 @@ The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/ga
 
 The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbox.tscn), **F6**) shows the whole arena with a round's spawn layout. Its buttons let the sheep wander into obstacles and borders, switch the debug overlay (footprints, occluders, borders, spawn areas) and change the zoom.
 
+### Two instances on one computer
+
+The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
+
+```bash
+godot --path . -- --host
+```
+
+```bash
+godot --path . -- --join
+```
+
+Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance check are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+
 ## Run the tests
 
 ```bash
@@ -204,6 +218,14 @@ boot → lobby → round → results ─┬→ round   (next round)
 ```
 
 `SceneFlow.go_to(SceneFlowController.Screen.ROUND)` changes the scene and refuses transitions the flow does not allow. Each screen is a scene in `ui/screens/`; a task replaces a placeholder by setting `SceneFlow.screen_scenes[...]`.
+
+### Session and replication
+
+`Services.session` ([systems/session/game_session.gd](systems/session/game_session.gd)) sits between the connection and the game. It knows who is host, who plays which role and which screen both devices are on, and it owns the building blocks every networked feature uses: reliable ordered events, unreliable snapshots with interpolation, host-owned synced values, and spawning of replicated entities with stable ids.
+
+The host decides the flock, combat and the round; each player moves their own character. The conventions (authority table, channels, tick rate, how to add a replicated entity or event) are in [docs/networking.md](docs/networking.md).
+
+**Rule:** gameplay code talks to the session, never to a transport or to Godot's multiplayer API directly.
 
 ## Project settings
 

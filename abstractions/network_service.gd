@@ -5,7 +5,13 @@ extends Node
 ## An implementation is a transport: WebRTC with QR / text-code pairing in the
 ## Web build, a localhost transport or an offline loopback for development and
 ## tests. Everything above it (session, roles, replication) only talks to this
-## contract and to the [MultiplayerPeer] it exposes.
+## contract and to Godot's multiplayer API.
+##
+## The transport installs its [MultiplayerPeer] as the scene tree's multiplayer
+## peer as soon as it starts hosting or joining, [b]before[/b] the connection
+## exists: the multiplayer API only knows a device whose connection it saw
+## being made. When the session ends, the transport puts the offline peer back.
+## It reports [signal session_started] once RPCs can reach the other device.
 ##
 ## A session always has exactly one host and at most one guest. The host is
 ## authoritative for the flock, combat and the round state.
@@ -14,7 +20,7 @@ extends Node
 @warning_ignore("unused_signal")
 signal connection_state_changed(state: ConnectionState)
 
-## The session is established and [method get_multiplayer_peer] is usable.
+## The session is established: RPCs reach the other device.
 @warning_ignore("unused_signal")
 signal session_started
 
@@ -82,8 +88,8 @@ enum DisconnectReason {
 ## The other device's peer id; 0 while nobody is connected or offline.
 @abstract func get_remote_peer_id() -> int
 
-## The peer to assign to [member MultiplayerAPI.multiplayer_peer]; [code]null[/code]
-## without a session.
+## The peer this transport installed as the scene tree's multiplayer peer;
+## [code]null[/code] without a session.
 @abstract func get_multiplayer_peer() -> MultiplayerPeer
 
 ## Whether the players have to exchange pairing codes to connect
