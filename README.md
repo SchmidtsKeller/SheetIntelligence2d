@@ -294,7 +294,7 @@ setup → spawn → countdown → active → resolved → results ─┬→ setu
 | `COUNTDOWN` | `round_countdown_duration`, 3 s | Everybody is in place; nobody can act |
 | `ACTIVE` | `round_duration`, 180 s | The round. **Gameplay input is enabled only in this phase** |
 | `RESOLVED` | `round_resolved_duration`, 3 s | The round is decided and stays on screen with its outcome |
-| `RESULTS` | until the host continues | The results screen; the perks are cleared |
+| `RESULTS` | until the host continues | The results screen. The perks of the round are cleared and the players get the roles of the next round, so each can choose a perk for the role they are about to play |
 
 **Who wins a round** is decided by [RoundRules](systems/match/round_rules.gd), which has no scene, no session and no clock and is tested case by case in `tests/unit/test_round_rules.gd`:
 
@@ -305,7 +305,7 @@ setup → spawn → countdown → active → resolved → results ─┬→ setu
 - **Points** are always recorded, whoever wins: the Monster gets 1 for every sheep it ate alive (0 for the body of a shot one), the Sheepherder 1 for every sheep that survived and −2 for every sheep they shot.
 - **Same tick.** The host reports lethal events in the order its combat service decides them, and the first one decides the round. The timer is looked at after the events of a tick, so a kill in the tick in which the time runs out still counts.
 
-**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played; the roles are random in round 1 and swap after every round. The player with more round wins takes the match; equal wins are a draw.
+**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played. Round 1 is played in the roles the session drew at random when it started, which are the ones the lobby shows; they swap after every round, and a rematch draws them anew. The player with more round wins takes the match; equal wins are a draw.
 
 ```gdscript
 var flow: MatchFlow = Services.match_flow

@@ -14,7 +14,10 @@ extends Node
 ##
 ## The flow starts a round when both devices have entered the round screen,
 ## shows the results screen when it is over, and ends the match when the
-## session ends or the players return to the lobby.
+## session ends or the players return to the lobby. On the results screen it
+## clears the perks of the round and gives the players the roles of the next
+## one, so the perks for it can be chosen before its [constant Phase.SETUP]
+## ends, where the flow locks them.
 
 ## The match moved on. Emitted on both devices.
 signal phase_changed(phase: Phase)
@@ -142,23 +145,29 @@ func setup(session: GameSession) -> void:
 
 
 ## Starts a match with its first round. The host plays [param host_role] in
-## it, or [member first_host_role]; without either the roles are drawn. Host
-## only, and not while a round is running.
+## it, or [member first_host_role]. Without either, the players keep the roles
+## the session drew when it started (GDD §2.3: random in round 1), which are
+## the ones the lobby showed them and they chose their perks for; a rematch
+## draws them anew. Host only, and not while a round is running.
 func start_match(host_role: GameEnums.Role = GameEnums.Role.NONE) -> bool:
 	if not _may_start_round():
 		return false
+	var is_rematch: bool = _score.get_rounds_played() > 0
 	_publish_score(MatchScore.new(perks.get_stat_int(StatIds.MATCH_ROUNDS)))
-	var role: GameEnums.Role = host_role if host_role != GameEnums.Role.NONE else first_host_role
+	var role: GameEnums.Role = host_role
 	if role == GameEnums.Role.NONE:
-		_session.assign_random_roles()
-	else:
+		role = first_host_role
+	if role != GameEnums.Role.NONE:
 		_session.assign_roles(role)
+	elif is_rematch or _session.get_local_role() == GameEnums.Role.NONE:
+		_session.assign_random_roles()
 	_begin_round()
 	return true
 
 
-## Starts the next round of the match with the roles swapped, or a new match
-## if none is running or the last one is over. Host only, and not while a
+## Starts the next round of the match, in the roles the players got when the
+## last one was over, or a new match if none is running or the last one is
+## over. Host only, and not while a
 ## round is running. The flow calls this itself when both devices have
 ## entered the round screen.
 func start_round() -> bool:
@@ -354,8 +363,19 @@ func _finish_round() -> void:
 
 func _show_results() -> void:
 	_enter(Phase.RESULTS, OPEN_END)
+	if not _session.request_screen(SceneFlowController.Screen.RESULTS):
+		_prepare_next_round()
+
+
+## The round's world is gone. Its perks end, and the players get the roles of
+## the next round (GDD §2.3: they swap after every round), so that each can
+## choose a perk for the role they are about to play.
+func _prepare_next_round() -> void:
+	if _phase != Phase.RESULTS:
+		return
+	if not _score.is_over():
+		_session.assign_roles(_score.get_next_host_role())
 	perks.clear_selection()
-	_session.request_screen(SceneFlowController.Screen.RESULTS)
 
 
 ## The host ends the match for both devices.
@@ -532,6 +552,8 @@ func _on_screen_entered(screen: SceneFlowController.Screen) -> void:
 	match screen:
 		SceneFlowController.Screen.ROUND:
 			start_round()
+		SceneFlowController.Screen.RESULTS:
+			_prepare_next_round()
 		SceneFlowController.Screen.LOBBY:
 			# However the players got here, the match is over.
 			_end_match()

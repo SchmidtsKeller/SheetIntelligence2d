@@ -71,6 +71,9 @@ func test_without_a_match_the_flow_is_idle() -> void:
 
 
 func test_entering_the_round_screen_starts_the_match_on_both_devices() -> void:
+	var drawn_role: GameEnums.Role = _pair.host.get_local_role()
+	assert_ne(drawn_role, Role.NONE, "the session drew the roles when it started")
+
 	_pair.host.request_screen(Screen.ROUND)
 	await wait_frames(4)
 
@@ -79,8 +82,8 @@ func test_entering_the_round_screen_starts_the_match_on_both_devices() -> void:
 	assert_eq(_host.get_round_number(), 1)
 	assert_eq(_guest.get_round_number(), 1)
 	assert_eq(_guest.get_rounds_total(), 5)
-	assert_ne(_pair.host.get_local_role(), Role.NONE, "the roles are drawn")
-	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(_pair.host.get_local_role()))
+	assert_eq(_pair.host.get_local_role(), drawn_role, "round 1 is played as the lobby showed")
+	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(drawn_role))
 
 
 func test_a_round_goes_through_setup_spawn_and_countdown() -> void:
@@ -404,6 +407,10 @@ func test_after_a_moment_both_devices_see_the_results() -> void:
 	assert_eq(_host.get_phase(), Phase.RESOLVED)
 
 	_pass(0.2)
+	assert_eq(_host.get_phase(), Phase.RESULTS)
+	assert_true(_host_perks.is_selection_locked(), "the round's world is still on screen")
+	assert_eq(_pair.host.get_local_role(), Role.SHEEPHERDER)
+
 	await wait_frames(4)
 
 	assert_eq(_host.get_phase(), Phase.RESULTS)
@@ -412,6 +419,68 @@ func test_after_a_moment_both_devices_see_the_results() -> void:
 	assert_eq(_pair.guest_flow.current_screen, Screen.RESULTS)
 	assert_false(_host_perks.is_selection_locked(), "the perks of the round are gone")
 	assert_false(_host.is_match_over())
+
+
+func test_on_the_results_screen_the_players_have_the_roles_of_the_next_round() -> void:
+	await _play_round(Role.SHEEPHERDER, Role.SHEEPHERDER)
+
+	# So each of them can choose a perk for the role they are about to play.
+	assert_eq(_pair.host.get_local_role(), Role.MONSTER)
+	assert_eq(_pair.guest.get_local_role(), Role.SHEEPHERDER)
+	assert_eq(_host.get_score().get_role_in_round(0, MatchScore.Player.HOST), Role.SHEEPHERDER)
+	assert_eq(_guest.get_score().get_role_in_round(0, MatchScore.Player.GUEST), Role.MONSTER)
+
+
+func test_after_the_last_round_the_roles_stay() -> void:
+	_config.match_rounds = 1
+	await _play_round(Role.SHEEPHERDER, Role.SHEEPHERDER)
+
+	assert_true(_host.is_match_over())
+	assert_eq(_pair.host.get_local_role(), Role.SHEEPHERDER)
+	assert_false(_host_perks.is_selection_locked())
+
+
+func test_a_players_own_perks_follow_them_through_the_swap() -> void:
+	# A choice is asked of the host and answered, as over a real connection.
+	_delay_link()
+	var host_perks: SessionPerkService = _create_perks(
+		_pair.host, [PerkIds.WIDE_FLASHLIGHT, PerkIds.INVISIBILITY]
+	)
+	var guest_perks: SessionPerkService = _create_perks(
+		_pair.guest, [PerkIds.LONG_FLASHLIGHT, PerkIds.FASTER_CONSUMPTION]
+	)
+	_host.perks = host_perks
+	_guest.perks = guest_perks
+	_pair.host.assign_roles(Role.SHEEPHERDER)
+	# In the lobby both pick a perk for the role they were given.
+	host_perks.clear_selection()
+	await _settle()
+
+	_pair.host.request_screen(Screen.ROUND)
+	await _settle()
+
+	for perks: SessionPerkService in [host_perks, guest_perks]:
+		assert_true(perks.is_selection_locked())
+		assert_eq(perks.get_selected_perk(Role.SHEEPHERDER), PerkIds.WIDE_FLASHLIGHT)
+		assert_eq(perks.get_selected_perk(Role.MONSTER), PerkIds.FASTER_CONSUMPTION)
+
+	await _play_round(Role.NONE, Role.SHEEPHERDER)
+	await _settle()
+
+	# On the results screen the roles are swapped, and each picks again.
+	assert_eq(_pair.guest.get_local_role(), Role.SHEEPHERDER)
+	for perks: SessionPerkService in [host_perks, guest_perks]:
+		assert_false(perks.is_selection_locked())
+		assert_eq(perks.get_selected_perk(Role.MONSTER), PerkIds.INVISIBILITY, "the host's")
+		assert_eq(perks.get_selected_perk(Role.SHEEPHERDER), PerkIds.LONG_FLASHLIGHT, "the guest's")
+
+	_host.request_next_round()
+	await _settle()
+
+	for perks: SessionPerkService in [host_perks, guest_perks]:
+		assert_true(perks.is_selection_locked(), "locked for round 2")
+		assert_eq(perks.get_selected_perk(Role.MONSTER), PerkIds.INVISIBILITY)
+		assert_eq(perks.get_selected_perk(Role.SHEEPHERDER), PerkIds.LONG_FLASHLIGHT)
 
 
 func test_the_next_round_swaps_the_roles() -> void:
@@ -597,6 +666,17 @@ func _create_flow(
 	return add_child_autofree(flow)
 
 
+## A real perk service for [param session], whose player wants
+## [param launch_perks].
+func _create_perks(session: GameSession, launch_perks: Array[StringName]) -> SessionPerkService:
+	var perks: SessionPerkService = SessionPerkService.new(_config, PerkCatalog.load_default())
+	perks.launch_perks = launch_perks
+	add_child_autofree(perks)
+	perks.setup(session)
+	perks.set_process(false)
+	return perks
+
+
 ## Lets [param seconds] pass on both clocks and both flows look at them.
 func _pass(seconds: float) -> void:
 	_time += seconds
@@ -659,3 +739,12 @@ func _travel(seconds: float) -> void:
 			_pair.host.messenger.receive(entry[1], entry[2], SessionPair.GUEST_ID)
 		else:
 			_pair.guest.messenger.receive(entry[1], entry[2], SessionPair.HOST_ID)
+
+
+## With a delayed link: delivers what is on its way, and what that causes,
+## until both devices have settled.
+func _settle() -> void:
+	for _turn: int in 3:
+		while not _in_transit.is_empty():
+			_travel(0.0)
+		await wait_frames(3)

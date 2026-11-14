@@ -144,7 +144,7 @@ session.get_local_role()       # GameEnums.Role
 session.roles_changed          # signal, both devices
 ```
 
-**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1) and swaps them with `swap_roles()` after every round. The assignment is synced state, so both devices always agree.
+**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1), and the match flow swaps them after every round, when the results screen is up. The assignment is synced state, so both devices always agree.
 
 **Screens.** `session.request_screen(SceneFlowController.Screen.ROUND)` on the host takes both devices along: both load the scene, each reports when it is ready, and only then `screen_entered` is emitted on both. Start a round on `screen_entered`, not in `_ready`, so neither device starts ahead of the other.
 
