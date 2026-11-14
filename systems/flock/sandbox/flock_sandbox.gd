@@ -20,6 +20,8 @@ var _round_seed: int = 1
 var _speed_index: int = 0
 var _extra_sheep: SheepBody
 var _status: Label
+var _normal_physics_ticks: int = Engine.physics_ticks_per_second
+var _normal_physics_steps: int = Engine.max_physics_steps_per_frame
 
 
 func _ready() -> void:
@@ -44,7 +46,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	Engine.time_scale = 1.0
+	_set_speed(1.0)
 	Services.input.set_role(GameEnums.Role.NONE)
 	_swarm.despawn_flock()
 	if is_instance_valid(_extra_sheep):
@@ -139,7 +141,16 @@ func _toggle_overlay() -> void:
 
 func _next_speed() -> void:
 	_speed_index = (_speed_index + 1) % SPEEDS.size()
-	Engine.time_scale = SPEEDS[_speed_index]
+	_set_speed(SPEEDS[_speed_index])
+
+
+## Time lapse runs more physics steps instead of longer ones, so the sheep
+## behave exactly as at normal speed.
+func _set_speed(factor: float) -> void:
+	var steps: float = maxf(factor, 1.0)
+	Engine.time_scale = factor
+	Engine.physics_ticks_per_second = roundi(_normal_physics_ticks * steps)
+	Engine.max_physics_steps_per_frame = roundi(_normal_physics_steps * steps)
 
 
 func _kill_one() -> void:

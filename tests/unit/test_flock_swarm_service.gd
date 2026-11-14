@@ -428,6 +428,74 @@ func test_grazing_death_bleats_and_the_bell_reach_the_guest() -> void:
 	host_swarm.despawn_flock()
 
 
+func test_guest_knows_the_phase_of_every_sheep() -> void:
+	var pair: Dictionary = _create_pair()
+	var host_swarm: FlockSwarmService = pair["host_swarm"]
+	var guest_swarm: FlockSwarmService = pair["guest_swarm"]
+	host_swarm.spawn_flock(ROUND_SEED)
+	watch_signals(guest_swarm)
+
+	await _simulate(15.0, FAST_WITH_GUEST)
+
+	assert_gt(
+		get_signal_emit_count(guest_swarm, &"sheep_phase_changed"),
+		_flock_size,
+		"the guest hears of phase changes"
+	)
+	for sheep_id: int in host_swarm.get_living_sheep_ids():
+		assert_eq(
+			guest_swarm.get_sheep_phase(sheep_id),
+			host_swarm.get_agent(sheep_id).get_phase(),
+			"sheep %d" % sheep_id
+		)
+	host_swarm.despawn_flock()
+
+
+func test_guest_sheep_move_smoothly_over_a_bad_connection() -> void:
+	var pair: Dictionary = _create_pair()
+	var host_swarm: FlockSwarmService = pair["host_swarm"]
+	var guest_swarm: FlockSwarmService = pair["guest_swarm"]
+	var guest_messenger: NetMessenger = (pair["pair"] as SessionPair).guest.messenger
+	guest_messenger.sim_latency = 0.06
+	guest_messenger.sim_jitter = 0.04
+	guest_messenger.sim_loss = 0.15
+	host_swarm.spawn_flock(ROUND_SEED)
+	# The spawns take their time over this line.
+	var arrival_deadline_msec: int = Time.get_ticks_msec() + 2000
+	while guest_swarm.get_living_count() < _flock_size and Time.get_ticks_msec() < arrival_deadline_msec:
+		await get_tree().process_frame
+	var ids: Array[int] = guest_swarm.get_living_sheep_ids()
+	assert_eq(ids.size(), _flock_size, "the flock arrives, if a little late")
+	var speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+	var shown: Dictionary[int, Vector2] = {}
+	for sheep_id: int in ids:
+		shown[sheep_id] = (guest_swarm.get_sheep_body(sheep_id) as Node2D).global_position
+	var travelled: float = 0.0
+	var jumps: int = 0
+	var largest_gap: float = 0.0
+
+	# In real time: what counts is how far a sheep moves from frame to frame.
+	var until_msec: int = Time.get_ticks_msec() + 5000
+	while Time.get_ticks_msec() < until_msec:
+		await get_tree().process_frame
+		var delta: float = get_process_delta_time()
+		for sheep_id: int in ids:
+			var now: Vector2 = (guest_swarm.get_sheep_body(sheep_id) as Node2D).global_position
+			var step: float = now.distance_to(shown[sheep_id])
+			travelled += step
+			# Twice its walking speed, plus the small correction after a gap.
+			jumps += int(step > speed * delta * 2.0 + 12.0)
+			shown[sheep_id] = now
+			var on_host: Vector2 = (host_swarm.get_sheep_body(sheep_id) as Node2D).global_position
+			largest_gap = maxf(largest_gap, now.distance_to(on_host))
+
+	assert_gt(travelled, 500.0, "the guest's sheep walk")
+	assert_eq(jumps, 0, "without jumping")
+	# A quarter of a second behind at most: interpolation delay plus the line.
+	assert_lt(largest_gap, speed * 0.3 + 20.0, "and stay close to where they really are")
+	host_swarm.despawn_flock()
+
+
 func test_every_sheep_is_shown_through_the_same_delay() -> void:
 	# Uniform presentation: on the host, a sheep it simulates is drawn where
 	# the guest draws it, not where its simulation already is.
@@ -519,6 +587,10 @@ static func _mean_distance_between(positions: Array) -> float:
 ## guest's arena lives in its own viewport, so the two worlds do not collide.
 func _create_pair() -> Dictionary:
 	var pair: SessionPair = SessionPair.create(self)
+	# The guest's session runs first in every frame. Both devices share one
+	# process here; this way the guest's clock has already reached the frame in
+	# which the host sends a snapshot, as on a real second device.
+	move_child(pair.guest, pair.host.get_index())
 	var guest_viewport: SubViewport = add_child_autofree(SubViewport.new())
 	var guest_arena: Arena = ARENA_SCENE.instantiate()
 	guest_viewport.add_child(guest_arena)

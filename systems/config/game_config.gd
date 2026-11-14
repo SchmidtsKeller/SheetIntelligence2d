@@ -93,6 +93,15 @@ extends Resource
 @export_range(0.0, 2000.0, 1.0, "suffix:px") var flock_cohesion_radius: float = 280.0
 ## How much a sheep that starts to walk leans toward where the others walk.
 @export_range(0.0, 2.0, 0.05) var flock_alignment_weight: float = 0.35
+## How strongly walking sheep keep apart from each other, compared to the pull
+## of where they want to go (1).
+@export_range(0.0, 10.0, 0.05) var flock_separation_weight: float = 1.6
+## How strongly a sheep that starts to walk is drawn back to the flock.
+@export_range(0.0, 10.0, 0.05) var flock_cohesion_weight: float = 2.5
+## How strongly walking sheep keep clear of obstacles.
+@export_range(0.0, 10.0, 0.05) var flock_obstacle_weight: float = 2.2
+## How strongly walking sheep keep clear of the borders.
+@export_range(0.0, 10.0, 0.05) var flock_border_weight: float = 2.2
 ## Walking sheep steer away from obstacles closer than this.
 @export_range(0.0, 500.0, 1.0, "suffix:px") var flock_obstacle_margin: float = 60.0
 ## Walking sheep steer away from the borders when closer than this.

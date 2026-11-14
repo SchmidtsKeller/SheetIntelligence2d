@@ -6,8 +6,8 @@ extends SwarmService
 ## The host simulates. It spawns the sheep as replicated entities, gives each
 ## one a [FlockAgent] that decides what it does, and passes the decisions to
 ## the sheep's [SheepBody]. The guest gets the same sheep through the entity
-## registry and sees them move through [SheepNetSync]; deaths, bleats and the
-## bell reach it as events. Every query works on both devices.
+## registry and sees them move through [SheepNetSync]; phases, deaths, bleats
+## and the bell reach it as events. Every query works on both devices.
 ##
 ## Sheep are found in the arena of the running round (group
 ## [constant Groups.ARENA]), which also supplies the start positions and what
@@ -20,6 +20,9 @@ const KIND: StringName = &"sheep"
 const EVENT_KILLED: StringName = &"flock.sheep_killed"
 ## Host to both: a sheep bleats. [code][sheep_id][/code]
 const EVENT_BLEAT: StringName = &"flock.bleat"
+## Host to both: a sheep entered another behaviour phase.
+## [code][sheep_id, phase][/code]
+const EVENT_PHASE: StringName = &"flock.phase"
 ## Host to both: the bell rang. [code][origin, radius][/code]
 const EVENT_BELL: StringName = &"flock.bell"
 ## Either device to the host: ring the bell. [code][origin, radius][/code]
@@ -56,10 +59,12 @@ func setup(session: GameSession, perks: PerkService) -> void:
 	var messenger: NetMessenger = session.messenger
 	messenger.register_event(EVENT_KILLED, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.register_event(EVENT_BLEAT, NetMessenger.SenderRule.HOST_ONLY)
+	messenger.register_event(EVENT_PHASE, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.register_event(EVENT_BELL, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.register_event(EVENT_BELL_REQUEST, NetMessenger.SenderRule.ANYONE)
 	messenger.subscribe(EVENT_KILLED, _on_killed)
 	messenger.subscribe(EVENT_BLEAT, _on_bleat)
+	messenger.subscribe(EVENT_PHASE, _on_phase)
 	messenger.subscribe(EVENT_BELL, _on_bell)
 	messenger.subscribe(EVENT_BELL_REQUEST, _on_bell_request)
 
@@ -98,8 +103,7 @@ func _physics_process(delta: float) -> void:
 			_session.messenger.broadcast(EVENT_BLEAT, [sheep_id])
 		var phase: GameEnums.SheepPhase = agent.get_phase()
 		if _phases.get(sheep_id, -1) != phase:
-			_phases[sheep_id] = phase
-			sheep_phase_changed.emit(sheep_id, phase)
+			_session.messenger.broadcast(EVENT_PHASE, [sheep_id, phase])
 
 
 # --- Contract --------------------------------------------------------------------
@@ -210,6 +214,12 @@ func unregister_neighbour(body: Node2D) -> void:
 # --- For the debug overlay and tests ---------------------------------------------
 
 
+## The behaviour phase of a living sheep as this device knows it;
+## [constant GameEnums.SheepPhase.WANDER] until it hears otherwise.
+func get_sheep_phase(sheep_id: int) -> GameEnums.SheepPhase:
+	return _phases.get(sheep_id, GameEnums.SheepPhase.WANDER)
+
+
 ## The mind of a living sheep; [code]null[/code] on the guest and for dead sheep.
 func get_agent(sheep_id: int) -> FlockAgent:
 	return _agents.get(sheep_id)
@@ -309,6 +319,14 @@ func _on_killed(payload: Array, _sender_id: int) -> void:
 	if was_alive:
 		sheep_died.emit(sheep_id, cause, body.global_position)
 		living_count_changed.emit(get_living_count())
+
+
+func _on_phase(payload: Array, _sender_id: int) -> void:
+	var sheep_id: int = payload[0]
+	var phase: GameEnums.SheepPhase = payload[1]
+	if is_sheep_alive(sheep_id) and _phases.get(sheep_id, -1) != phase:
+		_phases[sheep_id] = phase
+		sheep_phase_changed.emit(sheep_id, phase)
 
 
 func _on_bleat(payload: Array, _sender_id: int) -> void:

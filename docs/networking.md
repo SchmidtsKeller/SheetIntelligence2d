@@ -10,7 +10,7 @@ Gameplay (flock, Sheepherder, Monster, round rules)
 GameSession ── roles, screens, lifecycle            Services.session
   ├─ messenger   events and snapshots               NetMessenger
   ├─ state       host-owned values                  SyncedState
-  └─ entities    spawning and transforms            NetEntityRegistry, NetTransform2D
+  └─ entities    spawning and transforms            NetEntityRegistry, NetTransform2D, SheepNetSync
         │  talks only to
 NetworkService (contract) ── the transport
   ├─ StubNetworkService     offline: a session of one
@@ -24,7 +24,7 @@ NetworkService (contract) ── the transport
 
 | What | Decided by | How the other device learns it |
 |:--|:--|:--|
-| NPC flock: positions, behaviour phases, visual seeds | Host | Snapshots (positions), events (phase changes, spawns) |
+| NPC flock: positions, behaviour phases, bleats, deaths, visual seeds | Host | Snapshots (position, heading, grazing), events (spawns, phase changes, deaths, bleats, bell) |
 | Combat: shots, hits, deaths, eating, blood, ammo | Host | Events |
 | Round and match state: timer, scores, outcome | Host | Synced state, events |
 | Roles | Host | Synced state |
@@ -76,13 +76,27 @@ A `HOST_ONLY` event sent by the guest is refused on the guest and ignored on the
 
 ### Snapshots and interpolation
 
-Several times per second each device sends one snapshot with the transform of every entity it owns. The receiving device does not show these states as they arrive. It shows every replicated entity `GameConfig.net_interpolation_delay` (0.1 s) in the past, interpolated between two states that have already arrived. As long as packets arrive within that delay, motion is smooth however unevenly they come in. If nothing newer has arrived, an entity keeps its course for at most `net_max_extrapolation` (0.1 s) and then stands still.
+Several times per second each device sends one snapshot with the state of every entity it owns. What that state is, the entity's `NetTransform2D` decides: position and rotation by default, more in a subclass (a sheep adds whether it grazes). The receiving device does not show these states as they arrive. It shows every replicated entity `GameConfig.net_interpolation_delay` (0.1 s) in the past, interpolated between two states that have already arrived. As long as packets arrive within that delay, motion is smooth however unevenly they come in. If nothing newer has arrived, an entity keeps its course for at most `net_max_extrapolation` (0.1 s) and then stands still.
 
 ### Uniform presentation rule
 
 > On each device, every sheep-like entity reaches the screen through the same interpolation path.
 
-Otherwise the network itself becomes a tell. For a hosting Sheepherder the NPC sheep are simulated on their own device and would move perfectly, while the Monster arrives over the network. So an entity that must be indistinguishable sets `NetTransform2D.delayed_visual`: its visible part is then drawn from the same buffer, with the same delay, on the device that simulates it as on the other one. The sheep body (#12) and the flock (#13) must use this for every sheep, and the Monster (#16) for its sheep on the Sheepherder's device. The character a player controls themself is exempt on their own device, where its picture has to follow the input.
+Otherwise the network itself becomes a tell. For a hosting Sheepherder the NPC sheep are simulated on their own device and would move perfectly, while the Monster arrives over the network. So an entity that must be indistinguishable sets `NetTransform2D.delayed_visual`: its visible part is then drawn from the same buffer, with the same delay, on the device that simulates it as on the other one. The character a player controls themself is exempt on their own device, where its picture has to follow the input.
+
+**Sheep** use [SheepNetSync](../entities/sheep/sheep_net_sync.gd), a `NetTransform2D` for a `SheepBody`. It goes one step further than `delayed_visual`: on both devices the sheep's picture, its walk animation and its grazing all come from the buffered state, so the animation cannot run ahead of the picture either. Grazing travels in the snapshot as a flag instead of as an event, which shows it at the matching moment and repairs itself after lost packets. The flock (#13) spawns every NPC sheep with it. The Monster (#16) must use the same component for its sheep body, with `live_on_owner = true` so that it follows the input on the Monster's own device and is shown delayed everywhere else.
+
+**Flock events** (all decided by the host, see [FlockSwarmService](../services/swarm/flock_swarm_service.gd)):
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `flock.sheep_killed` | Host | `[sheep_id, cause]` |
+| `flock.bleat` | Host | `[sheep_id]` |
+| `flock.phase` | Host | `[sheep_id, phase]` |
+| `flock.bell` | Host | `[origin, radius]` |
+| `flock.bell_request` | Either device, to the host | `[origin, radius]` |
+
+The phase event feeds `SwarmService.sheep_phase_changed` on both devices, for game logic. What a sheep is *shown* doing comes from the snapshots alone.
 
 ## Session
 
@@ -126,10 +140,10 @@ session.state.value_changed.connect(_on_value)     # both devices
    	return sheep
    ```
 
-3. Tell the registry where entities live: `session.entities.spawn_root = $World/Entities`.
+3. Tell the registry where entities live: `session.entities.spawn_root = $World/Entities`. A kind that belongs somewhere else names its parent when it is registered, as a function that is asked at every spawn: `register_kind(&"sheep", _build_sheep, _get_sheep_parent)`. Do not move an entity to another parent after it was spawned; the registry takes that for its removal.
 4. On the host, spawn it for its owner: `var id: int = session.entities.spawn(&"sheep", owner_peer_id, {"x": 100.0, "y": 80.0, "seed": 42})`. The id is the same on both devices and is how events refer to the entity.
 5. On the owning device, move the root node as usual. Nothing else is needed: the transform travels in the snapshots and the other device shows it interpolated. Use `session.entities.is_local_authority(id)` to run simulation code only on the owner.
-6. Send everything that is not a transform (a state change, an animation trigger) as an event that names the entity id.
+6. Send everything that happens once (a death, a sound, an animation trigger) as an event that names the entity id. A state that lasts and must match the picture belongs in the snapshot instead: extend `NetTransform2D` and override `capture`, `receive` and `present`, as `SheepNetSync` does.
 7. On the host, remove it with `despawn(id)`; `despawn_all()` at the end of a round.
 
 Spawn data and event payloads must be plain data: numbers, strings, vectors, arrays, dictionaries. No objects or node references.

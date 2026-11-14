@@ -34,11 +34,6 @@ const TARGET_ATTEMPTS: int = 12
 ## Distance between the points checked along the way to a target.
 const PATH_CHECK_STEP: float = 40.0
 
-const SEPARATION_WEIGHT: float = 1.6
-const OBSTACLE_WEIGHT: float = 2.2
-const BORDER_WEIGHT: float = 2.2
-const COHESION_WEIGHT: float = 2.5
-
 var activity: Activity = Activity.PAUSE
 ## Where the current walk leads, or where the bell rang.
 var target: Vector2 = Vector2.ZERO
@@ -149,7 +144,7 @@ func _start_walk(position: Vector2, world: FlockWorld) -> void:
 		direction += world.heading * _settings.alignment_weight
 		direction += (
 			FlockSteering.cohesion(position, world.center, _settings.cohesion_radius)
-			* COHESION_WEIGHT
+			* _settings.cohesion_weight
 		)
 		if direction.is_zero_approx():
 			continue
@@ -181,15 +176,15 @@ func _steer(position: Vector2, world: FlockWorld) -> Vector2:
 	var wish: Vector2 = position.direction_to(target)
 	wish += (
 		FlockSteering.separation(position, world.neighbours, _settings.separation_radius)
-		* SEPARATION_WEIGHT
+		* _settings.separation_weight
 	)
 	wish += (
 		FlockSteering.obstacle_avoidance(position, world.footprints, _settings.obstacle_margin)
-		* OBSTACLE_WEIGHT
+		* _settings.obstacle_weight
 	)
 	wish += (
 		FlockSteering.border_avoidance(position, world.play_area, _settings.border_margin)
-		* BORDER_WEIGHT
+		* _settings.border_weight
 	)
 	return wish.normalized() if wish.length() > 0.05 else Vector2.ZERO
 
