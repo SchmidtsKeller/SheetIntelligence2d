@@ -63,6 +63,12 @@ const BAT_COOLDOWN: StringName = &"bat_cooldown"
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
 
+# --- Network -----------------------------------------------------------------
+const NET_TICK_RATE: StringName = &"net_tick_rate"
+const NET_INTERPOLATION_DELAY: StringName = &"net_interpolation_delay"
+const NET_MAX_EXTRAPOLATION: StringName = &"net_max_extrapolation"
+const NET_CONNECT_TIMEOUT: StringName = &"net_connect_timeout"
+
 # --- View --------------------------------------------------------------------
 const VIEW_MAX_WORLD_WIDTH: StringName = &"view_max_world_width"
 const VIEW_MAX_WORLD_HEIGHT: StringName = &"view_max_world_height"

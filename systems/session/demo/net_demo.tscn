@@ -1,0 +1,74 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/session/demo/net_demo.gd" id="1_demo"]
+
+[node name="NetDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_demo")
+
+[node name="World" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Panel" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 200.0
+grow_horizontal = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 2
+text = "Network demo: move your box with WASD or the arrow keys."
+
+[node name="Status" type="Label" parent="Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No session."
+
+[node name="Buttons" type="HBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SwapRoles" type="Button" parent="Panel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Swap roles (host)"
+
+[node name="SayHello" type="Button" parent="Panel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Send an event"
+
+[node name="GoToRound" type="Button" parent="Panel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Both go to Round (host)"
+
+[node name="Leave" type="Button" parent="Panel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Leave the session"
+
+[node name="Log" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -180.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+scroll_following = true
