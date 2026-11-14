@@ -29,6 +29,8 @@ The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn]
 
 The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden).
 
+The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/monster/sandbox/monster_sandbox.tscn), **F6**) is a round without rules: you are the Monster among a round's flock, with a Sheepherder who only stands there. Walk with WASD, sprint with Shift, graze with C, bleat with F and eat with E; the status line shows stamina, the eaten count and the attack's cooldown, and a button lets the Sheepherder shoot at you. Started twice with `-- --host` and `-- --join`, it is the same round between two players.
+
 ### Two instances on one computer
 
 The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
@@ -41,7 +43,7 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance check are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
 
 ## Run the tests
 
@@ -229,6 +231,22 @@ Services.swarm.register_neighbour(monster_body)             # the flock treats i
 - **The arena** is found through the group `arena`; the sheep live in its entities layer.
 
 The flock sandbox ([systems/flock/sandbox/flock_sandbox.tscn](systems/flock/sandbox/flock_sandbox.tscn), **F6**) shows a round's flock in the arena, with one more sheep in the Monster's slot that can be steered with the Monster's keys. A click rings the bell there; the buttons start a new flock, switch the debug overlay (activity, target and steering per sheep, the reach of the last bell), run a time lapse and kill a sheep.
+
+### The Monster
+
+The [Monster](entities/monster/monster.gd) (GDD §3.2) has no body of its own. It is one node inside the shared sheep body, spawned in the slot the flock leaves free:
+
+```gdscript
+Monster.register(Services.session)                                   # both devices, before the round
+Services.session.entities.spawn(Monster.KIND, owner_id, Monster.spawn_data(round_seed, arena))   # host
+Services.combat.begin_round(sheepherder, Monster.of(body).get_body())
+```
+
+- **Disguise.** Same scene, same replication and same layer as an NPC sheep, steered through the same motion model, grazing and bleat. Whatever would tell it apart on the Sheepherder's device is a bug: [docs/no-tell-audit.md](docs/no-tell-audit.md) is the checklist, and `tests/unit/test_monster_no_tell.gd` works through it.
+- **Sprint.** Hold to move at `monster_sprint_speed` while the stamina lasts ([MonsterStamina](entities/monster/monster_stamina.gd)). An empty meter ends the sprint until the button is let go of; it refills whenever the Monster is not sprinting.
+- **Eating.** `Services.combat.request_eat()` asks the host, which looks for something within `melee_range`: a living sheep, the body of a shot one, or the Sheepherder once `herder_kill_threshold` sheep are eaten. The Monster is locked for `eat_duration`, and the cooldown starts when that ends. Other systems can forbid the attack with `add_eat_blocker()` and ask `is_eating()`.
+- **Evolution.** Every eaten sheep counts, also the body of one the Sheepherder shot (which gives no points: `get_eaten_alive_count()`). At `spider_evolution_threshold` the Monster becomes the [spider](entities/monster/spider_visual.gd) when it has finished eating: faster, without sprint or mimicry, and bullets do nothing to it.
+- **For the HUD:** `get_stamina_ratio()`, `is_sprinting()` and `get_form()` on the Monster; `get_eaten_count()`, `get_eat_cooldown_remaining()`, `can_kill_sheepherder()` and `is_monster_killable()` on the combat service.
 
 ### Vision
 
