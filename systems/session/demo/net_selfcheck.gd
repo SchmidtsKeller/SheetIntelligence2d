@@ -6,10 +6,13 @@ extends Node
 ## against the other, prints what it observed, and exits with code 0 if
 ## everything held:
 ## [br]- both connect by themselves and get opposite roles; a swap reaches both
-## [br]- each moves its own box; the other sees it move smoothly
+## [br]- each moves its own box; the other sees it move smoothly, up to the
+## moment both load the round, which holds up a device and not the network
 ## [br]- 30 numbered events arrive exactly once and in order, in both directions
-## [br]- the host takes both to the Round screen, with the ready handshake
-## [br]- the host leaves; the guest returns to the lobby with a message
+## [br]- the host takes both to the Round screen, with the ready handshake,
+## which starts a match on both
+## [br]- the host leaves in the middle of the round; the match ends on both, and
+## the guest returns to the lobby with a message
 ##
 ## The network flags [code]--net-latency[/code], [code]--net-jitter[/code] and
 ## [code]--net-loss[/code] apply, so the same check runs on a bad connection.
@@ -25,6 +28,7 @@ const LEAVE_AFTER_ENTERING: float = 1.0
 const GIVE_UP_AFTER: float = 25.0
 
 var _session: GameSession
+var _flow: MatchFlow
 var _label: String = "?"
 ## Which side this instance plays. Asked from the command line, because
 ## without a session every device counts as the host.
@@ -40,17 +44,21 @@ var _remote_previous: Vector2
 var _remote_travelled: float = 0.0
 var _remote_observed_for: float = 0.0
 var _remote_jumps: int = 0
+var _watching_remote_box: bool = true
 
 var _events_sent: int = 0
 var _events_received: Array[int] = []
 var _roles_changed_count: int = 0
 var _role_before_swap: GameEnums.Role = GameEnums.Role.NONE
 var _swapped: bool = false
+var _swap_changed_role: bool = false
 var _screen_requested: bool = false
 var _entered_round_at: float = -1.0
 var _left: bool = false
 var _end_reason: int = -1
 var _end_message: String = ""
+var _match_seen: bool = false
+var _match_aborted: bool = false
 
 
 func _ready() -> void:
@@ -66,6 +74,10 @@ func _ready() -> void:
 	_session.session_ended.connect(_on_session_ended)
 	_session.roles_changed.connect(func() -> void: _roles_changed_count += 1)
 	_session.screen_entered.connect(_on_screen_entered)
+	_flow = Services.match_flow
+	_flow.phase_changed.connect(_on_phase_changed)
+	_flow.match_aborted.connect(_on_match_aborted)
+	SceneFlow.screen_changing.connect(_on_screen_changing)
 
 	var options: LaunchOptions = LaunchOptions.from_command_line()
 	_hosting = options.mode == LaunchOptions.Mode.HOST
@@ -106,6 +118,9 @@ func _on_session_started() -> void:
 
 
 func _on_entity_spawned(entity_id: int, entity: Node) -> void:
+	# The round that starts later spawns its own entities.
+	if not entity is NetDemoBox:
+		return
 	if _session.entities.is_local_authority(entity_id):
 		_own_box = entity as Node2D
 		_own_box_center = _own_box.position
@@ -123,7 +138,7 @@ func _move_own_box() -> void:
 
 
 func _watch_remote_box(delta: float) -> void:
-	if not is_instance_valid(_remote_box) or delta <= 0.0:
+	if not _watching_remote_box or not is_instance_valid(_remote_box) or delta <= 0.0:
 		return
 	var step: float = _remote_box.position.distance_to(_remote_previous)
 	_remote_previous = _remote_box.position
@@ -155,18 +170,40 @@ func _direct_the_scenario() -> void:
 		_session.swap_roles()
 	if not _screen_requested and _session_time >= CHANGE_SCREEN_AT:
 		_screen_requested = true
+		# Asked now, because the match that starts with the round draws the roles anew.
+		_swap_changed_role = _session.get_local_role() != _role_before_swap
 		_session.request_screen(SceneFlowController.Screen.ROUND)
 	if not _left and _entered_round_at >= 0.0:
 		if _session_time - _entered_round_at >= LEAVE_AFTER_ENTERING:
 			_left = true
 			var problems: Array[String] = _problems()
+			if not _flow.is_match_running():
+				problems.append("no match is running one second into the round")
 			_session.leave()
+			problems.append_array(_match_end_problems())
 			_finish(problems)
+
+
+func _on_screen_changing(
+	_from: SceneFlowController.Screen, _to: SceneFlowController.Screen
+) -> void:
+	# Loading a screen freezes this device for a moment, and the other one soon
+	# after. What the box does from here on says nothing about the connection.
+	_watching_remote_box = false
 
 
 func _on_screen_entered(screen: SceneFlowController.Screen) -> void:
 	if screen == SceneFlowController.Screen.ROUND:
 		_entered_round_at = _session_time
+
+
+func _on_phase_changed(phase: MatchFlow.Phase) -> void:
+	if phase != MatchFlow.Phase.IDLE:
+		_match_seen = true
+
+
+func _on_match_aborted() -> void:
+	_match_aborted = true
 
 
 func _on_session_ended(reason: NetworkService.DisconnectReason, message: String) -> void:
@@ -177,7 +214,7 @@ func _on_session_ended(reason: NetworkService.DisconnectReason, message: String)
 	# Guest: the host went away. One frame later the lobby must be showing.
 	await get_tree().process_frame
 	await get_tree().process_frame
-	var problems: Array[String] = _problems()
+	var problems: Array[String] = _problems() + _match_end_problems()
 	if _end_reason != NetworkService.DisconnectReason.REMOTE_CLOSE:
 		problems.append("the session ended with reason %d, not a remote close" % _end_reason)
 	if _end_message.is_empty():
@@ -204,7 +241,7 @@ func _problems() -> Array[String]:
 		)
 	if _session.is_active() and _session.get_local_role() == GameEnums.Role.NONE:
 		problems.append("no role")
-	if _hosting and _session.get_local_role() == _role_before_swap:
+	if _hosting and _swapped and not _swap_changed_role and _screen_requested:
 		problems.append("the swap did not change the host's role")
 	var expected_events: Array[int] = []
 	expected_events.assign(range(EVENTS_TO_SEND))
@@ -222,6 +259,20 @@ func _problems() -> Array[String]:
 		)
 	if _entered_round_at < 0.0:
 		problems.append("the Round screen was never entered")
+	elif not _match_seen:
+		problems.append("the Round screen did not start a match")
+	return problems
+
+
+## What must hold once the session is over: the match went with it.
+func _match_end_problems() -> Array[String]:
+	var problems: Array[String] = []
+	if not _match_aborted:
+		problems.append("nothing said that the match was aborted")
+	if _flow.get_phase() != MatchFlow.Phase.IDLE or _flow.get_score().get_rounds_played() != 0:
+		problems.append("the match outlived the session")
+	if not Services.input.is_gameplay_enabled():
+		problems.append("gameplay input stayed disabled after the match")
 	return problems
 
 

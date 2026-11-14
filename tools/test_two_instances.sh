@@ -5,6 +5,7 @@
 #
 #   tools/test_two_instances.sh            # the session framework
 #   tools/test_two_instances.sh monster    # the Monster against the Sheepherder
+#   tools/test_two_instances.sh match      # a whole Best of 5 with the round rules
 #   tools/test_two_instances.sh --net-latency=80 --net-jitter=40 --net-loss=10
 #   tools/test_two_instances.sh monster --net-latency=80 --net-jitter=40 --net-loss=10
 #
@@ -23,9 +24,13 @@ case "${1:-}" in
 		SCENE="res://entities/monster/sandbox/monster_selfcheck.tscn"
 		shift
 		;;
+	match)
+		SCENE="res://systems/match/check/match_selfcheck.tscn"
+		shift
+		;;
 	--* | "") ;;
 	*)
-		echo "Unknown check '$1'. Known checks: session, monster." >&2
+		echo "Unknown check '$1'. Known checks: session, monster, match." >&2
 		exit 2
 		;;
 esac
