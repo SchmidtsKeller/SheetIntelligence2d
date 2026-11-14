@@ -41,6 +41,10 @@ const SHEEP_MOVE_SPEED: StringName = &"sheep_move_speed"
 const SHEEP_GRAZE_DURATION_MIN: StringName = &"sheep_graze_duration_min"
 const SHEEP_GRAZE_DURATION_MAX: StringName = &"sheep_graze_duration_max"
 
+# --- Sheep motion ------------------------------------------------------------
+const SHEEP_ACCELERATION: StringName = &"sheep_acceleration"
+const SHEEP_TURN_RATE_DEG: StringName = &"sheep_turn_rate_deg"
+
 # --- Perks -------------------------------------------------------------------
 const PERK_WIDE_FLASHLIGHT_ANGLE_DEG: StringName = &"perk_wide_flashlight_angle_deg"
 const PERK_LONG_FLASHLIGHT_LENGTH: StringName = &"perk_long_flashlight_length"

@@ -72,6 +72,13 @@ extends Resource
 ## Longest time a sheep stands still with its head lowered.
 @export_range(0.0, 60.0, 0.1, "suffix:s") var sheep_graze_duration_max: float = 6.0
 
+@export_group("Sheep Motion")
+## How fast a sheep speeds up to its walking speed and slows down again. Not
+## from the GDD: NPC sheep and the Monster's sheep share it, so both move alike.
+@export_range(0.0, 10000.0, 10.0, "suffix:px/s²") var sheep_acceleration: float = 900.0
+## How fast a sheep turns toward the direction it wants to walk.
+@export_range(0.0, 3600.0, 10.0, "suffix:°/s") var sheep_turn_rate_deg: float = 540.0
+
 @export_group("Perks")
 ## Cone angle with the Wide Flashlight perk (+50 % lit area).
 @export_range(1.0, 360.0, 1.0, "suffix:°") var perk_wide_flashlight_angle_deg: float = 90.0

@@ -21,6 +21,8 @@ godot --path .
 
 The game starts in the boot screen, which checks the services and hands over to the lobby. Lobby, round and results are placeholder screens for now; their buttons walk through the scene flow.
 
+The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
+
 ## Run the tests
 
 ```bash
@@ -168,6 +170,10 @@ var bullets: int = Services.perks.get_stat_int(StatIds.FIREARM_AMMO)
 | `InputActions` | The input actions and the action set of each role |
 | `PhysicsLayers` | The 2D physics layers as bit masks |
 | `Groups` | The node groups |
+
+### Seeded randomness
+
+Everything both devices derive from a seed, such as the look of a sheep, uses [SeededRandom](systems/random/seeded_random.gd), never `RandomNumberGenerator` or the global `randi()`. It is integer-only, so a seed gives the same numbers on every platform; Godot documents the algorithm of `RandomNumberGenerator` as an implementation detail.
 
 ### Scene flow
 
