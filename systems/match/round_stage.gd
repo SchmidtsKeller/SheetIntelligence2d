@@ -121,9 +121,7 @@ func _spawn_round() -> void:
 	_session.entities.spawn(
 		Sheepherder.KIND, other_id if local_is_monster else local_id, herder_data
 	)
-	_session.entities.spawn(
-		Monster.KIND, local_id if local_is_monster else other_id, monster_data
-	)
+	_session.entities.spawn(Monster.KIND, local_id if local_is_monster else other_id, monster_data)
 
 
 func _despawn_round() -> void:
