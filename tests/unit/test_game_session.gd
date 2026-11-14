@@ -48,6 +48,22 @@ func test_session_starts_on_both_devices() -> void:
 	assert_signal_emit_count(_pair.guest, &"session_started", 1)
 
 
+func test_pairing_codes_pass_through_the_session() -> void:
+	var session: GameSession = _pair.host
+	assert_false(session.requires_pairing_codes())
+	watch_signals(session)
+
+	_pair.host_network.pairing = true
+	_pair.host_network.refusal = "Wrong code."
+	_pair.host_network.pairing_code_ready.emit("OFFER")
+
+	assert_true(session.requires_pairing_codes())
+	assert_signal_emitted_with(session, &"pairing_code_ready", ["OFFER"])
+	assert_eq(session.submit_pairing_code("ANSWER"), ERR_INVALID_DATA)
+	assert_eq(_pair.host_network.submitted_codes, PackedStringArray(["ANSWER"]))
+	assert_eq(session.get_pairing_problem(), "Wrong code.")
+
+
 func test_connection_state_follows_the_transport() -> void:
 	assert_eq(_pair.guest.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
 
