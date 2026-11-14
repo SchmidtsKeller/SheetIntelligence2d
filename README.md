@@ -25,6 +25,8 @@ The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/ga
 
 The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbox.tscn), **F6**) shows the whole arena with a round's spawn layout. Its buttons let the sheep wander into obstacles and borders, switch the debug overlay (footprints, occluders, borders, spawn areas) and change the zoom.
 
+The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn](entities/sheepherder/sandbox/sheepherder_sandbox.tscn), **F6**) puts you in the arena as the Sheepherder, among a round's sheep that stand still: walk with WASD, aim with the mouse, ring the bell with Space and shoot with the left mouse button.
+
 ### Two instances on one computer
 
 The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
