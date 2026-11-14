@@ -191,6 +191,7 @@ func test_changes_are_announced() -> void:
 
 # --- The application's registry ------------------------------------------------
 
+
 func test_application_registry_serves_every_core_contract() -> void:
 	for contract: Script in ServiceBootstrap.core_contracts():
 		assert_true(Services.has_service(contract), "%s is registered" % contract.get_global_name())

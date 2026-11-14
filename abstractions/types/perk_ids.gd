@@ -1,5 +1,4 @@
-@abstract
-class_name PerkIds
+@abstract class_name PerkIds
 extends RefCounted
 ## Identifiers of all perks (GDD §4). Each player picks exactly one per round.
 ##

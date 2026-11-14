@@ -39,6 +39,7 @@ jobs:
         run: git ls-files -z '*.gd' | xargs -0 gdformat --diff
 
       - name: Lint (gdlint)
+        if: ${{ !cancelled() }}
         run: git ls-files -z '*.gd' | xargs -0 gdlint
 
   test:

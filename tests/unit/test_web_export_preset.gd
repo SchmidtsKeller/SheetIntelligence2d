@@ -33,7 +33,10 @@ func test_canvas_fills_the_browser_window() -> void:
 func test_textures_work_on_desktop_and_mobile_browsers() -> void:
 	assert_eq(_presets.get_value(OPTIONS, "vram_texture_compression/for_desktop", false), true)
 	assert_eq(_presets.get_value(OPTIONS, "vram_texture_compression/for_mobile", false), true)
-	assert_eq(ProjectSettings.get_setting("rendering/textures/vram_compression/import_etc2_astc", false), true)
+	assert_eq(
+		ProjectSettings.get_setting("rendering/textures/vram_compression/import_etc2_astc", false),
+		true
+	)
 
 
 func test_tests_and_tools_are_not_shipped() -> void:
@@ -46,8 +49,8 @@ func test_tests_and_tools_are_not_shipped() -> void:
 func test_head_include_loads_the_page_files_that_ship_with_the_game() -> void:
 	var head_include: String = _presets.get_value(OPTIONS, "html/head_include", "")
 
-	assert_has(head_include, "href=\"page.css\"")
-	assert_has(head_include, "src=\"page.js\"")
+	assert_has(head_include, 'href="page.css"')
+	assert_has(head_include, 'src="page.js"')
 	assert_false(head_include.contains("http"), "nothing is loaded from another server")
 	assert_true(FileAccess.file_exists("res://web/page.css"))
 	assert_true(FileAccess.file_exists("res://web/page.js"))

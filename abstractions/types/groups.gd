@@ -1,5 +1,4 @@
-@abstract
-class_name Groups
+@abstract class_name Groups
 extends RefCounted
 ## Node groups used across systems (declared as global groups in `project.godot`).
 ##

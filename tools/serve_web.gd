@@ -61,7 +61,12 @@ func _initialize() -> void:
 
 	var error: Error = _server.listen(port, bind_address)
 	if error != OK:
-		printerr("Cannot listen on port %d (%s). Is another server running?" % [port, error_string(error)])
+		printerr(
+			(
+				"Cannot listen on port %d (%s). Is another server running?"
+				% [port, error_string(error)]
+			)
+		)
 		quit(1)
 		return
 
@@ -69,18 +74,32 @@ func _initialize() -> void:
 	print("  http://localhost:%d" % port)
 	if bind_address == "*":
 		for address: String in IP.get_local_addresses():
-			if address.count(".") == 3 and not address.begins_with("127.") and not address.begins_with("169.254."):
-				print("  http://%s:%d   (other devices; no camera or clipboard without HTTPS)" % [address, port])
+			if (
+				address.count(".") == 3
+				and not address.begins_with("127.")
+				and not address.begins_with("169.254.")
+			):
+				print(
+					(
+						"  http://%s:%d   (other devices; no camera or clipboard without HTTPS)"
+						% [address, port]
+					)
+				)
 	print("Press Ctrl+C to stop.")
 
 
 func _process(_delta: float) -> bool:
 	while _server.is_connection_available():
-		_connections.append({
-			"peer": _server.take_connection(),
-			"buffer": PackedByteArray(),
-			"since": Time.get_ticks_msec(),
-		})
+		(
+			_connections
+			. append(
+				{
+					"peer": _server.take_connection(),
+					"buffer": PackedByteArray(),
+					"since": Time.get_ticks_msec(),
+				}
+			)
+		)
 	for connection: Dictionary in _connections.duplicate():
 		if _advance(connection):
 			(connection["peer"] as StreamPeerTCP).disconnect_from_host()
@@ -116,7 +135,14 @@ func _advance(connection: Dictionary) -> bool:
 func _respond(peer: StreamPeerTCP, request_line: String) -> void:
 	var parts: PackedStringArray = request_line.split(" ")
 	if parts.size() < 2 or (parts[0] != "GET" and parts[0] != "HEAD"):
-		_send(peer, 405, "Method Not Allowed", "text/plain; charset=utf-8", "Only GET and HEAD are supported.".to_utf8_buffer(), true)
+		_send(
+			peer,
+			405,
+			"Method Not Allowed",
+			"text/plain; charset=utf-8",
+			"Only GET and HEAD are supported.".to_utf8_buffer(),
+			true
+		)
 		return
 
 	var url_path: String = parts[1].get_slice("?", 0).get_slice("#", 0).uri_decode()
@@ -125,29 +151,47 @@ func _respond(peer: StreamPeerTCP, request_line: String) -> void:
 		file_path = file_path.path_join("index.html")
 	# simplify_path() resolves "..", so a path outside the root is an escape attempt.
 	if file_path != _root and not file_path.begins_with(_root + "/"):
-		_send(peer, 403, "Forbidden", "text/plain; charset=utf-8", "Forbidden.".to_utf8_buffer(), true)
+		_send(
+			peer, 403, "Forbidden", "text/plain; charset=utf-8", "Forbidden.".to_utf8_buffer(), true
+		)
 		return
 	if not FileAccess.file_exists(file_path):
 		print("404  %s" % url_path)
-		_send(peer, 404, "Not Found", "text/plain; charset=utf-8", "Not found.".to_utf8_buffer(), true)
+		_send(
+			peer, 404, "Not Found", "text/plain; charset=utf-8", "Not found.".to_utf8_buffer(), true
+		)
 		return
 
-	var mime_type: String = MIME_TYPES.get(file_path.get_extension().to_lower(), "application/octet-stream")
+	var mime_type: String = MIME_TYPES.get(
+		file_path.get_extension().to_lower(), "application/octet-stream"
+	)
 	print("200  %s" % url_path)
 	_send(peer, 200, "OK", mime_type, FileAccess.get_file_as_bytes(file_path), parts[0] == "GET")
 
 
-func _send(peer: StreamPeerTCP, status: int, reason: String, mime_type: String, body: PackedByteArray, with_body: bool) -> void:
-	var head: String = "\r\n".join([
-		"HTTP/1.1 %d %s" % [status, reason],
-		"Content-Type: %s" % mime_type,
-		"Content-Length: %d" % body.size(),
-		# Always serve the latest export.
-		"Cache-Control: no-store",
-		"Connection: close",
-		"",
-		"",
-	])
+func _send(
+	peer: StreamPeerTCP,
+	status: int,
+	reason: String,
+	mime_type: String,
+	body: PackedByteArray,
+	with_body: bool
+) -> void:
+	var head: String = (
+		"\r\n"
+		. join(
+			[
+				"HTTP/1.1 %d %s" % [status, reason],
+				"Content-Type: %s" % mime_type,
+				"Content-Length: %d" % body.size(),
+				# Always serve the latest export.
+				"Cache-Control: no-store",
+				"Connection: close",
+				"",
+				"",
+			]
+		)
+	)
 	peer.put_data(head.to_utf8_buffer())
 	if with_body:
 		peer.put_data(body)

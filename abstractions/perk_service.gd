@@ -1,5 +1,4 @@
-@abstract
-class_name PerkService
+@abstract class_name PerkService
 extends Node
 ## Contract for perks and the modifier-aware stat lookup (GDD §4, §5).
 ##
@@ -35,18 +34,14 @@ signal perk_selected(role: GameEnums.Role, perk_id: StringName)
 @warning_ignore("unused_signal")
 signal active_perk_state_changed(role: GameEnums.Role)
 
-
 # --- Stat lookup -------------------------------------------------------------
 
 ## The effective value of [param stat] (see [StatIds]): the base value from
 ## [GameConfig] with all active modifiers applied.
-@abstract
-func get_stat(stat: StringName) -> float
-
+@abstract func get_stat(stat: StringName) -> float
 
 ## The configured value of [param stat] without any modifier.
-@abstract
-func get_base_stat(stat: StringName) -> float
+@abstract func get_base_stat(stat: StringName) -> float
 
 
 ## [method get_stat] rounded to the nearest integer, for counts such as ammo.
@@ -58,8 +53,7 @@ func get_stat_int(stat: StringName) -> int:
 ## [method remove_modifier]. [param source] names who added it (a perk id, an
 ## effect). With [param duration] > 0 the modifier removes itself after that
 ## many seconds; otherwise it stays until removed.
-@abstract
-func add_modifier(
+@abstract func add_modifier(
 	stat: StringName,
 	op: ModifierOp,
 	value: float,
@@ -67,70 +61,46 @@ func add_modifier(
 	duration: float = -1.0,
 ) -> int
 
-
 ## Removes the modifier with [param handle]. Unknown handles are ignored.
-@abstract
-func remove_modifier(handle: int) -> void
-
+@abstract func remove_modifier(handle: int) -> void
 
 ## Removes every modifier added by [param source].
-@abstract
-func remove_modifiers_from(source: StringName) -> void
-
+@abstract func remove_modifiers_from(source: StringName) -> void
 
 # --- Loadout -----------------------------------------------------------------
 
 ## The perks a player with [param role] may choose from.
-@abstract
-func get_available_perks(role: GameEnums.Role) -> Array[StringName]
-
+@abstract func get_available_perks(role: GameEnums.Role) -> Array[StringName]
 
 ## Selects [param perk_id] for the player with [param role], replacing an
 ## earlier choice. Returns [code]false[/code] if the perk is not in the role's
 ## pool or the selection is locked.
-@abstract
-func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool
-
+@abstract func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool
 
 ## The perk selected for [param role], or [constant PerkIds.NONE].
-@abstract
-func get_selected_perk(role: GameEnums.Role) -> StringName
-
+@abstract func get_selected_perk(role: GameEnums.Role) -> StringName
 
 ## Locks both selections at round start and applies the perks' effects.
-@abstract
-func lock_selection() -> void
-
+@abstract func lock_selection() -> void
 
 ## Whether selections are locked for the running round.
-@abstract
-func is_selection_locked() -> bool
-
+@abstract func is_selection_locked() -> bool
 
 ## Removes both selections and all modifiers after a round.
-@abstract
-func clear_selection() -> void
-
+@abstract func clear_selection() -> void
 
 # --- Active perks ------------------------------------------------------------
 
 ## Triggers the active perk of [param role]. Returns [code]false[/code] if the
 ## role has no active perk, it is on cooldown, or it cannot be used right now.
-@abstract
-func activate_perk(role: GameEnums.Role) -> bool
-
+@abstract func activate_perk(role: GameEnums.Role) -> bool
 
 ## Whether the active perk of [param role] is running (e.g. invisible right now).
-@abstract
-func is_perk_active(role: GameEnums.Role) -> bool
-
+@abstract func is_perk_active(role: GameEnums.Role) -> bool
 
 ## Seconds until the active perk of [param role] can be triggered again.
-@abstract
-func get_perk_cooldown_remaining(role: GameEnums.Role) -> float
-
+@abstract func get_perk_cooldown_remaining(role: GameEnums.Role) -> float
 
 ## What is left of the running effect, from 1 (full) to 0 (used up), e.g. the
 ## invisibility meter. 0 when the perk is not running.
-@abstract
-func get_perk_charge(role: GameEnums.Role) -> float
+@abstract func get_perk_charge(role: GameEnums.Role) -> float

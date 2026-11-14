@@ -1,5 +1,4 @@
-@abstract
-class_name InputService
+@abstract class_name InputService
 extends Node
 ## Contract for player input (GDD §9.2).
 ##
@@ -41,85 +40,57 @@ signal gameplay_enabled_changed(enabled: bool)
 @warning_ignore("unused_signal")
 signal scheme_changed(scheme: Scheme)
 
-
 ## Movement input with a length of 0..1: analog on touch and gamepad, 8-way on
 ## the keyboard. [constant Vector2.ZERO] while movement is locked or gameplay
 ## input is disabled.
-@abstract
-func get_move_vector() -> Vector2
-
+@abstract func get_move_vector() -> Vector2
 
 ## Unit vector the player aims along, in world space.
 ## [param aim_origin] is the world position of the controlled character: with
 ## the mouse, the aim points from there to the cursor. With a stick, the last
 ## direction is kept after the stick is released. Never zero.
-@abstract
-func get_aim_direction(aim_origin: Vector2) -> Vector2
-
+@abstract func get_aim_direction(aim_origin: Vector2) -> Vector2
 
 ## Whether an ability action of the current role is currently held down.
 ## [code]false[/code] while the action is locked or gameplay input is disabled.
-@abstract
-func is_action_held(action: StringName) -> bool
-
+@abstract func is_action_held(action: StringName) -> bool
 
 ## Activates the action set of [param role] (see [method InputActions.abilities_for]).
 ## Actions of the other role are no longer reported; held ones are released.
-@abstract
-func set_role(role: GameEnums.Role) -> void
-
+@abstract func set_role(role: GameEnums.Role) -> void
 
 ## The role whose action set is active.
-@abstract
-func get_role() -> GameEnums.Role
-
+@abstract func get_role() -> GameEnums.Role
 
 ## Switches gameplay input on or off as a whole. While off, vectors are zero
 ## and no action is reported. Menus and UI input are not affected.
-@abstract
-func set_gameplay_enabled(enabled: bool) -> void
-
+@abstract func set_gameplay_enabled(enabled: bool) -> void
 
 ## Whether gameplay input is switched on.
-@abstract
-func is_gameplay_enabled() -> bool
-
+@abstract func is_gameplay_enabled() -> bool
 
 ## Blocks [param action] until [method remove_lock] is called with the same
 ## [param source]. [param action] is an ability action or one of the
 ## pseudo-actions [constant InputActions.MOVE] and [constant InputActions.AIM].
 ## Several sources can lock the same action; it stays blocked until the last
 ## lock is gone. A locked aim keeps its last direction.
-@abstract
-func add_lock(action: StringName, source: StringName) -> void
-
+@abstract func add_lock(action: StringName, source: StringName) -> void
 
 ## Removes the lock [param source] holds on [param action], if any.
-@abstract
-func remove_lock(action: StringName, source: StringName) -> void
-
+@abstract func remove_lock(action: StringName, source: StringName) -> void
 
 ## Removes every lock held by [param source].
-@abstract
-func clear_locks(source: StringName) -> void
-
+@abstract func clear_locks(source: StringName) -> void
 
 ## Whether at least one source currently locks [param action].
-@abstract
-func is_locked(action: StringName) -> bool
-
+@abstract func is_locked(action: StringName) -> bool
 
 ## The control scheme in use.
-@abstract
-func get_scheme() -> Scheme
-
+@abstract func get_scheme() -> Scheme
 
 ## Forces [param scheme] regardless of the device (debugging touch controls on
 ## a desktop). Stays until [method clear_scheme_override] is called.
-@abstract
-func set_scheme_override(scheme: Scheme) -> void
-
+@abstract func set_scheme_override(scheme: Scheme) -> void
 
 ## Returns to automatic scheme detection.
-@abstract
-func clear_scheme_override() -> void
+@abstract func clear_scheme_override() -> void

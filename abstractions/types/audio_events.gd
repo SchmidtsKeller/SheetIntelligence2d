@@ -1,5 +1,4 @@
-@abstract
-class_name AudioEvents
+@abstract class_name AudioEvents
 extends RefCounted
 ## Identifiers of all sound events (GDD §7.2).
 ##

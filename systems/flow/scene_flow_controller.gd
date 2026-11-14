@@ -68,11 +68,21 @@ func can_go_to(screen: Screen) -> bool:
 ## the flow does not allow it or the scene cannot be loaded.
 func go_to(screen: Screen) -> bool:
 	if not can_go_to(screen):
-		push_error("SceneFlow: cannot go from %s to %s." % [screen_name(current_screen), screen_name(screen)])
+		push_error(
+			(
+				"SceneFlow: cannot go from %s to %s."
+				% [screen_name(current_screen), screen_name(screen)]
+			)
+		)
 		return false
 	var error: Error = scene_changer.call(screen_scenes[screen])
 	if error != OK:
-		push_error("SceneFlow: could not load the scene of %s (%s)." % [screen_name(screen), error_string(error)])
+		push_error(
+			(
+				"SceneFlow: could not load the scene of %s (%s)."
+				% [screen_name(screen), error_string(error)]
+			)
+		)
 		return false
 	var previous: Screen = current_screen
 	print_verbose("SceneFlow: %s → %s" % [screen_name(previous), screen_name(screen)])
