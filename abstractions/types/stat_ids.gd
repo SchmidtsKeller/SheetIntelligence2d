@@ -14,6 +14,9 @@ const FLOCK_SIZE: StringName = &"flock_size"
 const HERDER_POINTS_PER_SURVIVING_SHEEP: StringName = &"herder_points_per_surviving_sheep"
 const HERDER_POINTS_PER_SHOT_SHEEP: StringName = &"herder_points_per_shot_sheep"
 const MONSTER_POINTS_PER_EATEN_SHEEP: StringName = &"monster_points_per_eaten_sheep"
+const ROUND_SETUP_DURATION: StringName = &"round_setup_duration"
+const ROUND_COUNTDOWN_DURATION: StringName = &"round_countdown_duration"
+const ROUND_RESOLVED_DURATION: StringName = &"round_resolved_duration"
 
 # --- Sheepherder -------------------------------------------------------------
 const HERDER_MOVE_SPEED: StringName = &"herder_move_speed"
@@ -95,6 +98,7 @@ const NET_TICK_RATE: StringName = &"net_tick_rate"
 const NET_INTERPOLATION_DELAY: StringName = &"net_interpolation_delay"
 const NET_MAX_EXTRAPOLATION: StringName = &"net_max_extrapolation"
 const NET_CONNECT_TIMEOUT: StringName = &"net_connect_timeout"
+const NET_CLOCK_SYNC_INTERVAL: StringName = &"net_clock_sync_interval"
 
 # --- View --------------------------------------------------------------------
 const VIEW_MAX_WORLD_WIDTH: StringName = &"view_max_world_width"
