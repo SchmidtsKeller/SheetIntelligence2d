@@ -152,12 +152,13 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass |
 | | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking |
 | | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired |
+| **Arena** | Arena Size | `3200 × 2400 px` | One arena; the border fences and river are included |
 
 ---
 
 ## 6. Level Design & World Environment
 
-- **Map Layout & Dimensions:** Bounded 2D top-down environment set in open green fields with slight hills and patches of grass.
+- **Map Layout & Dimensions:** Bounded 2D top-down environment set in open green fields with slight hills and patches of grass. There is one arena of **3200 × 2400 px**, borders included.
 - **Line-of-Sight Obstacles:** Solid environmental props that block movement, the Sheepherder's flashlight visibility cone, and the Monster's view (e.g., trees, barns, thick bushes, wooden structures, hay bales).
 - **Map Boundaries:** Enclosed by non-traversable natural and man-made borders (e.g., rivers, wooden fences).
 
