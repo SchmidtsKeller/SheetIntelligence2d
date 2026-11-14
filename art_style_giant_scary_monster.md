@@ -20,7 +20,7 @@ This document outlines the precise prompt elements and stylistic constraints req
 
   * **Texture, Appearance & Articulation:** The legs are entirely hairless, smooth, and glossy black, resembling enormous spider or crustacean limbs. Critically, these legs must feature **DOUBLE** the number of joints of a regular spider leg, creating a highly segmented, unnaturally articulated, and jagged appearance. **The spider legs must have extremely SHARP and POINTY endings, almost STABBING into the ground. They should look as though the creature could EASILY PIERCE into its victim using just its giant, sharp, pointy legs.**
 
-  * **Scale & Elevation (CRITICAL):** The spider legs are EVEN BIGGER and more colossal than a standard giant spider, completely dwarfing the central sheep body. They must VISIBLY LIFT the sheep body HIGH INTO THE AIR. Through the use of shading, forced perspective, and overlapping forms, it *must* be immediately apparent that the sheep body is towering high above the ground strictly because these spider legs are so unimaginably huge.
+  * **Scale, Proportions & Elevation (CRITICAL):** **Each individual spider leg MUST be at least 2 TIMES as long as the entire length of the sheep's body (measured along the sheep's longest axis from head to tail).** Because of this extreme 2:1 leg-to-body length ratio, the central sheep body appears tiny, fragile, and dwarfed in the middle of a colossal, sprawling canopy of towering black limbs. The legs must VISIBLY LIFT the sheep body HIGH INTO THE AIR. Through the use of shading, forced perspective, and overlapping forms, it *must* be immediately apparent that the sheep body is towering high above the ground strictly because these spider legs are so unimaginably huge and long.
 
 ## 3. Art Style & Medium (Atmospheric Realism)
 
@@ -49,6 +49,8 @@ This document outlines the precise prompt elements and stylistic constraints req
 ## 6. Negative Prompting (What to strictly avoid)
 
 * **NO standard arachnid leg counts:** Strictly NO 8-legged or 10-legged (5 per side) spiders. Avoid wide, sparse spacing between leg bases along the flanks; enforce a crowded, 20-legged (10 per side) silhouette.
+
+* **NO short or proportional legs:** Strictly avoid legs that are equal to or shorter than the sheep's body length. The total span of the creature from leg tip to leg tip must be roughly 5 times the width of the sheep's body.
 
 * NO hair or fur on the spider legs (must be entirely smooth).
 
