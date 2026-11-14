@@ -14,8 +14,14 @@ func _ready() -> void:
 	collision_mask = 0
 	add_to_group(Groups.OBSTACLES)
 	add_to_group(Groups.STATIC_SCENERY)
+	# One-sided, so the flashlight lights the obstacle itself and the shadow
+	# falls behind it. That needs the same winding for every footprint.
+	var outline: PackedVector2Array = get_footprint()
+	if Geometry2D.is_polygon_clockwise(outline):
+		outline.reverse()
 	var shape: OccluderPolygon2D = OccluderPolygon2D.new()
-	shape.polygon = get_footprint()
+	shape.polygon = outline
+	shape.cull_mode = OccluderPolygon2D.CULL_COUNTER_CLOCKWISE
 	var occluder: LightOccluder2D = LightOccluder2D.new()
 	occluder.name = "Occluder"
 	occluder.occluder = shape

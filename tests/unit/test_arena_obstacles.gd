@@ -26,6 +26,23 @@ func test_every_type_shares_the_obstacle_base() -> void:
 		var occluder: LightOccluder2D = obstacle.get_occluder()
 		if assert_not_null(occluder, "%s occludes light" % path):
 			assert_eq(occluder.occluder.polygon, obstacle.get_footprint(), path)
+			assert_eq(occluder.occluder.cull_mode, OccluderPolygon2D.CULL_COUNTER_CLOCKWISE)
+			assert_false(Geometry2D.is_polygon_clockwise(occluder.occluder.polygon), path)
+
+
+func test_a_footprint_drawn_the_other_way_round_casts_the_same_shadow() -> void:
+	var obstacle: ArenaObstacle = (load(OBSTACLE_SCENES[2]) as PackedScene).instantiate()
+	var footprint: CollisionPolygon2D = obstacle.get_node(^"Footprint")
+	var reversed: PackedVector2Array = footprint.polygon.duplicate()
+	reversed.reverse()
+	footprint.polygon = reversed
+	add_child_autofree(obstacle)
+
+	var outline: PackedVector2Array = obstacle.get_occluder().occluder.polygon
+	assert_false(Geometry2D.is_polygon_clockwise(outline), "turned to the shared winding")
+	assert_eq(outline.size(), reversed.size())
+	for point: Vector2 in reversed:
+		assert_has(outline, point)
 
 
 func test_the_world_footprint_follows_the_obstacle() -> void:
