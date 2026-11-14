@@ -53,10 +53,10 @@ jobs:
         with:
           version: ${{ env.GODOT_VERSION }}
 
-      - name: Import the project (scripts parse, resources load)
+      - name: Import the project (resources import, autoloads load)
         run: tools/check_import.sh
 
-      - name: Run the unit tests
+      - name: Run the unit tests (includes: every script compiles)
         run: tools/run_tests.sh
 
   export-web:

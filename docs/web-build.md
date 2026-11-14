@@ -71,9 +71,11 @@ The server is a small GDScript ([tools/serve_web.gd](../tools/serve_web.gd)), so
 | Job | What it does | Fails when |
 |:--|:--|:--|
 | **GDScript format and lint** | `gdformat --diff` and `gdlint` (gdtoolkit) on all scripts | A script is not formatted, or breaks a lint rule |
-| **Import check and unit tests** | `tools/check_import.sh`, then `tools/run_tests.sh` | A script does not parse, a resource does not load, or a test fails |
+| **Import check and unit tests** | `tools/check_import.sh`, then `tools/run_tests.sh` | A resource cannot be imported, a script does not compile, or a test fails |
 | **Web export** | `tools/export_web.sh`, uploads the build as the artifact `web-build` | The export fails |
 | **Deploy to GitHub Pages** | Publishes the artifact; only on `main` and only after all jobs above passed | The deployment fails |
+
+Whether every script compiles is checked by a unit test (`tests/unit/test_scripts_compile.gd`), not by the import: the import does not compile scripts it has no reason to load, and `godot --check-only` knows no autoloads, so it rejects valid scripts that use `Services` or `SceneFlow`. The test loads each script inside the running project instead.
 
 Godot and the export templates are pinned to the version in `GODOT_VERSION` at the top of the workflow, downloaded from the official release, verified against the release's checksums, and cached.
 

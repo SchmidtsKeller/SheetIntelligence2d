@@ -229,7 +229,9 @@ NPC sheep and the Monster share every layer and group they are in, so neither ca
 
 ## Code conventions
 
+- **Formatted and linted.** CI checks every script with `gdformat` and `gdlint` from [gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit) 4.5.0; the settings are in `gdformatrc` and `gdlintrc`. Install it with `pipx install "gdtoolkit==4.5.0"`, then format with `gdformat $(git ls-files '*.gd')` and lint with `gdlint $(git ls-files '*.gd')` before pushing.
 - **Static typing everywhere.** Every variable, parameter and return value has a type. The project setting `debug/gdscript/warnings/untyped_declaration` is set to *Error*, so untyped code does not compile.
+- Definitions follow the style guide's order: signals, enums, constants, exported variables, variables, then functions.
 - Naming follows the [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html): `snake_case` for files, functions and variables; `PascalCase` for classes and nodes; `CONSTANT_CASE` for constants and enum values; a leading `_` for private members; signals in the past tense (`sheep_died`).
 - Contracts are named `<Thing>Service`, stubs `Stub<Thing>Service`, tests `tests/unit/test_<subject>.gd`.
 - Public classes, methods and signals carry `##` documentation comments.

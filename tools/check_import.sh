@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Imports the project and fails if Godot reports an error while doing so:
-# a script that does not parse, a resource that does not load, a broken scene.
+# a resource that cannot be imported, an autoload that does not load.
+#
+# This is not a full script check: the import does not compile every script.
+# That is done by the unit test tests/unit/test_scripts_compile.gd, which loads
+# all scripts inside the running project (tools/run_tests.sh).
 #
 #   tools/check_import.sh
 #
