@@ -97,6 +97,27 @@ func test_events_arrive_exactly_once_and_in_order_on_a_bad_connection() -> void:
 	assert_eq(_numbers_of(_guest_log), range(60))
 
 
+func test_event_sent_while_another_is_still_being_handed_over_keeps_the_order() -> void:
+	# The link delivers at once: the guest asks back while the host's first
+	# event is still on its way out, and the host answers inside that request.
+	var ask_back: Callable = func(payload: Array, _sender_id: int) -> void:
+		if payload == [0]:
+			_guest.send_to_host(REQUEST, ["asked back"])
+	var answer: Callable = func(payload: Array, _sender_id: int) -> void:
+		if payload == ["asked back"]:
+			_host.broadcast(WORLD_EVENT, [1])
+	_guest.subscribe(WORLD_EVENT, ask_back)
+	_host.subscribe(REQUEST, answer)
+
+	_host.broadcast(WORLD_EVENT, [0])
+	for number: int in range(2, 6):
+		_host.broadcast(WORLD_EVENT, [number])
+	_guest.send_to_host(REQUEST, ["later"])
+
+	assert_eq(_numbers_of(_guest_log), range(6), "the answer and all later events arrive")
+	assert_eq(_numbers_of(_host_log), [0, "asked back", 1, 2, 3, 4, 5, "later"])
+
+
 func test_event_that_overtook_another_waits_for_it() -> void:
 	_host.receive(true, [1, REQUEST, ["second"]], GUEST_ID)
 	assert_eq(_host_log, [], "the first one is still missing")
