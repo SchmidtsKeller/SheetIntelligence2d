@@ -50,6 +50,9 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 	# Audio
 	&"hearing_range_quiet": 400.0,
 	&"hearing_range_loud": 800.0,
+	# Arena
+	&"arena_width": 3200.0,
+	&"arena_height": 2400.0,
 }
 
 ## Values that are project decisions rather than GDD parameters.
