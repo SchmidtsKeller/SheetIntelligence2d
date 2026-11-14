@@ -12,7 +12,7 @@ The preset "Web" in [export_presets.cfg](../export_presets.cfg):
 | Progressive Web App | off | See the decision below |
 | Canvas resize policy | Adaptive | The canvas fills the browser window and follows resize and orientation changes |
 | VRAM texture compression | desktop and mobile | The same build runs in desktop and mobile browsers |
-| Head Include | `page.css`, `page.js` | Page rules and the hook for JavaScript that ships with the game |
+| Head Include | `page.css`, `page.js`, `vendor/qrcode-generator/qrcode.js`, `vendor/jsqr/jsQR.js`, `pairing.js` | Page rules, and the JavaScript that ships with the game (in this order: `pairing.js` needs the libraries) |
 | Excluded from the build | `tests/`, `tools/`, `web/`, `docs/`, `build/` | Not part of the game |
 
 The engine's default HTML shell is used. The game is served as its own page, not inside another site's frame (GDD §9.4).
@@ -34,7 +34,11 @@ The build is exported **without Thread Support and without the PWA option**:
 Everything in [web/](../web) is copied next to the exported game:
 
 - `page.css` keeps the page from scrolling, bouncing, zooming and selecting text while playing.
-- `page.js` blocks the context menu and iOS pinch zoom. It is also the hook for JavaScript libraries that have to ship with the game, such as the QR code library of the pairing task (#7). Nothing may be loaded from a CDN, because the game has to work on a local network without internet access.
+- `page.js` blocks the context menu (except on the pairing overlay, whose fields need it to paste) and iOS pinch zoom.
+- `pairing.js` is the browser side of pairing: QR codes, the camera scanner and the clipboard (see [pairing.md](pairing.md)).
+- `vendor/` holds the libraries `pairing.js` uses, with their versions, licences and checksums in [vendor/README.md](../web/vendor/README.md).
+
+Nothing may be loaded from a CDN, because the game has to work on a local network without internet access.
 
 ## Build and serve locally
 

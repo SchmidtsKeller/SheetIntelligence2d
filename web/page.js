@@ -1,10 +1,10 @@
 // Page behaviour for the Web build. Loaded from the export preset's Head
 // Include and copied next to the exported game by tools/export_web.
 //
-// This is the hook for JavaScript that has to ship with the game files, e.g.
-// the QR code library of the pairing task. Put further files into web/ and
-// load them from here or from the Head Include. Nothing may come from a CDN:
-// the game has to work on a local network without internet access.
+// This is the hook for JavaScript that has to ship with the game files, like
+// the pairing helpers in pairing.js and the libraries in vendor/. Put further
+// files into web/ and load them from the Head Include. Nothing may come from a
+// CDN: the game has to work on a local network without internet access.
 
 (function () {
 	"use strict";
@@ -15,9 +15,12 @@
 		console.warn("Hide in Sheep Clothing is embedded in a frame; camera and clipboard may be unavailable.");
 	}
 
-	// A long press or right click must not open the browser's context menu.
+	// A long press or right click must not open the browser's context menu,
+	// except on the pairing overlay, whose text fields need it to paste.
 	window.addEventListener("contextmenu", function (event) {
-		event.preventDefault();
+		if (!(event.target instanceof Element && event.target.closest(".sheep-overlay"))) {
+			event.preventDefault();
+		}
 	});
 
 	// iOS Safari ignores `user-scalable=no` and zooms on pinch and double tap.

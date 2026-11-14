@@ -258,6 +258,7 @@ res://
   * Godot's `CameraServer` is not implemented on the Web, so scanning must use the browser's camera through `JavaScriptBridge`.
   * Godot has no built-in QR code generator, and its only QR code support (OpenXR spatial entities) is for XR headsets. QR generation and decoding need either a JavaScript library (added through the web export's *Head Include* option and served with the game files) or a GDScript implementation.
   * Godot's docs say Web clipboard access "might not be reliable when accessed from GDScript", so copy and paste must be tested early.
+  * *Decided (#7):* QR codes are made with the JavaScript library qrcode-generator and read with jsQR, both shipped with the game files. Copy, paste and the camera preview are HTML laid over the game. A code is the session description with all candidates, trimmed and compressed, as Base32 text (A–Z, 2–7), so the same text works as QR code and as text code. Measured sizes and browser results are in docs/pairing.md.
 - **Godot Multiplayer API:** Use `WebRTCMultiplayerPeer`. A Web build can only be a WebSocket client, so `WebSocketMultiplayerPeer` would require a separate server.
 - **State Synchronization Requirements:**
   * Position and rotation of Sheepherder (including flashlight cone angle).

@@ -65,6 +65,10 @@ func submit_pairing_code(_code: String) -> Error:
 	return ERR_UNAVAILABLE
 
 
+func get_pairing_problem() -> String:
+	return ""
+
+
 func _set_state(state: ConnectionState) -> void:
 	if state == _state:
 		return

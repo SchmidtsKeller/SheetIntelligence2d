@@ -25,3 +25,54 @@ canvas {
 	-webkit-touch-callout: none;
 	-webkit-tap-highlight-color: transparent;
 }
+
+/*
+ * The pairing overlay (pairing.js): the camera preview and the fields to copy
+ * or paste a code, laid over the game. Unlike the game, it lets the player
+ * select, paste and scroll.
+ */
+.sheep-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 16px;
+	box-sizing: border-box;
+	overflow: auto;
+	background-color: rgba(10, 10, 12, 0.92);
+	color: #e8e4dc;
+	font: 18px/1.4 sans-serif;
+	text-align: center;
+	touch-action: auto;
+}
+
+.sheep-overlay p {
+	margin: 0;
+	max-width: 32em;
+}
+
+.sheep-overlay video {
+	width: min(92vw, 640px);
+	max-height: 60vh;
+	background-color: #000;
+}
+
+.sheep-overlay textarea {
+	width: min(92vw, 640px);
+	height: 30vh;
+	font: 16px/1.3 monospace;
+	word-break: break-all;
+	-webkit-user-select: text;
+	user-select: text;
+	touch-action: auto;
+}
+
+.sheep-overlay button {
+	min-width: 200px;
+	min-height: 48px;
+	font: inherit;
+}

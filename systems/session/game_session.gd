@@ -24,6 +24,10 @@ signal roles_changed
 ## Both devices have loaded [param screen] and may start using it.
 signal screen_entered(screen: SceneFlowController.Screen)
 
+## This device made a pairing code the other player has to read: the host's
+## offer or the guest's answer (see [method requires_pairing_codes]).
+signal pairing_code_ready(code: String)
+
 const KEY_HOST_ROLE: StringName = &"session.host_role"
 
 const EVENT_SCREEN: StringName = &"session.screen"
@@ -95,12 +99,14 @@ func bind_network(network: NetworkService) -> void:
 	if _network != null:
 		_network.session_started.disconnect(_on_network_session_started)
 		_network.session_ended.disconnect(_on_network_session_ended)
+		_network.pairing_code_ready.disconnect(pairing_code_ready.emit)
 		if _active:
 			_end(NetworkService.DisconnectReason.LOCAL_CLOSE, "The connection was replaced.")
 	_network = network
 	if _network != null:
 		_network.session_started.connect(_on_network_session_started)
 		_network.session_ended.connect(_on_network_session_ended)
+		_network.pairing_code_ready.connect(pairing_code_ready.emit)
 
 
 # --- Connection ----------------------------------------------------------------
@@ -119,6 +125,23 @@ func join(options: Dictionary = {}) -> Error:
 ## Leaves the session.
 func leave() -> void:
 	_network.close_session()
+
+
+## Whether the players connect by exchanging pairing codes (the Web build's
+## WebRTC) rather than by address.
+func requires_pairing_codes() -> bool:
+	return _network != null and _network.requires_pairing_codes()
+
+
+## Hands over the code the other device shows. See
+## [method NetworkService.submit_pairing_code].
+func submit_pairing_code(code: String) -> Error:
+	return _network.submit_pairing_code(code) if _network != null else ERR_UNCONFIGURED
+
+
+## Why the last code was refused, for the player; empty if it was not.
+func get_pairing_problem() -> String:
+	return _network.get_pairing_problem() if _network != null else ""
 
 
 ## Whether a session is up.
