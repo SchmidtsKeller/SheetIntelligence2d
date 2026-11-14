@@ -56,7 +56,7 @@ jobs:
       - name: Import the project (resources import, autoloads load)
         run: tools/check_import.sh
 
-      - name: Run the unit tests (includes: every script compiles)
+      - name: Run the unit tests, including that every script compiles
         run: tools/run_tests.sh
 
   export-web:
