@@ -12,3 +12,4 @@ kind = 1
 display_name = "Temporary Invisibility"
 description = "Turn invisible for a few seconds: standing still lasts longest, walking drains it fast. You can't eat while invisible, bullets still hit you and you can still be heard. Press again to end it early."
 effect = ExtResource("1_oo8pn")
+triggered = true

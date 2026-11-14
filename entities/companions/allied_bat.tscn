@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://entities/companions/allied_bat.gd" id="1_bat"]
+[ext_resource type="Texture2D" path="res://assets/companions/placeholder/allied_bat.svg" id="2_art"]
+[ext_resource type="Script" path="res://systems/session/net_transform_2d.gd" id="3_net"]
+[ext_resource type="Script" path="res://systems/vision/vision_target.gd" id="4_vision"]
+
+[node name="AlliedBat" type="Node2D" groups=["companions", "dynamic_entities"]]
+script = ExtResource("1_bat")
+
+[node name="Art" type="Sprite2D" parent="."]
+texture = ExtResource("2_art")
+
+[node name="NetTransform2D" type="Node" parent="."]
+script = ExtResource("3_net")
+
+[node name="VisionTarget" type="Node" parent="." node_paths=PackedStringArray("visual")]
+script = ExtResource("4_vision")
+visual = NodePath("../Art")
+radius = 18.0

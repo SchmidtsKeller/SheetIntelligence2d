@@ -109,7 +109,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - **Wide Flashlight (Passive):** Widens the flashlight cone angle by **50%** (60° → 90°) at the normal length, lighting **50%** more area for the entire round.
 - **Long Flashlight (Passive):** Lengthens the flashlight cone (350 px → 429 px) at the normal angle, lighting **50%** more area for the entire round.
 - **Faster Weapon Reload (Passive):** Reduces firearm reload duration by **50%**.
-- **Friendly Shepherd Dog (Companion):** An AI dog that stays near the Sheepherder; it barks and faces directly toward the Monster whenever the Monster is actively in the middle of its eating animation. It doesn't react when the Monster eats the body of a shot sheep.
+- **Friendly Shepherd Dog (Companion):** An AI dog that stays near the Sheepherder; it barks and faces directly toward the Monster whenever the Monster is actively in the middle of its eating animation. It only notices this within **800 px** of the dog (the loud hearing range), and it doesn't react when the Monster eats the body of a shot sheep. The dog passes through sheep and the Sheepherder, so it never blocks anyone.
 - **Spare Bullet (Passive):** Adds a hidden **4th bullet**. Because the Monster never sees the Sheepherder's perk choice, it can't be sure the weapon is empty after 3 shots. The Monster may still work it out by ruling out the perks it can observe (cone shape, the dog, reload speed); this is accepted for now.
 
 ### 4.2 Monster Perks (Choose 1)
@@ -118,7 +118,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - **Temporary Invisibility (Active):** Turns the Monster invisible for up to **5 seconds**. The duration meter drains slowly while standing still, and drains very rapidly while moving. Pressing the perk button again ends it early, and the rest of the meter is lost. The **30-second cooldown** starts when the invisibility ends. It can't be used in spider form or during the eating animation.
   * While invisible, the Monster can still be heard, it is still solid, and bullets still hit it. It cannot eat, it is hidden from the Shepherd Dog, and the NPC sheep no longer treat it as one of the flock.
   * The Monster's own player sees their character semi-transparent while it is invisible.
-- **Allied Bat (Companion / Active):** Commands an allied bat to fly toward the Sheepherder, harassing them and shrinking their flashlight cone's length and angle by about **42%** each for **10 seconds**, which cuts the lit area by **80%** (30-second cooldown). The bat enters from a random position on the map edge nearest the Sheepherder.
+- **Allied Bat (Companion / Active):** Commands an allied bat to fly toward the Sheepherder, harassing them and shrinking their flashlight cone's length and angle by about **42%** each for **10 seconds**, which cuts the lit area by **80%** (30-second cooldown). The bat enters from a random position on the map edge nearest the Sheepherder. The 10 seconds start when the bat reaches the Sheepherder, and the cooldown starts when it leaves. Bullets pass through the bat. It can't be used in spider form.
 
 ---
 
@@ -151,7 +151,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | **NPC Sheep** | Movement Speed | `180 px/s` | One speed for wandering and walking to the bell; same as the Monster |
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
 | **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD, from when it ends); can be ended early |
-| | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%` (`30.0s` CD) |
+| | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%`, from when the bat arrives (`30.0s` CD, from when it leaves) |
 | **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass |
 | | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking |
 | | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired |

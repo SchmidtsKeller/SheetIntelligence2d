@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="PerkDefinition" format=3]
 
+[ext_resource type="Script" path="res://systems/perks/effects/bat_effect.gd" id="3_bat"]
 [ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_ijn63"]
 [ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_kx2ys"]
 
@@ -9,4 +10,6 @@ id = &"allied_bat"
 role = 2
 kind = 2
 display_name = "Allied Bat"
-description = "Send a bat to harass the Sheepherder. It shrinks their flashlight cone for a while."
+description = "Send a bat to the Sheepherder: while it circles them, their flashlight cone shrinks. Not in spider form."
+effect = ExtResource("3_bat")
+triggered = true

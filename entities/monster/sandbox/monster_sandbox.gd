@@ -14,7 +14,10 @@ extends Node2D
 ## godot res://entities/monster/sandbox/monster_sandbox.tscn -- --join
 ## [/codeblock]
 ## The host plays the Sheepherder and the guest the Monster; with
-## [code]--monster[/code] on the host it is the other way round.
+## [code]--monster[/code] on the host it is the other way round. Perks are
+## locked for each round: give them with [code]--perk=<id>[,<id>][/code], e.g.
+## [code]--perk=shepherd_dog,allied_bat[/code] for both companions (Q sends
+## the bat).
 
 const ARENA_SCENE: PackedScene = preload("res://systems/arena/arena.tscn")
 const FIRST_ROUND_SEED: int = 16
@@ -23,6 +26,9 @@ const START_BELOW_FLOCK: float = 220.0
 ## The owner of the Sheepherder when nobody plays it: no device steers it.
 const NOBODY: int = -1
 const MONSTER_HOSTS_ARGUMENT: String = "--monster"
+## With two devices, how long the host waits before each round, so the guest's
+## perk choice (--perk) arrives before the selection is locked.
+const PERK_CHOICE_TIME: float = 1.0
 
 var _arena: Arena
 var _session: GameSession
@@ -31,6 +37,9 @@ var _herder: Sheepherder
 var _monster: Monster
 var _round_seed: int = FIRST_ROUND_SEED
 var _monster_hosts: bool = false
+## Counts the rounds started, so a round started while another one waits for
+## the perk choice is the only one that begins.
+var _rounds_started: int = 0
 var _status: Label
 var _round_button: Button
 var _shoot_button: Button
@@ -103,6 +112,7 @@ func _process(_delta: float) -> void:
 			]
 		),
 		"%d sheep alive" % Services.swarm.get_living_count(),
+		_describe_perk(),
 	]
 	_status.text = " | ".join(parts)
 	_shoot_button.disabled = not combat.can_shoot()
@@ -162,6 +172,14 @@ func _on_session_started() -> void:
 ## Sheepherder below the flock. Each belongs to the device of its player.
 func _start_round() -> void:
 	_despawn_round()
+	_rounds_started += 1
+	var this_round: int = _rounds_started
+	if _session.has_remote_player():
+		await get_tree().create_timer(PERK_CHOICE_TIME).timeout
+		if this_round != _rounds_started or not _session.is_active():
+			return
+	# Before the characters: the magazine size and the companions follow from it.
+	Services.perks.lock_selection()
 	Services.swarm.spawn_flock(_round_seed)
 	var local_id: int = _session.get_local_peer_id()
 	var other_id: int = _session.get_remote_peer_id() if _session.has_remote_player() else NOBODY
@@ -181,6 +199,7 @@ func _start_round() -> void:
 func _despawn_round() -> void:
 	if not _session.is_active() or not _session.is_host():
 		return
+	Services.perks.clear_selection()
 	Services.swarm.despawn_flock()
 	if is_instance_valid(_monster):
 		_session.entities.despawn(_monster.entity_id)
@@ -238,6 +257,20 @@ func _describe_monster() -> String:
 			", sprinting" if _monster.is_sprinting() else "",
 		]
 	)
+
+
+## The local player's perk, and the state of an active one.
+func _describe_perk() -> String:
+	var perks: PerkService = Services.perks
+	var role: GameEnums.Role = _session.get_local_role()
+	var perk_id: StringName = perks.get_selected_perk(role)
+	if perk_id == PerkIds.NONE:
+		return "no perk"
+	if perks.is_perk_active(role):
+		return "%s running (%d %%)" % [perk_id, roundi(perks.get_perk_charge(role) * 100.0)]
+	if perks.get_perk_cooldown_remaining(role) > 0.0:
+		return "%s again in %.1f s" % [perk_id, perks.get_perk_cooldown_remaining(role)]
+	return String(perk_id)
 
 
 func _describe_attack() -> String:

@@ -150,8 +150,21 @@ extends Resource
 ## Fraction by which the bat shrinks both the cone's length and its angle
 ## (about 42 % each, which cuts the lit area by 80 %).
 @export_range(0.0, 1.0, 0.01) var bat_cone_shrink: float = 0.42
-## Cooldown of the Allied Bat perk.
+## Cooldown of the Allied Bat perk. It starts when the bat leaves.
 @export_range(0.0, 300.0, 0.5, "suffix:s") var bat_cooldown: float = 30.0
+
+@export_group("Companions")
+## Not from the GDD: how fast the Shepherd Dog runs. Faster than the
+## Sheepherder, so it keeps up.
+@export_range(0.0, 1000.0, 1.0, "suffix:px/s") var dog_move_speed: float = 260.0
+## The dog stays at least this far from the Sheepherder ...
+@export_range(0.0, 500.0, 1.0, "suffix:px") var dog_follow_distance_min: float = 50.0
+## ... and at most this far, while it can.
+@export_range(0.0, 1000.0, 1.0, "suffix:px") var dog_follow_distance_max: float = 130.0
+## Not from the GDD: how fast the Allied Bat flies to the Sheepherder and away.
+@export_range(0.0, 2000.0, 1.0, "suffix:px/s") var bat_flight_speed: float = 420.0
+## How far from the Sheepherder the bat circles while it harasses them.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var bat_orbit_radius: float = 70.0
 
 @export_group("Audio")
 ## Hearing range of quiet sounds (sheep moving through grass).
