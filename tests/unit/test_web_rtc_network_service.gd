@@ -32,3 +32,12 @@ func test_its_channels_are_the_ones_the_messenger_uses() -> void:
 		WebRtcNetworkService.CHANNELS,
 		[MultiplayerPeer.TRANSFER_MODE_RELIABLE, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED]
 	)
+
+
+func test_the_guest_answers_as_the_side_that_waits_for_the_encryption() -> void:
+	var answer: String = "v=0\r\nm=application 9 UDP/DTLS/SCTP\r\na=setup:active\r\n"
+
+	var passive: String = WebRtcNetworkService.as_passive_answer(answer)
+
+	assert_eq(passive, answer.replace("active", "passive"))
+	assert_eq(WebRtcNetworkService.as_passive_answer(passive), passive)

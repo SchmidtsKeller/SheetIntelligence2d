@@ -29,7 +29,7 @@ const NO_PATH_HINT: String = (
 )
 
 ## Once both codes are in, the devices give up connecting after this many seconds.
-var connect_timeout: float = 15.0
+var connect_timeout: float = 30.0
 
 var _peer: WebRTCMultiplayerPeer
 var _connection: WebRTCPeerConnection
@@ -202,7 +202,17 @@ func _start(as_host: bool) -> Error:
 	return OK
 
 
+## [param answer] with the guest waiting for the host to start the encryption
+## (DTLS), as RFC 5763 allows. By default the guest starts it as soon as it
+## reaches the host, which can be long before the host has read the answer;
+## Chrome keeps such early messages, Firefox does not (docs/pairing.md).
+static func as_passive_answer(answer: String) -> String:
+	return answer.replace("a=setup:active", "a=setup:passive")
+
+
 func _on_session_description_created(type: String, sdp: String) -> void:
+	if type == "answer":
+		sdp = as_passive_answer(sdp)
 	_local_type = type
 	_local_sdp = sdp
 	_connection.set_local_description(type, sdp)

@@ -15,6 +15,8 @@ signal failed(message: String)
 ## Copying is over: [param copied] says whether the code is on the clipboard;
 ## otherwise the player was shown it to copy by hand.
 signal copy_finished(copied: bool)
+## The player answered [method request_camera].
+signal camera_answered(granted: bool)
 
 const INTERFACE: String = "SheepPairing"
 
@@ -34,6 +36,23 @@ func _init() -> void:
 ## Whether the browser side is there.
 func is_available() -> bool:
 	return _api != null
+
+
+## Turns the camera on until [method release_camera] or [method close]. While
+## it is on, the browser puts this device's real addresses into its pairing
+## code instead of hidden names (docs/pairing.md). Answers through
+## [signal camera_answered].
+func request_camera() -> void:
+	if _api == null:
+		camera_answered.emit.call_deferred(false)
+		return
+	_api.call(&"requestCamera", _callback)
+
+
+## Turns off the camera [method request_camera] turned on.
+func release_camera() -> void:
+	if _api != null:
+		_api.call(&"releaseCamera")
 
 
 ## The modules of a QR code for [param text], one row of [code]0[/code] and
@@ -62,7 +81,7 @@ func copy(text: String) -> void:
 		_api.call(&"copy", text, _callback)
 
 
-## Closes the camera or a field that is open.
+## Closes the scanner or a field that is open, and turns off the camera.
 func close() -> void:
 	if _api != null:
 		_api.call(&"close")
@@ -81,3 +100,5 @@ func _on_result(arguments: Array) -> void:
 			copy_finished.emit(true)
 		"closed":
 			copy_finished.emit(false)
+		"camera":
+			camera_answered.emit(value == "granted")

@@ -250,10 +250,10 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 [WebRtcNetworkService](../services/network/web_rtc_network_service.gd) connects two browsers in the same network without any server (GDD §9.4). WebRTC is built into Web exports only; desktop builds would need a plugin, so they use ENet.
 
 1. The host creates a `WebRTCMultiplayerPeer` server and an offer. Once the browser has found all its addresses (ICE candidates, `GATHERING_STATE_COMPLETE`, or after 3 s), the transport emits `pairing_code_ready` with a [PairingCode](../services/network/pairing_code.gd).
-2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way.
+2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way. The answer says that the guest waits for the host to start the encryption (`a=setup:passive`), so the handshake starts only once the host has the answer ([pairing.md](pairing.md#who-starts-the-encryption)).
 3. The host hands over the answer, and the devices connect. `session_started` follows when the data channels are open.
 
-A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 15 s after the answer was read, the message says so and mentions networks that block traffic between devices.
+A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 30 s after the answer was read, the message says so and mentions networks that block traffic between devices. Browsers hide the device's addresses behind `.local` names unless the page uses or may use the camera, so the pairing screens turn it on until the code is made ([pairing.md](pairing.md#hidden-addresses)).
 
 The transfer channels are those of the dev transport: `WebRTCMultiplayerPeer` is created with a reliable channel 1 for events and an unreliable ordered channel 2 for snapshots.
 
