@@ -22,7 +22,7 @@
 3. **Escalation & Evolution Phases:**
    * **Phase 1 (5 Sheep Eaten):** Once the Monster has eaten **5 sheep**, it unlocks the ability to kill the Sheepherder with a single melee attack.
    * **Phase 2 (All 10 Sheep Eaten):** If the Monster eats all **10 NPC sheep**, it sheds its disguise and evolves into a **giant spider monster**, becoming completely **unkillable** (immune to the Sheepherder's firearm) while hunting down the Sheepherder.
-   * Only sheep the Monster has eaten count toward both thresholds. Sheep shot by the Sheepherder don't count, so once any sheep is shot, the spider form can't be reached that round.
+   * Every sheep the Monster eats counts toward both thresholds, including the bodies of sheep the Sheepherder shot (see 3.2).
 4. **Round Resolution & Scoring:** The round ends when a win condition is met or the 180-second timer expires. Points are tallied based on sheep casualties/survival.
 
 ### 2.2 Win & Loss Conditions
@@ -38,7 +38,7 @@
 
 ### 2.3 Scoring System
 
-- **Monster Score:** Gains **+1 point** for every NPC sheep it eats during the round. Sheep shot by the Sheepherder give the Monster **0 points**.
+- **Monster Score:** Gains **+1 point** for every living NPC sheep it eats during the round. Sheep shot by the Sheepherder give the Monster **0 points**, even when it eats their bodies.
 - **Sheepherder Score:** Gains **+1 point** for every NPC sheep still alive at the end of the round, and loses **2 points** for every NPC sheep they shot.
 - **Match Structure:** Best of 5 rounds, decided by round wins. Roles are assigned at random for round 1, and players swap roles after every round. All 5 rounds are always played, even once the match is decided. Points only decide rounds that end on the timer. If both players have the same number of round wins after 5 rounds, the match is a **Draw**.
 
@@ -60,7 +60,7 @@
   * Equipped with a single-shot firearm with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
   * **Reloading:** Reloads automatically after each shot, using a long reload timer. Once all bullets are expended, the weapon is permanently empty for the rest of the round.
-  * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). Shooting the Monster before it evolves into the spider results in an instant Sheepherder victory.
+  * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). The shot sheep's body stays on the ground for the rest of the round, with blood next to it. Shooting the Monster before it evolves into the spider results in an instant Sheepherder victory.
 - **Sheepherder Base Abilities:**
   * **Bell:** Ringing the bell triggers a behavioral phase shift in the flock, causing nearby sheep to walk toward the Sheepherder.
 
@@ -83,7 +83,8 @@
   * **Consume Sheep:** Triggered via dedicated button press (PC) or virtual UI button (Mobile) when within melee proximity of an NPC sheep.
     * *Animation & Lockout:* Eating animation takes **1.0 second**. The Monster **cannot move or abort** during this animation, leaving it vulnerable.
     * *Cooldown:* Default **5.0 seconds** between consumptions.
-    * *Evidence:* Blood from killed sheep remains permanently on the ground as physical evidence (no blood appears on the Monster's wool).
+    * *Evidence:* Blood from killed sheep remains permanently on the ground as physical evidence (no blood appears on the Monster's wool). An eaten sheep's body disappears; only the blood stays.
+    * *Bodies of Shot Sheep:* The Monster can also eat the body of a sheep the Sheepherder shot. This works like eating a living sheep and counts toward both evolution thresholds, but gives no points (see 2.3), and the Shepherd Dog doesn't react to it.
   * **Phase 1 Evolution (5 Sheep Eaten):** Unlocks a one-attack kill on the Sheepherder, using the same melee proximity attack as on sheep. The Sheepherder dies instantly when the attack lands (so they can't shoot back), and the eating animation still plays.
   * **Phase 2 Evolution (10 Sheep Eaten — Spider Form):** Upon eating all 10 sheep, the Monster transforms into a **giant spider monster**, becoming completely **unkillable** (bullets have no effect) and hunting down the Sheepherder.
 
@@ -94,6 +95,7 @@
   * Act collectively as a dynamic swarm (flocking/boids behavior).
   * Operate on distinct behavioral phases: idle wandering, grazing (eating grass), bleating ("mähen" / audio cues), and reacting to the Sheepherder's bell (converging on the Sheepherder).
   * **Total Flock Size per Round:** 10 NPC sheep.
+- **Collision:** Sheep, including the Monster's sheep, are solid: they can't walk through each other or through the Sheepherder. The Sheepherder pushes sheep out of the way when walking into them.
 
 ---
 
@@ -106,7 +108,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - **Wide Flashlight (Passive):** Widens the flashlight cone angle by **50%** (60° → 90°) at the normal length, lighting **50%** more area for the entire round.
 - **Long Flashlight (Passive):** Lengthens the flashlight cone (350 px → 429 px) at the normal angle, lighting **50%** more area for the entire round.
 - **Faster Weapon Reload (Passive):** Reduces firearm reload duration by **50%**.
-- **Friendly Shepherd Dog (Companion):** An AI dog that stays near the Sheepherder; it barks and faces directly toward the Monster whenever the Monster is actively in the middle of its eating animation.
+- **Friendly Shepherd Dog (Companion):** An AI dog that stays near the Sheepherder; it barks and faces directly toward the Monster whenever the Monster is actively in the middle of its eating animation. It doesn't react when the Monster eats the body of a shot sheep.
 - **Spare Bullet (Passive):** Adds a hidden **4th bullet**. Because the Monster never sees the Sheepherder's perk choice, it can't be sure the weapon is empty after 3 shots. The Monster may still work it out by ruling out the perks it can observe (cone shape, the dog, reload speed); this is accepted for now.
 
 ### 4.2 Monster Perks (Choose 1)
@@ -126,7 +128,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | **Match Rules** | Round Duration | `180s` | At timeout the higher score wins the round; equal score with both players alive is a Draw |
 | | Match Format | `Best of 5` | Decided by round wins; all 5 rounds are always played; equal round wins after 5 rounds is a Draw; roles are random in round 1, then swap every round |
 | | Flock Size | `10 NPC Sheep` | Plus 1 disguised Monster (11 sheep-like entities total) |
-| | Shot Sheep Penalty | `-2 points` | Sheepherder only; the Monster gets `0` for shot sheep |
+| | Shot Sheep Penalty | `-2 points` | Sheepherder only; the Monster gets `0` for shot sheep, even when it eats their bodies |
 | **Sheepherder** | Base Movement Speed | `180 px/s` | Standard patrol speed |
 | | Firearm Ammo Capacity | `3 Bullets` | Strict per-round limit; cannot be replenished; `4` with *Spare Bullet* perk |
 | | Firearm Reload Time | `4.0s` | Automatic after each shot; reduced to `2.0s` with *Faster Weapon Reload* perk |
@@ -201,7 +203,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
     * "Evolution Bar" (tracks progress toward the 5-sheep Herder kill unlock and 10-sheep Spider evolution).
     * Remaining living NPC sheep count.
 - **Mobile HUD:** Identical telemetry to PC, adapted for touchscreens using responsive virtual joysticks (left for movement, right for Sheepherder flashlight aim) and ergonomic action buttons.
-- **End-of-Round / Scoreboard Screen:** Displays round outcome, points earned (+1 per surviving sheep and -2 per shot sheep for the Sheepherder; +1 per eaten sheep for the Monster), and the Best-of-5 round-win standing.
+- **End-of-Round / Scoreboard Screen:** Displays round outcome, points earned (+1 per surviving sheep and -2 per shot sheep for the Sheepherder; +1 per living sheep eaten for the Monster), and the Best-of-5 round-win standing.
 
 ---
 

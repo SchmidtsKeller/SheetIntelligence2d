@@ -54,6 +54,8 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 
 ## Values that are project decisions rather than GDD parameters.
 const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
+	&"sheep_acceleration": 900.0,
+	&"sheep_turn_rate_deg": 540.0,
 	&"view_max_world_width": 1600.0,
 	&"view_max_world_height": 900.0,
 }

@@ -1,0 +1,280 @@
+class_name SheepBody
+extends CharacterBody2D
+## The body of every sheep: the NPC sheep of the flock and the Monster's
+## disguise alike (GDD §3.2, §3.3).
+##
+## Whatever steers a sheep (the flock AI, the Monster player, a test) lives
+## outside this scene and only uses the methods below. So a sheep never shows
+## who controls it: node structure, draw order, motion, animation timing and
+## sounds are the same for all of them.
+##
+## Sheep are solid against the world, each other and the Sheepherder, who
+## pushes them aside through [method push] (GDD §3.3). A shot sheep stays as a
+## body that can still be eaten; an eaten sheep disappears (GDD §3.1, §3.2).
+
+## What the sheep is doing. Bleating is not a state: a sheep can bleat while
+## standing, walking or grazing.
+enum State {
+	IDLE,
+	WALK,
+	GRAZE,
+	## Shot: the body lies on the ground for the rest of the round.
+	CORPSE,
+	## Eaten: the body disappears once the animation has played.
+	EATEN,
+}
+
+## The sheep entered [param state].
+signal state_changed(state: State)
+
+## The sheep bleated.
+signal bleated()
+
+## The living sheep was killed.
+signal died(cause: GameEnums.DeathCause)
+
+const ANIMATION_IDLE: StringName = &"idle"
+const ANIMATION_WALK: StringName = &"walk"
+const ANIMATION_GRAZE: StringName = &"graze"
+const ANIMATION_CORPSE: StringName = &"corpse"
+const ANIMATION_EATEN: StringName = &"eaten"
+const ANIMATION_BLEAT: StringName = &"bleat"
+
+## Below this speed a sheep counts as standing.
+const WALK_SPEED_THRESHOLD: float = 5.0
+## The walk animation never plays slower than this, even at a crawl.
+const MIN_WALK_ANIMATION_SPEED: float = 0.4
+
+## Everything this sheep can look like.
+@export var catalog: SheepAppearanceCatalog
+
+var _visual_seed: int = 0
+var _appearance: SheepAppearance
+var _motion: SheepMotion = SheepMotion.new()
+var _move_input: Vector2 = Vector2.ZERO
+var _push_velocity: Vector2 = Vector2.ZERO
+var _grazing: bool = false
+var _state: State = State.IDLE
+var _layers: Array[Sprite2D] = []
+var _move_emitter: int = -1
+var _graze_emitter: int = -1
+
+@onready var _collision: CollisionShape2D = $Collision
+@onready var _facing: Node2D = $Facing
+@onready var _visual: Node2D = $Facing/Pose/Visual
+@onready var _body_anchor: Node2D = $Facing/Pose/Visual/Body
+@onready var _head_anchor: Node2D = $Facing/Pose/Visual/Head/HeadPose
+@onready var _hit_shape: CollisionShape2D = $Facing/HitArea/Shape
+@onready var _animation: AnimationPlayer = $Animation
+@onready var _voice: AnimationPlayer = $Voice
+
+
+func _ready() -> void:
+	_build_layers()
+	_apply_appearance()
+	_animation.animation_finished.connect(_on_animation_finished)
+	_move_emitter = Services.audio.start_emitter(AudioEvents.GRASS_MOVE, self)
+	_graze_emitter = Services.audio.start_emitter(AudioEvents.GRAZE, self)
+	_play_state_animation()
+
+
+func _physics_process(delta: float) -> void:
+	if not is_alive():
+		return
+	var perks: PerkService = Services.perks
+	velocity = _motion.step(
+		Vector2.ZERO if _grazing else _move_input,
+		perks.get_stat(StatIds.SHEEP_MOVE_SPEED),
+		perks.get_stat(StatIds.SHEEP_ACCELERATION),
+		deg_to_rad(perks.get_stat(StatIds.SHEEP_TURN_RATE_DEG)),
+		delta,
+	) + _push_velocity
+	_push_velocity = Vector2.ZERO
+	move_and_slide()
+	_facing.rotation = _motion.heading
+	_update_state()
+
+
+# --- Look ------------------------------------------------------------------------
+
+## Gives the sheep the look of [param visual_seed]. Can be called before or
+## after the sheep enters the scene tree.
+func set_visual_seed(visual_seed: int) -> void:
+	_visual_seed = visual_seed
+	if is_node_ready():
+		_apply_appearance()
+
+
+func get_visual_seed() -> int:
+	return _visual_seed
+
+
+## The look currently shown.
+func get_appearance() -> SheepAppearance:
+	return _appearance
+
+
+# --- Steering --------------------------------------------------------------------
+
+## Where the sheep should walk, with a length from 0 (stand) to 1 (full speed).
+## Stays in effect until changed. Ignored while grazing or dead.
+func set_move_input(direction: Vector2) -> void:
+	_move_input = direction.limit_length(1.0)
+
+
+## Lowers or raises the head to eat grass. A grazing sheep stands still
+## (GDD §3.2). Returns [code]false[/code] for a dead sheep.
+func set_grazing(grazing: bool) -> bool:
+	if not is_alive():
+		return false
+	_grazing = grazing
+	_update_state()
+	return true
+
+
+## Bleats, unless the sheep is dead or already bleating. Returns whether it did.
+func bleat() -> bool:
+	if not is_alive() or _voice.is_playing():
+		return false
+	_voice.play(ANIMATION_BLEAT)
+	Services.audio.play_event(AudioEvents.BLEAT, global_position)
+	bleated.emit()
+	return true
+
+
+## Moves the sheep by [param push_velocity] during the next physics step, on
+## top of its own walking, e.g. when the Sheepherder walks into it. The push is
+## blocked by the same obstacles as walking. Dead sheep cannot be pushed.
+func push(push_velocity: Vector2) -> void:
+	if is_alive():
+		_push_velocity += push_velocity
+
+
+# --- Death -----------------------------------------------------------------------
+
+## Kills the sheep. [constant GameEnums.DeathCause.SHOT] leaves a body,
+## [constant GameEnums.DeathCause.EATEN] makes it disappear; the body of a shot
+## sheep can still be eaten. Returns [code]false[/code] if the sheep cannot die
+## that way (e.g. it is already gone).
+func kill(cause: GameEnums.DeathCause) -> bool:
+	var was_alive: bool = is_alive()
+	match cause:
+		GameEnums.DeathCause.SHOT when was_alive:
+			_enter_state(State.CORPSE)
+		GameEnums.DeathCause.EATEN when was_alive or _state == State.CORPSE:
+			_enter_state(State.EATEN)
+		_:
+			return false
+	if was_alive:
+		died.emit(cause)
+	return true
+
+
+## Whether the sheep is alive.
+func is_alive() -> bool:
+	return _state != State.CORPSE and _state != State.EATEN
+
+
+func is_grazing() -> bool:
+	return _grazing and is_alive()
+
+
+func get_state() -> State:
+	return _state
+
+
+## Direction the sheep faces, in radians (0 = +x).
+func get_heading() -> float:
+	return _motion.heading
+
+
+## Current walking speed in pixels per second, without pushes.
+func get_speed() -> float:
+	return _motion.speed
+
+
+# --- Internals -------------------------------------------------------------------
+
+func _build_layers() -> void:
+	if catalog == null:
+		push_error("SheepBody: no appearance catalog is set.")
+		return
+	for slot: SheepAppearanceSlot in catalog.slots:
+		var layer: Sprite2D = Sprite2D.new()
+		layer.name = String(slot.id).to_pascal_case()
+		var anchor: Node2D = _head_anchor if slot.anchor == SheepAppearanceSlot.Anchor.HEAD else _body_anchor
+		anchor.add_child(layer)
+		_layers.append(layer)
+
+
+func _apply_appearance() -> void:
+	if catalog == null:
+		return
+	_appearance = SheepAppearanceGenerator.generate(_visual_seed, catalog)
+	for slot_index: int in _layers.size():
+		var layer: Sprite2D = _layers[slot_index]
+		var part_index: int = _appearance.part_indices[slot_index]
+		layer.visible = part_index != SheepAppearance.NONE
+		if not layer.visible:
+			layer.texture = null
+			continue
+		var part: SheepAppearancePart = catalog.slots[slot_index].parts[part_index]
+		var tint_index: int = _appearance.tint_indices[slot_index]
+		layer.texture = part.texture
+		layer.position = part.offset
+		layer.self_modulate = part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE
+	_visual.scale = Vector2(_appearance.length_permille, _appearance.width_permille) / 1000.0
+
+
+func _update_state() -> void:
+	if not is_alive():
+		return
+	var state: State = State.IDLE
+	if _grazing:
+		state = State.GRAZE
+	elif _motion.speed > WALK_SPEED_THRESHOLD:
+		state = State.WALK
+	if state != _state:
+		_enter_state(state)
+	if _state == State.WALK:
+		var max_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+		_animation.speed_scale = maxf(_motion.speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
+
+
+func _enter_state(state: State) -> void:
+	_state = state
+	if not is_alive():
+		_motion.speed = 0.0
+		velocity = Vector2.ZERO
+		_grazing = false
+		_voice.stop()
+		_collision.set_deferred(&"disabled", true)
+		_hit_shape.set_deferred(&"disabled", true)
+	Services.audio.set_emitter_playing(_move_emitter, state == State.WALK)
+	Services.audio.set_emitter_playing(_graze_emitter, state == State.GRAZE)
+	_play_state_animation()
+	state_changed.emit(state)
+
+
+func _play_state_animation() -> void:
+	_animation.speed_scale = 1.0
+	match _state:
+		State.IDLE:
+			_animation.play(ANIMATION_IDLE)
+		State.WALK:
+			_animation.play(ANIMATION_WALK)
+		State.GRAZE:
+			_animation.play(ANIMATION_GRAZE)
+		State.CORPSE:
+			_animation.play(ANIMATION_CORPSE)
+		State.EATEN:
+			# The sheep vanishes exactly while the Monster eats (GDD §3.2), which
+			# the Faster Consumption perk shortens.
+			var duration: float = Services.perks.get_stat(StatIds.EAT_DURATION)
+			var length: float = _animation.get_animation(ANIMATION_EATEN).length
+			_animation.play(ANIMATION_EATEN, -1.0, length / duration if duration > 0.0 else 1.0)
+
+
+func _on_animation_finished(animation_name: StringName) -> void:
+	if animation_name == ANIMATION_EATEN:
+		hide()
