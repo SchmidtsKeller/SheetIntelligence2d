@@ -219,6 +219,8 @@ godot --path . -- --join
 
 The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (see below).
 
+ENet has a packet throttle: while round trips take longer than before, it drops unreliable packets on the sending device, to relieve a congested line. The dev transport switches it off (`EnetNetworkService._switch_off_packet_throttle`). The connection is polled once per frame, so a round trip measures 1 or 2 frames depending on how the frames of the two instances fall, and ENet took that for congestion: in about one session in five the throttle closed within seconds, most snapshots were never sent, and the other device showed everything standing still and jumping. Snapshots are still unreliable and can get lost on a real network; `--net-loss` tests that.
+
 | Flag | Effect |
 |:--|:--|
 | `--net-latency=<ms>` | Delay every incoming message |
