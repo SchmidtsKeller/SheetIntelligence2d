@@ -292,6 +292,55 @@ func test_sheep_dies_only_once_but_a_shot_body_can_still_be_eaten() -> void:
 	assert_eq(_swarm.get_living_count(), _flock_size - 1)
 
 
+func test_shot_from_the_firearm_kills_the_sheep_it_hits() -> void:
+	# The flock together with the real firearm (#14).
+	_swarm.spawn_flock(ROUND_SEED)
+	var combat: SessionCombatService = add_child_autofree(SessionCombatService.new())
+	combat.session = _session
+	combat.swarm = _swarm
+	var sheepherder: Node2D = Node2D.new()
+	_arena.get_entities_layer().add_child(sheepherder)
+	combat.begin_round(sheepherder, null)
+	# The physics world has to know the sheep before a bullet can hit one.
+	await _simulate(0.2, 1.0)
+	# The sheep with the most room around it, so nothing else is in the way.
+	var victim: int = -1
+	var most_room: float = 0.0
+	for sheep_id: int in _swarm.get_living_sheep_ids():
+		var here: Vector2 = (_swarm.get_sheep_body(sheep_id) as Node2D).global_position
+		var room: float = INF
+		for other_id: int in _swarm.get_living_sheep_ids():
+			if other_id != sheep_id:
+				var there: Vector2 = (_swarm.get_sheep_body(other_id) as Node2D).global_position
+				room = minf(room, here.distance_to(there))
+		if room > most_room:
+			most_room = room
+			victim = sheep_id
+	var picture: Node2D = _swarm.get_sheep_body(victim).get_node(^"Facing")
+	watch_signals(combat)
+	watch_signals(_swarm)
+
+	# A bullet hits a sheep where it is shown.
+	var origin: Vector2 = picture.global_position + Vector2(-50.0, 0.0)
+	assert_true(combat.request_shot(origin, Vector2.RIGHT))
+
+	assert_false(_swarm.is_sheep_alive(victim), "the sheep that was aimed at is dead")
+	assert_eq(_swarm.get_living_count(), _flock_size - 1, "and only that one")
+	assert_eq(
+		(_swarm.get_sheep_body(victim) as SheepBody).get_state(),
+		SheepBody.State.CORPSE,
+		"its body stays on the field"
+	)
+	assert_signal_emit_count(_swarm, &"sheep_died", 1)
+	assert_signal_emitted(combat, &"shot_fired")
+	assert_eq(
+		get_signal_arguments(combat, &"shot_fired", 0)[2],
+		CombatService.ShotResult.HIT_SHEEP,
+		"the firearm reports a hit sheep"
+	)
+	sheepherder.queue_free()
+
+
 func test_unknown_sheep_cannot_be_killed() -> void:
 	_swarm.spawn_flock(ROUND_SEED)
 

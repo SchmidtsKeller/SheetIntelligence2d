@@ -60,8 +60,8 @@ signal eat_started(target: EatTarget, target_id: int, duration: float)
 @warning_ignore("unused_signal")
 signal eat_finished(target: EatTarget, target_id: int, cooldown: float)
 
-## Blood appeared on the ground where a sheep was eaten. It stays for the
-## whole round (GDD §3.2).
+## Blood appeared on the ground where a sheep was eaten or shot. It stays for
+## the whole round (GDD §3.1, §3.2).
 @warning_ignore("unused_signal")
 signal blood_spilled(position: Vector2)
 
