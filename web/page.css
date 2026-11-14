@@ -1,0 +1,27 @@
+/*
+ * Page rules for the Web build. Linked from the export preset's Head Include
+ * and copied next to the exported game by tools/export_web.
+ *
+ * The game owns the whole page: nothing scrolls, bounces, zooms or gets
+ * selected while playing.
+ */
+
+html,
+body {
+	/* No scroll bars, no rubber-band scrolling, no pull-to-refresh. */
+	overflow: hidden;
+	overscroll-behavior: none;
+	/* The page behind the canvas, visible while the game loads. */
+	background-color: #000;
+}
+
+body,
+canvas {
+	/* All touch gestures go to the game: no pinch zoom, no double-tap zoom. */
+	touch-action: none;
+	/* No text selection and no long-press callout (iOS). */
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+}

@@ -17,6 +17,10 @@ func _ready() -> void:
 		push_error("Boot: " + _status.text)
 		return
 	_status.text = "Starting …"
+	# Development: host or join right away when the command line asks for it.
+	var error: Error = LaunchOptions.from_command_line().start_session(Services.session)
+	if error != OK:
+		push_error("Boot: could not start the session (%s)." % error_string(error))
 	# The scene tree must not be changed while it is still setting up this scene.
 	_enter_lobby.call_deferred()
 

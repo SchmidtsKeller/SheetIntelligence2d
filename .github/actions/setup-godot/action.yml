@@ -1,0 +1,82 @@
+name: Set up Godot
+description: >
+  Installs a pinned Godot editor build (standard build, Linux x86_64) and,
+  on request, the matching Web export templates. Both are cached between runs
+  and verified against the checksums published with the release.
+
+inputs:
+  version:
+    description: Godot release tag, e.g. "4.7-stable".
+    required: true
+  web-templates:
+    description: Set to "true" to also install the Web export templates.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Restore Godot from cache
+      id: engine-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/godot/engine
+        key: godot-engine-linux-x86_64-${{ inputs.version }}
+
+    - name: Download Godot
+      if: steps.engine-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        GODOT_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+        archive="Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+        work="$(mktemp -d)"
+        cd "$work"
+        curl --fail --location --silent --show-error --remote-name "$base/$archive"
+        curl --fail --location --silent --show-error --remote-name "$base/SHA512-SUMS.txt"
+        sha512sum --check --ignore-missing SHA512-SUMS.txt
+        unzip -q "$archive"
+        mkdir -p "$HOME/godot/engine"
+        mv "Godot_v${GODOT_VERSION}_linux.x86_64" "$HOME/godot/engine/godot"
+        chmod +x "$HOME/godot/engine/godot"
+        rm -rf "$work"
+
+    - name: Add Godot to the PATH
+      shell: bash
+      run: |
+        echo "$HOME/godot/engine" >> "$GITHUB_PATH"
+        echo "GODOT=$HOME/godot/engine/godot" >> "$GITHUB_ENV"
+        "$HOME/godot/engine/godot" --version
+
+    - name: Restore Web export templates from cache
+      if: inputs.web-templates == 'true'
+      id: templates-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.local/share/godot/export_templates
+        key: godot-web-templates-${{ inputs.version }}
+
+    - name: Download Web export templates
+      if: inputs.web-templates == 'true' && steps.templates-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        GODOT_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+        archive="Godot_v${GODOT_VERSION}_export_templates.tpz"
+        # Godot looks for templates in a folder named like "4.7.stable".
+        target="$HOME/.local/share/godot/export_templates/${GODOT_VERSION/-/.}"
+        work="$(mktemp -d)"
+        cd "$work"
+        curl --fail --location --silent --show-error --remote-name "$base/$archive"
+        curl --fail --location --silent --show-error --remote-name "$base/SHA512-SUMS.txt"
+        sha512sum --check --ignore-missing SHA512-SUMS.txt
+        # The archive holds the templates of every platform; only Web is needed.
+        unzip -q "$archive" "templates/web_*" "templates/version.txt"
+        mkdir -p "$target"
+        mv templates/* "$target/"
+        rm -rf "$work"
+        ls -l "$target"

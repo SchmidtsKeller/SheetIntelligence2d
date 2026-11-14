@@ -92,6 +92,10 @@ func get_eaten_count() -> int:
 	return 0
 
 
+func get_eaten_alive_count() -> int:
+	return 0
+
+
 func get_monster_form() -> GameEnums.MonsterForm:
 	return GameEnums.MonsterForm.SHEEP
 

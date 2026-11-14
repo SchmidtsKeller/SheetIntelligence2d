@@ -1,6 +1,8 @@
 extends TestCase
 ## The scene flow walks boot → lobby → round → results and refuses shortcuts.
 
+# An alias for an enum type, so it is named like a type.
+# gdlint: ignore=constant-name
 const Screen = SceneFlowController.Screen
 
 var _flow: SceneFlowController
@@ -20,9 +22,14 @@ func test_a_scene_outside_the_flow_is_no_screen() -> void:
 
 
 func test_any_screen_can_be_entered_from_outside_the_flow() -> void:
-	for screen: SceneFlowController.Screen in [Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS]:
+	for screen: SceneFlowController.Screen in [
+		Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS
+	]:
 		assert_true(SceneFlowController.can_transition(Screen.NONE, screen))
-	assert_false(SceneFlowController.can_transition(Screen.LOBBY, Screen.NONE), "nothing leads out of the flow")
+	assert_false(
+		SceneFlowController.can_transition(Screen.LOBBY, Screen.NONE),
+		"nothing leads out of the flow"
+	)
 
 
 func test_full_match_flow() -> void:
@@ -55,11 +62,16 @@ func test_transition_table() -> void:
 	}
 
 	for from: SceneFlowController.Screen in allowed:
-		for to: SceneFlowController.Screen in [Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS]:
+		for to: SceneFlowController.Screen in [
+			Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS
+		]:
 			assert_eq(
 				SceneFlowController.can_transition(from, to),
 				allowed[from].has(to),
-				"%s → %s" % [SceneFlowController.screen_name(from), SceneFlowController.screen_name(to)],
+				(
+					"%s → %s"
+					% [SceneFlowController.screen_name(from), SceneFlowController.screen_name(to)]
+				),
 			)
 
 
@@ -113,9 +125,17 @@ func test_a_task_can_replace_the_scene_of_a_screen() -> void:
 func test_every_screen_has_an_existing_scene() -> void:
 	var flow: SceneFlowController = get_node(^"/root/SceneFlow")
 
-	for screen: SceneFlowController.Screen in [Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS]:
-		assert_true(flow.screen_scenes.has(screen), "%s has a scene" % SceneFlowController.screen_name(screen))
-		assert_true(ResourceLoader.exists(flow.screen_scenes[screen]), "%s exists" % flow.screen_scenes[screen])
+	for screen: SceneFlowController.Screen in [
+		Screen.BOOT, Screen.LOBBY, Screen.ROUND, Screen.RESULTS
+	]:
+		assert_true(
+			flow.screen_scenes.has(screen),
+			"%s has a scene" % SceneFlowController.screen_name(screen)
+		)
+		assert_true(
+			ResourceLoader.exists(flow.screen_scenes[screen]),
+			"%s exists" % flow.screen_scenes[screen]
+		)
 
 
 func test_placeholder_screens_can_be_instantiated() -> void:

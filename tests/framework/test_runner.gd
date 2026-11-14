@@ -68,7 +68,12 @@ func _process(_delta: float) -> void:
 	if _running_test.is_empty():
 		return
 	if Time.get_ticks_msec() - _running_since_msec > TEST_TIMEOUT_SECONDS * 1000.0:
-		print("\nTIMEOUT  %s did not finish within %s s. Aborting the test run." % [_running_test, TEST_TIMEOUT_SECONDS])
+		print(
+			(
+				"\nTIMEOUT  %s did not finish within %s s. Aborting the test run."
+				% [_running_test, TEST_TIMEOUT_SECONDS]
+			)
+		)
 		get_tree().quit(1)
 
 
@@ -168,7 +173,9 @@ func _run_test(test_case: TestCaseBase, path: String, method: String) -> void:
 	if failures.is_empty():
 		if not _quiet:
 			var expected_errors: int = test_case._get_expected_error_count()
-			var note: String = "  (the engine error above was expected)" if expected_errors > 0 else ""
+			var note: String = (
+				"  (the engine error above was expected)" if expected_errors > 0 else ""
+			)
 			print("  PASS  %s%s" % [method, note])
 	else:
 		_failed_count += 1
@@ -193,7 +200,15 @@ func _print_summary(duration_msec: int) -> void:
 	for failed_test: String in _failed_tests:
 		print("FAILED  %s" % failed_test)
 	print(
-		"%d tests, %d passed, %d failed, %d assertions, %.2f s"
-		% [_test_count, _test_count - _failed_count, _failed_count, _assert_count, duration_msec / 1000.0]
+		(
+			"%d tests, %d passed, %d failed, %d assertions, %.2f s"
+			% [
+				_test_count,
+				_test_count - _failed_count,
+				_failed_count,
+				_assert_count,
+				duration_msec / 1000.0
+			]
+		)
 	)
 	print("RESULT: %s" % ("PASSED" if _failed_count == 0 and _test_count > 0 else "FAILED"))

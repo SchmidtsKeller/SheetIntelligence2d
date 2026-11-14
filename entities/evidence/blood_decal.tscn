@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/evidence/placeholder/blood.svg" id="1_blood"]
+[ext_resource type="Script" path="res://systems/vision/vision_target.gd" id="2_vision"]
+
+[node name="BloodDecal" type="Sprite2D" groups=["dynamic_entities"]]
+self_modulate = Color(1, 1, 1, 0.9)
+texture = ExtResource("1_blood")
+
+[node name="VisionTarget" type="Node" parent="."]
+script = ExtResource("2_vision")
+kind = 1
+radius = 14.0
