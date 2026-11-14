@@ -1,5 +1,4 @@
-@abstract
-class_name ServiceBootstrap
+@abstract class_name ServiceBootstrap
 extends RefCounted
 ## The composition root: the one place that decides which implementation
 ## fulfils which contract.

@@ -1,5 +1,4 @@
-@abstract
-class_name GameEnums
+@abstract class_name GameEnums
 extends RefCounted
 ## Shared enums of the game rules (GDD §2, §3).
 ##

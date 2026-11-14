@@ -1,8 +1,8 @@
 extends TestCase
 ## Every stub satisfies its contract and behaves as the contract describes.
 
-
 # --- All stubs -----------------------------------------------------------------
+
 
 func test_bootstrap_registers_a_stub_for_every_contract() -> void:
 	var registry: ServiceRegistry = add_child_autofree(ServiceRegistry.new())
@@ -22,18 +22,27 @@ func test_contracts_are_abstract_and_stubs_are_not() -> void:
 	for contract: Script in ServiceBootstrap.core_contracts():
 		assert_true(contract.is_abstract(), "%s is abstract" % contract.get_global_name())
 	for stub: Script in [
-		StubInputService, StubNetworkService, StubSwarmService,
-		StubCombatService, StubPerkService, StubAudioService,
+		StubInputService,
+		StubNetworkService,
+		StubSwarmService,
+		StubCombatService,
+		StubPerkService,
+		StubAudioService,
 	]:
 		assert_false(stub.is_abstract(), "%s can be instantiated" % stub.get_global_name())
 
 
 func test_contracts_extend_node() -> void:
 	for contract: Script in ServiceBootstrap.core_contracts():
-		assert_eq(contract.get_instance_base_type(), &"Node", "%s extends Node" % contract.get_global_name())
+		assert_eq(
+			contract.get_instance_base_type(),
+			&"Node",
+			"%s extends Node" % contract.get_global_name()
+		)
 
 
 # --- Input ---------------------------------------------------------------------
+
 
 func test_input_stub_reports_the_simulated_vectors() -> void:
 	var input: StubInputService = autofree(StubInputService.new())
@@ -41,7 +50,9 @@ func test_input_stub_reports_the_simulated_vectors() -> void:
 	input.move_vector = Vector2(3.0, 4.0)
 	input.aim_direction = Vector2(0.0, -5.0)
 
-	assert_almost_eq(input.get_move_vector().length(), 1.0, 0.0001, "movement is limited to length 1")
+	assert_almost_eq(
+		input.get_move_vector().length(), 1.0, 0.0001, "movement is limited to length 1"
+	)
 	assert_eq(input.get_aim_direction(Vector2.ZERO), Vector2.UP, "aim is a unit vector")
 
 
@@ -154,6 +165,7 @@ func test_input_stub_scheme_override() -> void:
 
 # --- Network -------------------------------------------------------------------
 
+
 func test_network_stub_starts_disconnected() -> void:
 	var network: StubNetworkService = autofree(StubNetworkService.new())
 
@@ -175,7 +187,9 @@ func test_network_stub_hosts_an_offline_session() -> void:
 	assert_eq(network.get_local_peer_id(), 1)
 	assert_eq(network.get_remote_peer_id(), 0, "nobody else is in an offline session")
 	assert_is(network.get_multiplayer_peer(), OfflineMultiplayerPeer)
-	assert_signal_emitted_with(network, &"connection_state_changed", [NetworkService.ConnectionState.CONNECTED])
+	assert_signal_emitted_with(
+		network, &"connection_state_changed", [NetworkService.ConnectionState.CONNECTED]
+	)
 	assert_signal_emit_count(network, &"session_started", 1)
 	assert_eq(network.host_session(), ERR_ALREADY_IN_USE, "a second session cannot be started")
 
@@ -197,13 +211,17 @@ func test_network_stub_closes_its_session() -> void:
 
 	assert_eq(network.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
 	assert_null(network.get_multiplayer_peer())
-	assert_eq(get_signal_arguments(network, &"session_ended")[0], NetworkService.DisconnectReason.LOCAL_CLOSE)
+	assert_eq(
+		get_signal_arguments(network, &"session_ended")[0],
+		NetworkService.DisconnectReason.LOCAL_CLOSE
+	)
 
 	network.close_session()
 	assert_signal_emit_count(network, &"session_ended", 1, "closing twice ends the session once")
 
 
 # --- Swarm ---------------------------------------------------------------------
+
 
 func test_swarm_stub_is_an_empty_flock() -> void:
 	var swarm: StubSwarmService = autofree(StubSwarmService.new())
@@ -241,6 +259,7 @@ func test_swarm_stub_keeps_track_of_neighbours() -> void:
 
 
 # --- Combat --------------------------------------------------------------------
+
 
 func test_combat_stub_answers_for_a_fresh_round() -> void:
 	var combat: StubCombatService = autofree(StubCombatService.new(GameConfig.new()))
@@ -297,6 +316,7 @@ func test_combat_stub_reads_ammo_from_the_config() -> void:
 
 # --- Perks ---------------------------------------------------------------------
 
+
 func test_perk_stub_returns_the_plain_config_value_of_every_stat() -> void:
 	var config: GameConfig = GameConfig.new()
 	var perks: StubPerkService = autofree(StubPerkService.new(config))
@@ -332,8 +352,12 @@ func test_perk_stub_fails_loudly_for_an_unknown_stat() -> void:
 func test_perk_stub_ignores_modifiers() -> void:
 	var perks: StubPerkService = autofree(StubPerkService.new(GameConfig.new()))
 
-	var first: int = perks.add_modifier(StatIds.FIREARM_AMMO, PerkService.ModifierOp.ADD, 1.0, PerkIds.SPARE_BULLET)
-	var second: int = perks.add_modifier(StatIds.EAT_DURATION, PerkService.ModifierOp.MULTIPLY, 0.5, PerkIds.FASTER_CONSUMPTION, 3.0)
+	var first: int = perks.add_modifier(
+		StatIds.FIREARM_AMMO, PerkService.ModifierOp.ADD, 1.0, PerkIds.SPARE_BULLET
+	)
+	var second: int = perks.add_modifier(
+		StatIds.EAT_DURATION, PerkService.ModifierOp.MULTIPLY, 0.5, PerkIds.FASTER_CONSUMPTION, 3.0
+	)
 
 	assert_ne(first, second, "every modifier gets its own handle")
 	assert_eq(perks.get_stat(StatIds.FIREARM_AMMO), 3.0)
@@ -347,7 +371,9 @@ func test_perk_stub_accepts_only_perks_from_the_role_pool() -> void:
 	watch_signals(perks)
 
 	assert_true(perks.select_perk(GameEnums.Role.SHEEPHERDER, PerkIds.SPARE_BULLET))
-	assert_false(perks.select_perk(GameEnums.Role.SHEEPHERDER, PerkIds.INVISIBILITY), "a Monster perk")
+	assert_false(
+		perks.select_perk(GameEnums.Role.SHEEPHERDER, PerkIds.INVISIBILITY), "a Monster perk"
+	)
 	assert_false(perks.select_perk(GameEnums.Role.MONSTER, &"no_such_perk"))
 
 	assert_eq(perks.get_selected_perk(GameEnums.Role.SHEEPHERDER), PerkIds.SPARE_BULLET)
@@ -362,7 +388,9 @@ func test_perk_stub_locks_and_clears_the_selection() -> void:
 
 	perks.lock_selection()
 	assert_true(perks.is_selection_locked())
-	assert_false(perks.select_perk(GameEnums.Role.MONSTER, PerkIds.INVISIBILITY), "locked at round start")
+	assert_false(
+		perks.select_perk(GameEnums.Role.MONSTER, PerkIds.INVISIBILITY), "locked at round start"
+	)
 	assert_eq(perks.get_selected_perk(GameEnums.Role.MONSTER), PerkIds.ALLIED_BAT)
 
 	perks.clear_selection()
@@ -382,6 +410,7 @@ func test_perk_stub_has_no_active_perks() -> void:
 
 # --- Audio ---------------------------------------------------------------------
 
+
 func test_audio_stub_records_what_was_played() -> void:
 	var audio: StubAudioService = autofree(StubAudioService.new(GameConfig.new()))
 	watch_signals(audio)
@@ -390,7 +419,10 @@ func test_audio_stub_records_what_was_played() -> void:
 	audio.play_ui(&"click")
 
 	assert_eq(audio.played.size(), 2)
-	assert_eq(audio.played[0], {"event": AudioEvents.BELL, "position": Vector2(5.0, 6.0), "positional": true})
+	assert_eq(
+		audio.played[0],
+		{"event": AudioEvents.BELL, "position": Vector2(5.0, 6.0), "positional": true}
+	)
 	assert_eq(audio.played[1]["positional"], false)
 	assert_signal_emitted_with(audio, &"event_played", [AudioEvents.BELL, Vector2(5.0, 6.0)])
 

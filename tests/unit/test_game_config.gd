@@ -122,6 +122,7 @@ func test_get_number_fails_loudly_for_an_unknown_name() -> void:
 
 # --- Relations the design document states in words ------------------------------
 
+
 func test_monster_moves_exactly_like_the_sheep_it_imitates() -> void:
 	var config: GameConfig = GameConfig.new()
 
@@ -148,10 +149,16 @@ func test_spider_is_faster_than_a_sprinting_sheep() -> void:
 
 func test_both_flashlight_perks_light_half_as_much_area_again() -> void:
 	var config: GameConfig = GameConfig.new()
-	var base_area: float = _lit_area(config.flashlight_cone_angle_deg, config.flashlight_cone_length)
+	var base_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.flashlight_cone_length
+	)
 
-	var wide_area: float = _lit_area(config.perk_wide_flashlight_angle_deg, config.flashlight_cone_length)
-	var long_area: float = _lit_area(config.flashlight_cone_angle_deg, config.perk_long_flashlight_length)
+	var wide_area: float = _lit_area(
+		config.perk_wide_flashlight_angle_deg, config.flashlight_cone_length
+	)
+	var long_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.perk_long_flashlight_length
+	)
 
 	assert_almost_eq(wide_area / base_area, 1.5, 0.01)
 	assert_almost_eq(long_area / base_area, 1.5, 0.01)
@@ -160,7 +167,9 @@ func test_both_flashlight_perks_light_half_as_much_area_again() -> void:
 func test_bat_cuts_the_lit_area_by_about_eighty_percent() -> void:
 	var config: GameConfig = GameConfig.new()
 	var remaining: float = 1.0 - config.bat_cone_shrink
-	var base_area: float = _lit_area(config.flashlight_cone_angle_deg, config.flashlight_cone_length)
+	var base_area: float = _lit_area(
+		config.flashlight_cone_angle_deg, config.flashlight_cone_length
+	)
 
 	var disrupted_area: float = _lit_area(
 		config.flashlight_cone_angle_deg * remaining,
@@ -192,9 +201,15 @@ func test_spider_needs_the_whole_flock() -> void:
 
 func _assert_matches_gdd(config: GameConfig) -> void:
 	for number_name: StringName in GDD_DEFAULTS:
-		assert_eq(config.get(number_name), GDD_DEFAULTS[number_name], "GDD §5 default of '%s'" % number_name)
+		assert_eq(
+			config.get(number_name),
+			GDD_DEFAULTS[number_name],
+			"GDD §5 default of '%s'" % number_name
+		)
 	for number_name: StringName in PROJECT_DEFAULTS:
-		assert_eq(config.get(number_name), PROJECT_DEFAULTS[number_name], "default of '%s'" % number_name)
+		assert_eq(
+			config.get(number_name), PROJECT_DEFAULTS[number_name], "default of '%s'" % number_name
+		)
 
 
 ## Area of a circular sector, up to a constant factor.

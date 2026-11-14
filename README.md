@@ -8,7 +8,8 @@ An asymmetric 1v1 social deduction game for the browser. One player is the **She
 
 ## Requirements
 
-- **Godot 4.7** (strictly this version, GDD §9.1). The standard build is enough; the project uses GDScript only, because C# projects cannot be exported to the Web.
+- **Godot 4.7** (strictly this version, GDD §9.1), **standard build**. The project uses GDScript only. The .NET build of Godot can run the project and the tests, but it cannot export to the Web.
+- For the Web build: the Web export templates of the same version (*Editor → Manage Export Templates*).
 
 ## Run the project
 
@@ -71,6 +72,26 @@ func test_bell_reaches_sheep_inside_the_radius() -> void:
 
 The harness lives in the repository and has no dependencies, so it cannot fall behind the engine version. GUT and gdUnit4 are the usual choices; they were not evaluated against Godot 4.7 for this project. The assertion names follow GUT's, so switching later is mostly a change of the base class.
 
+## Web build
+
+The game ships as a Web build. Details, including the reasoning behind the export settings, are in [docs/web-build.md](docs/web-build.md).
+
+**Build and serve locally.** Export the Web build and serve it at <http://localhost:8060>:
+
+```bash
+tools/export_web.sh --serve
+```
+
+On Windows: `tools\export_web.ps1 --serve`. Add `--debug` for a debug build.
+
+**Continuous integration.** Every pull request and every push to `main` runs the format and lint check, the import check with the unit tests, and the Web export. The exported build of a pull request can be downloaded from its CI run as the artifact `web-build`.
+
+**Deployment.** Every push to `main` is deployed to GitHub Pages: <https://schmidtskeller.github.io/SheetIntelligence2d/>. Pages has to be enabled once by the repository owner (*Settings → Pages → Source: GitHub Actions*).
+
+**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost`.
+
+**Thread Support** is off and the Progressive Web App option is not used, because GitHub Pages cannot send the cross-origin isolation headers that threads need. This affects audio latency in *Stream* mode; see the decision in [docs/web-build.md](docs/web-build.md#decision-no-thread-support-no-progressive-web-app).
+
 ## Architecture
 
 The code follows two rules from GDD §9.2: **separation of concerns** through service contracts, and **one source of truth** for every number and name.
@@ -84,7 +105,9 @@ res://
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
-└── tools/            Developer scripts
+├── tools/            Developer scripts: tests, import check, Web export, local server
+├── web/              Page files that ship next to the exported game
+└── docs/             Decisions and how-tos
 ```
 
 ### Service contracts
@@ -206,7 +229,9 @@ NPC sheep and the Monster share every layer and group they are in, so neither ca
 
 ## Code conventions
 
+- **Formatted and linted.** CI checks every script with `gdformat` and `gdlint` from [gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit) 4.5.0; the settings are in `gdformatrc` and `gdlintrc`. Install it with `pipx install "gdtoolkit==4.5.0"`, then format with `gdformat $(git ls-files '*.gd')` and lint with `gdlint $(git ls-files '*.gd')` before pushing.
 - **Static typing everywhere.** Every variable, parameter and return value has a type. The project setting `debug/gdscript/warnings/untyped_declaration` is set to *Error*, so untyped code does not compile.
+- Definitions follow the style guide's order: signals, enums, constants, exported variables, variables, then functions.
 - Naming follows the [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html): `snake_case` for files, functions and variables; `PascalCase` for classes and nodes; `CONSTANT_CASE` for constants and enum values; a leading `_` for private members; signals in the past tense (`sheep_died`).
 - Contracts are named `<Thing>Service`, stubs `Stub<Thing>Service`, tests `tests/unit/test_<subject>.gd`.
 - Public classes, methods and signals carry `##` documentation comments.

@@ -40,7 +40,12 @@ func register(contract: Script, implementation: Node) -> bool:
 	if not _is_valid_pair(contract, implementation):
 		return false
 	if _services.has(contract):
-		_fail("%s is already registered. Use replace() to swap the implementation." % _name_of(contract))
+		_fail(
+			(
+				"%s is already registered. Use replace() to swap the implementation."
+				% _name_of(contract)
+			)
+		)
 		return false
 	_adopt(contract, implementation)
 	service_registered.emit(contract, implementation)
@@ -115,7 +120,9 @@ func _is_valid_pair(contract: Script, implementation: Node) -> bool:
 		_fail("Cannot register null as %s." % _name_of(contract))
 		return false
 	if not is_instance_of(implementation, contract):
-		_fail("%s does not extend the contract %s." % [_describe(implementation), _name_of(contract)])
+		_fail(
+			"%s does not extend the contract %s." % [_describe(implementation), _name_of(contract)]
+		)
 		return false
 	return true
 

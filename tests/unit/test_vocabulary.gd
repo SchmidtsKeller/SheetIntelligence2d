@@ -1,8 +1,8 @@
 extends TestCase
 ## The shared vocabulary (roles, perks, sound events) matches the design document.
 
-
 # --- Roles ---------------------------------------------------------------------
+
 
 func test_roles_are_each_others_opposite() -> void:
 	assert_eq(GameEnums.opposite_role(GameEnums.Role.SHEEPHERDER), GameEnums.Role.MONSTER)
@@ -16,10 +16,19 @@ func test_role_names() -> void:
 
 
 func test_role_action_sets() -> void:
-	assert_eq(InputActions.abilities_for(GameEnums.Role.SHEEPHERDER), [InputActions.SHOOT, InputActions.BELL])
+	assert_eq(
+		InputActions.abilities_for(GameEnums.Role.SHEEPHERDER),
+		[InputActions.SHOOT, InputActions.BELL]
+	)
 	assert_eq(
 		InputActions.abilities_for(GameEnums.Role.MONSTER),
-		[InputActions.GRAZE, InputActions.BLEAT, InputActions.EAT, InputActions.SPRINT, InputActions.PERK],
+		[
+			InputActions.GRAZE,
+			InputActions.BLEAT,
+			InputActions.EAT,
+			InputActions.SPRINT,
+			InputActions.PERK
+		],
 	)
 	assert_eq(InputActions.abilities_for(GameEnums.Role.NONE), [])
 	assert_true(InputActions.role_aims(GameEnums.Role.SHEEPHERDER))
@@ -27,6 +36,7 @@ func test_role_action_sets() -> void:
 
 
 # --- Perks (GDD §4) --------------------------------------------------------------
+
 
 func test_sheepherder_has_five_perks_and_the_monster_three() -> void:
 	assert_eq(PerkIds.SHEEPHERDER_POOL.size(), 5)
@@ -49,6 +59,7 @@ func test_no_perk_is_never_a_valid_choice() -> void:
 
 
 # --- Sound events (GDD §5, §7.2) -------------------------------------------------
+
 
 func test_every_sound_event_has_a_hearing_range_class() -> void:
 	assert_eq(AudioEvents.ALL.size(), 10)
@@ -79,6 +90,7 @@ func test_unknown_sound_events_are_quiet() -> void:
 
 
 # --- Stats -----------------------------------------------------------------------
+
 
 func test_stat_ids_are_unique() -> void:
 	var seen: Array[StringName] = []

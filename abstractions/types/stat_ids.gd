@@ -1,5 +1,4 @@
-@abstract
-class_name StatIds
+@abstract class_name StatIds
 extends RefCounted
 ## Names of all gameplay stats (GDD §5).
 ##

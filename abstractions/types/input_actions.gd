@@ -1,5 +1,4 @@
-@abstract
-class_name InputActions
+@abstract class_name InputActions
 extends RefCounted
 ## Names of all input actions declared in the InputMap (`project.godot`).
 ##
@@ -52,10 +51,21 @@ const HOLD_ACTIONS: Array[StringName] = [GRAZE, SPRINT]
 
 ## Every action that must exist in the InputMap.
 const ALL: Array[StringName] = [
-	MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN,
-	AIM_LEFT, AIM_RIGHT, AIM_UP, AIM_DOWN,
-	SHOOT, BELL,
-	GRAZE, BLEAT, EAT, SPRINT, PERK,
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	MOVE_UP,
+	MOVE_DOWN,
+	AIM_LEFT,
+	AIM_RIGHT,
+	AIM_UP,
+	AIM_DOWN,
+	SHOOT,
+	BELL,
+	GRAZE,
+	BLEAT,
+	EAT,
+	SPRINT,
+	PERK,
 ]
 
 
