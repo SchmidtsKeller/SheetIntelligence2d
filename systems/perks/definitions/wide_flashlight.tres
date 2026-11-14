@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_f80ho"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_s0elx"]
+
+[sub_resource type="Resource" id="Resource_mgyuw"]
+script = ExtResource("1_f80ho")
+stat = &"flashlight_cone_angle_deg"
+value_stat = &"perk_wide_flashlight_angle_deg"
+
+[resource]
+script = ExtResource("2_s0elx")
+id = &"wide_flashlight"
+role = 1
+display_name = "Wide Flashlight"
+description = "A wider flashlight cone at the normal length, which lights half as much area again."
+modifiers = Array[ExtResource("1_f80ho")]([SubResource("Resource_mgyuw")])

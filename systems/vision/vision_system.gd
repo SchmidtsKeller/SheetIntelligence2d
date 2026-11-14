@@ -9,7 +9,9 @@ extends Node2D
 ## [br][b]Monster:[/b] no darkness. Entities are seen unless an obstacle stands
 ## between them and the Monster; the ground, with its marks and the
 ## Sheepherder's light, is always seen.
-## [br]Everybody always sees their own character.
+## [br]Everybody always sees their own character. A
+## [member VisionTarget.cloaked] entity, the invisible Monster, is seen by
+## nobody else.
 ##
 ## Every entity with a [VisionTarget] is decided the same way; there are no
 ## rules per entity type. The decision only changes what is drawn here. It
@@ -60,6 +62,8 @@ func update(delta: float) -> void:
 func can_see(target: VisionTarget) -> bool:
 	if viewer != null and target.get_parent() == viewer:
 		return true
+	if target.cloaked:
+		return false
 	match role:
 		GameEnums.Role.SHEEPHERDER:
 			return _is_lit(target)

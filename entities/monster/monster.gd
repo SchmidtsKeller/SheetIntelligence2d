@@ -12,7 +12,7 @@ extends Node2D
 ##
 ## On the device of the Monster's player the sheep is steered from
 ## [InputService]: a [SheepPlayerDriver] moves it, grazes and bleats, and this
-## node adds the sprint and the attack. The attack is asked of
+## node adds the sprint, the attack and the perk button. The attack is asked of
 ## [CombatService], whose host decides it; what it reports is shown here on
 ## both devices: the eating, the spider form and the Monster's death.
 
@@ -44,6 +44,8 @@ var _driver: SheepPlayerDriver
 var _camera: Camera2D
 ## The flock the body was registered with as a neighbour.
 var _swarm: SwarmService
+## The perk service the body was registered with as the Monster's character.
+var _perks: PerkService
 ## How far the sheep reaches for the vision system, to restore it after the
 ## spider.
 var _sheep_radius: float = 0.0
@@ -129,6 +131,9 @@ func _ready() -> void:
 	# The flock treats the Monster's sheep as one of its own.
 	_swarm = Services.swarm
 	_swarm.register_neighbour(_body)
+	# Its active perk (invisibility) acts on the sheep, on both devices.
+	_perks = Services.perks
+	_perks.register_character(GameEnums.Role.MONSTER, _body)
 	if controlled_locally:
 		_take_control()
 
@@ -141,6 +146,8 @@ func _exit_tree() -> void:
 	session.messenger.unsubscribe(EVENT_BLEAT, _on_bleat_event)
 	if is_instance_valid(_swarm):
 		_swarm.unregister_neighbour(_body)
+	if is_instance_valid(_perks):
+		_perks.unregister_character(_body)
 
 
 func _physics_process(delta: float) -> void:
@@ -228,8 +235,11 @@ func _take_control() -> void:
 
 
 func _on_action_pressed(action: StringName) -> void:
-	if action == InputActions.EAT:
-		Services.combat.request_eat()
+	match action:
+		InputActions.EAT:
+			Services.combat.request_eat()
+		InputActions.PERK:
+			Services.perks.use_perk(GameEnums.Role.MONSTER)
 
 
 ## The other device hears the Monster bleat like any sheep.

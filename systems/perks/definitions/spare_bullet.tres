@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_fxuls"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_k1cft"]
+
+[sub_resource type="Resource" id="Resource_nwoco"]
+script = ExtResource("1_fxuls")
+stat = &"firearm_ammo"
+value_stat = &"perk_spare_bullet_ammo"
+
+[resource]
+script = ExtResource("2_k1cft")
+id = &"spare_bullet"
+role = 1
+display_name = "Spare Bullet"
+description = "A hidden extra bullet. The Monster can't be sure that your firearm is empty."
+modifiers = Array[ExtResource("1_fxuls")]([SubResource("Resource_nwoco")])
