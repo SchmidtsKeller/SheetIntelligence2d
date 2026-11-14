@@ -31,6 +31,7 @@ func after_each() -> void:
 
 # --- Scene -------------------------------------------------------------------------
 
+
 func test_a_sheep_is_a_solid_sheep_like_entity() -> void:
 	var sheep: SheepBody = _spawn()
 	var hit_area: Area2D = sheep.get_node(^"Facing/HitArea")
@@ -38,7 +39,9 @@ func test_a_sheep_is_a_solid_sheep_like_entity() -> void:
 	assert_true(sheep.is_in_group(Groups.SHEEP_LIKE))
 	assert_true(sheep.is_in_group(Groups.DYNAMIC_ENTITIES))
 	assert_eq(sheep.collision_layer, PhysicsLayers.SHEEP)
-	assert_eq(sheep.collision_mask, PhysicsLayers.WORLD | PhysicsLayers.SHEEP | PhysicsLayers.SHEEPHERDER)
+	assert_eq(
+		sheep.collision_mask, PhysicsLayers.WORLD | PhysicsLayers.SHEEP | PhysicsLayers.SHEEPHERDER
+	)
 	assert_eq(sheep.motion_mode, CharacterBody2D.MOTION_MODE_FLOATING)
 	assert_eq(hit_area.collision_layer, PhysicsLayers.HITBOX)
 	assert_eq(sheep.get_state(), SheepBody.State.IDLE)
@@ -59,7 +62,10 @@ func test_the_layers_show_the_look_of_the_seed() -> void:
 		var part: SheepAppearancePart = slot.parts[part_index]
 		assert_eq(layer.texture, part.texture)
 		var tint_index: int = expected.tint_indices[slot_index]
-		assert_eq(layer.self_modulate, part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE)
+		assert_eq(
+			layer.self_modulate,
+			part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE
+		)
 
 
 func test_the_look_can_change_after_the_sheep_is_in_the_tree() -> void:
@@ -68,10 +74,14 @@ func test_the_look_can_change_after_the_sheep_is_in_the_tree() -> void:
 	sheep.set_visual_seed(2)
 
 	assert_eq(sheep.get_visual_seed(), 2)
-	assert_eq(sheep.get_appearance().fingerprint(), SheepAppearanceGenerator.generate(2, sheep.catalog).fingerprint())
+	assert_eq(
+		sheep.get_appearance().fingerprint(),
+		SheepAppearanceGenerator.generate(2, sheep.catalog).fingerprint()
+	)
 
 
 # --- Steering ----------------------------------------------------------------------
+
 
 func test_a_steered_sheep_walks_and_faces_where_it_goes() -> void:
 	var sheep: SheepBody = _spawn()
@@ -170,6 +180,7 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 
 # --- Death -------------------------------------------------------------------------
 
+
 func test_a_shot_sheep_leaves_a_body() -> void:
 	var sheep: SheepBody = _spawn()
 	watch_signals(sheep)
@@ -181,8 +192,13 @@ func test_a_shot_sheep_leaves_a_body() -> void:
 	assert_false(sheep.is_alive())
 	assert_signal_emitted_with(sheep, &"died", [GameEnums.DeathCause.SHOT])
 	assert_true(sheep.visible, "the body stays")
-	assert_true((sheep.get_node(^"Collision") as CollisionShape2D).disabled, "a body does not block")
-	assert_true((sheep.get_node(^"Facing/HitArea/Shape") as CollisionShape2D).disabled, "a body stops no bullet")
+	assert_true(
+		(sheep.get_node(^"Collision") as CollisionShape2D).disabled, "a body does not block"
+	)
+	assert_true(
+		(sheep.get_node(^"Facing/HitArea/Shape") as CollisionShape2D).disabled,
+		"a body stops no bullet"
+	)
 
 
 func test_a_body_ignores_steering_and_pushes() -> void:
@@ -249,6 +265,7 @@ func test_a_sheep_cannot_die_twice() -> void:
 
 # --- No tell -----------------------------------------------------------------------
 
+
 func test_a_player_steered_sheep_is_indistinguishable_from_a_script_steered_one() -> void:
 	var input: StubInputService = StubInputService.new()
 	var original_input: Node = Services.replace(InputService, input)
@@ -272,7 +289,9 @@ func test_a_player_steered_sheep_is_indistinguishable_from_a_script_steered_one(
 	input.simulate_press(InputActions.BLEAT)
 	await _physics_frames(10)
 
-	assert_eq(_describe_tree(by_player), _describe_tree(by_script), "node structure, draw order and pose")
+	assert_eq(
+		_describe_tree(by_player), _describe_tree(by_script), "node structure, draw order and pose"
+	)
 	assert_eq(by_player.velocity, by_script.velocity, "motion")
 	# Positions are float32: the same steps round differently 400 px apart.
 	assert_almost_eq(by_player.position - Vector2(0.0, 400.0), by_script.position, 0.01, "path")
@@ -281,8 +300,14 @@ func test_a_player_steered_sheep_is_indistinguishable_from_a_script_steered_one(
 	for player_name: NodePath in [^"Animation", ^"Voice"]:
 		var scripted: AnimationPlayer = by_script.get_node(player_name)
 		var played: AnimationPlayer = by_player.get_node(player_name)
-		assert_eq(played.current_animation, scripted.current_animation, "%s animation" % player_name)
-		assert_eq(played.current_animation_position, scripted.current_animation_position, "%s timing" % player_name)
+		assert_eq(
+			played.current_animation, scripted.current_animation, "%s animation" % player_name
+		)
+		assert_eq(
+			played.current_animation_position,
+			scripted.current_animation_position,
+			"%s timing" % player_name
+		)
 	assert_eq(_events_near(by_player.position), _events_near(by_script.position), "sounds")
 	assert_eq(_events(&"bleat").size(), 2)
 	Services.replace(InputService, original_input)
@@ -290,6 +315,7 @@ func test_a_player_steered_sheep_is_indistinguishable_from_a_script_steered_one(
 
 
 # --- Helpers -----------------------------------------------------------------------
+
 
 func _spawn(visual_seed: int = 0, at: Vector2 = Vector2.ZERO) -> SheepBody:
 	var sheep: SheepBody = SHEEP_SCENE.instantiate()
@@ -305,7 +331,11 @@ func _physics_frames(count: int) -> void:
 
 
 func _layer(sheep: SheepBody, slot: SheepAppearanceSlot) -> Sprite2D:
-	var anchor: String = "Facing/Pose/Visual/Head/HeadPose" if slot.anchor == SheepAppearanceSlot.Anchor.HEAD else "Facing/Pose/Visual/Body"
+	var anchor: String = (
+		"Facing/Pose/Visual/Head/HeadPose"
+		if slot.anchor == SheepAppearanceSlot.Anchor.HEAD
+		else "Facing/Pose/Visual/Body"
+	)
 	return sheep.get_node("%s/%s" % [anchor, String(slot.id).to_pascal_case()])
 
 
@@ -334,12 +364,23 @@ func _describe_tree(root: Node) -> PackedStringArray:
 	var nodes: Array[Node] = [root]
 	nodes.append_array(root.find_children("*", "", true, false))
 	for node: Node in nodes:
-		var line: String = "%s %s %s %s" % [root.get_path_to(node), node.get_class(), node.get_script(), node.get_groups()]
+		var line: String = (
+			"%s %s %s %s"
+			% [root.get_path_to(node), node.get_class(), node.get_script(), node.get_groups()]
+		)
 		if node is CanvasItem:
 			var item: CanvasItem = node
-			line += " visible=%s z=%d rel=%s ysort=%s modulate=%s self=%s" % [
-				item.visible, item.z_index, item.z_as_relative, item.y_sort_enabled, item.modulate, item.self_modulate,
-			]
+			line += (
+				" visible=%s z=%d rel=%s ysort=%s modulate=%s self=%s"
+				% [
+					item.visible,
+					item.z_index,
+					item.z_as_relative,
+					item.y_sort_enabled,
+					item.modulate,
+					item.self_modulate,
+				]
+			)
 		if node is Node2D and node != root:
 			var node_2d: Node2D = node
 			line += " at=%s rot=%s scale=%s" % [node_2d.position, node_2d.rotation, node_2d.scale]

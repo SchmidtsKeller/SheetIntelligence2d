@@ -6,7 +6,9 @@ extends Node2D
 ## and the Monster player will.
 
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
-const CATALOG: SheepAppearanceCatalog = preload("res://entities/sheep/appearance/sheep_appearance_catalog.tres")
+const CATALOG: SheepAppearanceCatalog = preload(
+	"res://entities/sheep/appearance/sheep_appearance_catalog.tres"
+)
 const COLUMNS: int = 4
 const SPACING: Vector2 = Vector2(170.0, 150.0)
 const GRASS: Color = Color("4f6b3a")
@@ -70,11 +72,15 @@ func _spawn_round() -> void:
 	_sheep.clear()
 	_walking = false
 	var count: int = Services.perks.get_stat_int(StatIds.FLOCK_SIZE) + 1
-	var seeds: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(_round_seed, count, CATALOG)
+	var seeds: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(
+		_round_seed, count, CATALOG
+	)
 	var rows: int = ceili(float(count) / COLUMNS)
 	var origin: Vector2 = -Vector2(COLUMNS - 1, rows - 1) * SPACING / 2.0
 	for index: int in count:
-		var cell: Vector2 = origin + Vector2(index % COLUMNS, floori(index / float(COLUMNS))) * SPACING
+		var cell: Vector2 = (
+			origin + Vector2(index % COLUMNS, floori(index / float(COLUMNS))) * SPACING
+		)
 		var sheep: SheepBody = SHEEP_SCENE.instantiate()
 		sheep.set_visual_seed(seeds[index])
 		sheep.position = cell
@@ -177,5 +183,7 @@ func _on_darkness() -> void:
 
 ## Gameplay zoom: the camera shows as much world as a player would see.
 func _update_zoom() -> void:
-	var zoom: float = ViewRules.camera_zoom(get_viewport_rect().size, Services.config.get_view_max_world_size())
+	var zoom: float = ViewRules.camera_zoom(
+		get_viewport_rect().size, Services.config.get_view_max_world_size()
+	)
 	_camera.zoom = Vector2(zoom, zoom)

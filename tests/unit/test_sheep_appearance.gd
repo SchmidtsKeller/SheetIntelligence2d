@@ -24,16 +24,21 @@ func before_all() -> void:
 
 # --- Determinism -------------------------------------------------------------------
 
+
 func test_fingerprints_match_the_reference() -> void:
 	var fixture: SheepAppearanceCatalog = _fixture_catalog()
 
 	for visual_seed: int in FIXTURE_FINGERPRINTS:
 		var appearance: SheepAppearance = SheepAppearanceGenerator.generate(visual_seed, fixture)
-		assert_eq(appearance.fingerprint(), FIXTURE_FINGERPRINTS[visual_seed], "seed %d" % visual_seed)
+		assert_eq(
+			appearance.fingerprint(), FIXTURE_FINGERPRINTS[visual_seed], "seed %d" % visual_seed
+		)
 
 
 func test_round_seeds_match_the_reference() -> void:
-	var seeds: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(7, 4, _fixture_catalog())
+	var seeds: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(
+		7, 4, _fixture_catalog()
+	)
 
 	assert_eq(Array(seeds), FIXTURE_ROUND_7_SEEDS)
 
@@ -58,12 +63,15 @@ func test_the_monster_seed_is_drawn_like_any_other() -> void:
 	# Drawing one more seed only appends to the sequence, so the last of 11
 	# seeds (the Monster's, if the round gives it that one) is no special case.
 	var flock: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(55, 10, _catalog)
-	var with_monster: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(55, 11, _catalog)
+	var with_monster: PackedInt64Array = SheepAppearanceGenerator.generate_round_seeds(
+		55, 11, _catalog
+	)
 
 	assert_eq(with_monster.slice(0, 10), flock)
 
 
 # --- Distinctness ------------------------------------------------------------------
+
 
 func test_no_two_sheep_of_a_round_look_alike() -> void:
 	var count: int = Services.config.flock_size + 1
@@ -74,7 +82,12 @@ func test_no_two_sheep_of_a_round_look_alike() -> void:
 			for j: int in range(i + 1, count):
 				var difference: int = appearances[i].difference(appearances[j])
 				if difference < _catalog.min_difference:
-					fail_test("round %d: sheep %d and %d differ in only %d layers" % [round_seed, i, j, difference])
+					fail_test(
+						(
+							"round %d: sheep %d and %d differ in only %d layers"
+							% [round_seed, i, j, difference]
+						)
+					)
 					return
 	pass_test()
 
@@ -111,6 +124,7 @@ func test_proportions_do_not_count_as_a_difference() -> void:
 
 # --- Shipped catalog ---------------------------------------------------------------
 
+
 func test_shipped_catalog_is_complete() -> void:
 	if not assert_not_null(_catalog, "the shipped catalog loads"):
 		return
@@ -125,7 +139,9 @@ func test_shipped_catalog_is_complete() -> void:
 
 func test_generated_looks_stay_inside_the_catalog() -> void:
 	for visual_seed: int in 500:
-		var appearance: SheepAppearance = SheepAppearanceGenerator.generate(visual_seed * 7919, _catalog)
+		var appearance: SheepAppearance = SheepAppearanceGenerator.generate(
+			visual_seed * 7919, _catalog
+		)
 		for slot_index: int in _catalog.slots.size():
 			var slot: SheepAppearanceSlot = _catalog.slots[slot_index]
 			var part_index: int = appearance.part_indices[slot_index]
@@ -135,15 +151,28 @@ func test_generated_looks_stay_inside_the_catalog() -> void:
 			assert_lt(part_index, slot.parts.size())
 			var tint_index: int = appearance.tint_indices[slot_index]
 			assert_lt(tint_index, slot.parts[part_index].tints.size())
-		assert_true(appearance.length_permille >= _catalog.min_length_permille and appearance.length_permille <= _catalog.max_length_permille)
-		assert_true(appearance.width_permille >= _catalog.min_width_permille and appearance.width_permille <= _catalog.max_width_permille)
+		assert_true(
+			(
+				appearance.length_permille >= _catalog.min_length_permille
+				and appearance.length_permille <= _catalog.max_length_permille
+			)
+		)
+		assert_true(
+			(
+				appearance.width_permille >= _catalog.min_width_permille
+				and appearance.width_permille <= _catalog.max_width_permille
+			)
+		)
 
 
 # --- Helpers -----------------------------------------------------------------------
 
+
 func _round(round_seed: int, count: int) -> Array[SheepAppearance]:
 	var appearances: Array[SheepAppearance] = []
-	for visual_seed: int in SheepAppearanceGenerator.generate_round_seeds(round_seed, count, _catalog):
+	for visual_seed: int in SheepAppearanceGenerator.generate_round_seeds(
+		round_seed, count, _catalog
+	):
 		appearances.append(SheepAppearanceGenerator.generate(visual_seed, _catalog))
 	return appearances
 
