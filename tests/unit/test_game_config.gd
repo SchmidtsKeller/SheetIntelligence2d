@@ -57,6 +57,9 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 
 ## Values that are project decisions rather than GDD parameters.
 const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
+	&"round_setup_duration": 0.0,
+	&"round_countdown_duration": 3.0,
+	&"round_resolved_duration": 3.0,
 	&"flock_walk_time_min": 1.5,
 	&"flock_walk_time_max": 4.0,
 	&"flock_pause_time_min": 0.8,
@@ -84,6 +87,7 @@ const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"net_interpolation_delay": 0.1,
 	&"net_max_extrapolation": 0.1,
 	&"net_connect_timeout": 10.0,
+	&"net_clock_sync_interval": 0.5,
 	&"view_max_world_width": 1600.0,
 	&"view_max_world_height": 900.0,
 }

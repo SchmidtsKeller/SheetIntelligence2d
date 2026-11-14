@@ -257,8 +257,12 @@ func _may_send(event_id: StringName) -> bool:
 func _send_event(event_id: StringName, payload: Array) -> void:
 	if not has_remote():
 		return
-	transmitter.call(true, [_next_send_sequence, event_id, payload])
+	# The number is taken before the event leaves: a transport that delivers at
+	# once can make this device send again before the call returns, and that
+	# event must not get the same number.
+	var sequence: int = _next_send_sequence
 	_next_send_sequence += 1
+	transmitter.call(true, [sequence, event_id, payload])
 
 
 func _transmit_rpc(reliable: bool, message: Array) -> void:

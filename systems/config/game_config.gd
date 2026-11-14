@@ -24,6 +24,13 @@ extends Resource
 @export var herder_points_per_shot_sheep: int = -2
 ## Monster points for every NPC sheep it ate. Shot sheep give it nothing.
 @export var monster_points_per_eaten_sheep: int = 1
+## The perk selection window before a round. 0 skips it until the selection
+## screen exists.
+@export_range(0.0, 120.0, 0.5, "suffix:s") var round_setup_duration: float = 0.0
+## The countdown between the spawn and the start of a round. Nobody can act yet.
+@export_range(0.0, 30.0, 0.5, "suffix:s") var round_countdown_duration: float = 3.0
+## How long the arena stays on screen after a round was decided.
+@export_range(0.0, 30.0, 0.5, "suffix:s") var round_resolved_duration: float = 3.0
 
 @export_group("Sheepherder")
 ## Patrol speed.
@@ -169,6 +176,8 @@ extends Resource
 @export_range(0.0, 1.0, 0.01, "suffix:s") var net_max_extrapolation: float = 0.1
 ## A joining device gives up after this time.
 @export_range(1.0, 60.0, 0.5, "suffix:s") var net_connect_timeout: float = 10.0
+## How often the guest compares its clock with the host's, for the round timer.
+@export_range(0.1, 10.0, 0.1, "suffix:s") var net_clock_sync_interval: float = 0.5
 
 @export_group("View")
 ## The widest stretch of world a player may ever see. Not from the GDD: this
