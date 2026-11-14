@@ -19,7 +19,7 @@ Open the folder in the Godot 4.7 editor and press **F5**, or from a terminal:
 godot --path .
 ```
 
-The game starts in the boot screen, which checks the services and hands over to the lobby. Lobby, round and results are placeholder screens for now; their buttons walk through the scene flow.
+The game starts in the boot screen, which checks the services and hands over to the lobby. The lobby is a placeholder screen for now; its button starts a match: five rounds with the rules of GDD §2, each followed by the results screen (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against nobody.
 
 The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
 
@@ -43,7 +43,7 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-Both end up in the lobby, which shows who is host and who plays which role; the host's buttons take both instances through the screens. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+Both end up in the lobby, which shows who is host and who plays which role. The host's button starts the match on both instances; after every round the host continues from the results screen. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
 
 ## Run the tests
 
@@ -125,7 +125,7 @@ res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
 ├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
-├── systems/          Game config, scene flow, view rule, arena, session, input, flock, seeded randomness; later lighting
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, match rules, seeded randomness; later lighting
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -260,6 +260,51 @@ What a player sees is decided on their own device by the [VisionSystem](systems/
 
 The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
 
+### Round rules and match flow
+
+A match is a Best of 5 (GDD §2.3). `Services.match_flow` ([systems/match/match_flow.gd](systems/match/match_flow.gd)) runs it on the host and replicates it, so both devices always agree on the phase, the timer and the scores:
+
+```text
+setup → spawn → countdown → active → resolved → results ─┬→ setup   (next round with swapped roles, or a rematch)
+                                                         └→ lobby   (the host ends the match)
+```
+
+| Phase | Lasts | What happens |
+|:--|:--|:--|
+| `SETUP` | `round_setup_duration` (0 s until the perk selection of #20 exists) | The window for choosing perks |
+| `SPAWN` | a moment | The host locks the perks, draws the round's seed and the [RoundStage](systems/match/round_stage.gd) builds the round: flock, Sheepherder, Monster, vision, a clean ground, full ammo and no cooldowns |
+| `COUNTDOWN` | `round_countdown_duration`, 3 s | Everybody is in place; nobody can act |
+| `ACTIVE` | `round_duration`, 180 s | The round. **Gameplay input is enabled only in this phase** |
+| `RESOLVED` | `round_resolved_duration`, 3 s | The round is decided and stays on screen with its outcome |
+| `RESULTS` | until the host continues | The results screen; the perks are cleared |
+
+**Who wins a round** is decided by [RoundRules](systems/match/round_rules.gd), which has no scene, no session and no clock and is tested case by case in `tests/unit/test_round_rules.gd`:
+
+- The **Sheepherder** wins by shooting the Monster before it is the spider.
+- The **Monster** wins by killing the Sheepherder, which it can once `herder_kill_threshold` sheep are eaten.
+- When the **time runs out**, the player with more points wins the round; equal points are a draw, which is no round win for anybody.
+- An empty magazine ends nothing: the Monster cannot be killed anymore, and the round goes on.
+- **Points** are always recorded, whoever wins: the Monster gets 1 for every sheep it ate alive (0 for the body of a shot one), the Sheepherder 1 for every sheep that survived and −2 for every sheep they shot.
+- **Same tick.** The host reports lethal events in the order its combat service decides them, and the first one decides the round. The timer is looked at after the events of a tick, so a kill in the tick in which the time runs out still counts.
+
+**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played; the roles are random in round 1 and swap after every round. The player with more round wins takes the match; equal wins are a draw.
+
+```gdscript
+var flow: MatchFlow = Services.match_flow
+flow.phase_changed.connect(_on_phase_changed)      # both devices
+flow.round_resolved.connect(_on_round_resolved)    # both devices, with the RoundResult
+flow.get_phase()                                   # MatchFlow.Phase
+flow.get_round_time_left()                         # seconds, the same on both devices
+flow.get_round_number()                            # 1 to 5
+flow.get_score().get_round_wins(flow.get_local_player())
+flow.get_last_result().get_sheepherder_points()
+flow.request_next_round()                          # host, on the results screen
+flow.request_rematch()                             # host, after the last round
+flow.request_lobby()                               # host: end the match
+```
+
+The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round, the role and the timer in a plain line, and the [results screen](ui/screens/results_screen.gd) the record of the round, the standing and the host's buttons; the HUD (#21) and the styled scoreboard (#20) replace them. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+
 ### Scene flow
 
 `SceneFlow` (autoload, [systems/flow/scene_flow_controller.gd](systems/flow/scene_flow_controller.gd)) knows which screen is shown and which may follow:
@@ -270,7 +315,7 @@ boot → lobby → round → results ─┬→ round   (next round)
                  └→ lobby                  (disconnect)
 ```
 
-`SceneFlow.go_to(SceneFlowController.Screen.ROUND)` changes the scene and refuses transitions the flow does not allow. Each screen is a scene in `ui/screens/`; a task replaces a placeholder by setting `SceneFlow.screen_scenes[...]`.
+`SceneFlow.go_to(SceneFlowController.Screen.ROUND)` changes the scene and refuses transitions the flow does not allow. Each screen is a scene in `ui/screens/`; a task replaces a placeholder (the lobby is the last one) by setting `SceneFlow.screen_scenes[...]`.
 
 ### Session and replication
 
