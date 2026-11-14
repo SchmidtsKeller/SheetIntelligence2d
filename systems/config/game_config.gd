@@ -79,6 +79,12 @@ extends Resource
 ## How fast a sheep turns toward the direction it wants to walk.
 @export_range(0.0, 3600.0, 10.0, "suffix:°/s") var sheep_turn_rate_deg: float = 540.0
 
+@export_group("Arena")
+## Width of the arena, borders included.
+@export_range(800.0, 20000.0, 1.0, "suffix:px") var arena_width: float = 3200.0
+## Height of the arena, borders included.
+@export_range(800.0, 20000.0, 1.0, "suffix:px") var arena_height: float = 2400.0
+
 @export_group("Perks")
 ## Cone angle with the Wide Flashlight perk (+50 % lit area).
 @export_range(1.0, 360.0, 1.0, "suffix:°") var perk_wide_flashlight_angle_deg: float = 90.0

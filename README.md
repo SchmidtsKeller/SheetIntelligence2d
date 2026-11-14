@@ -23,6 +23,8 @@ The game starts in the boot screen, which checks the services and hands over to 
 
 The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
 
+The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbox.tscn), **F6**) shows the whole arena with a round's spawn layout. Its buttons let the sheep wander into obstacles and borders, switch the debug overlay (footprints, occluders, borders, spawn areas) and change the zoom.
+
 ### Two instances on one computer
 
 The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
@@ -116,8 +118,8 @@ The code follows two rules from GDD §9.2: **separation of concerns** through se
 res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
-├── entities/         Sheepherder, Monster, NPC sheep, companions
-├── systems/          Game config, scene flow, view rule; later lighting, AI, swarm
+├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
+├── systems/          Game config, scene flow, view rule, arena, seeded randomness; later lighting, AI, swarm
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -188,6 +190,22 @@ var bullets: int = Services.perks.get_stat_int(StatIds.FIREARM_AMMO)
 ### Seeded randomness
 
 Everything both devices derive from a seed, such as the look of a sheep, uses [SeededRandom](systems/random/seeded_random.gd), never `RandomNumberGenerator` or the global `randi()`. It is integer-only, so a seed gives the same numbers on every platform; Godot documents the algorithm of `RandomNumberGenerator` as an implementation detail.
+
+### Arena and line of sight
+
+The [Arena](systems/arena/arena.gd) is the playing field. It provides:
+
+- its bounds and play area
+- the layers to place things in (entities, decals, overlays)
+- obstacle footprints for steering
+- free-position sampling and a round's spawn layout
+- camera limits
+
+Its size comes from the config, and the borders are built from it.
+
+Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it.
+
+**Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 
 ### Scene flow
 

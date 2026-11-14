@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://entities/obstacles/arena_obstacle.gd" id="1_xjnyu"]
+[ext_resource type="Texture2D" path="res://assets/arena/placeholder/bush.svg" id="2_dlfjo"]
+
+[node name="Bush" type="StaticBody2D" unique_id=413145186]
+script = ExtResource("1_xjnyu")
+
+[node name="Art" type="Sprite2D" parent="." unique_id=243319723]
+texture = ExtResource("2_dlfjo")
+
+[node name="Footprint" type="CollisionPolygon2D" parent="." unique_id=1016318999]
+polygon = PackedVector2Array(42, 0, 36, 15, 21, 26, 0, 30, -21, 26, -36, 15, -42, 0, -36, -15, -21, -26, 0, -30, 21, -26, 36, -15)
