@@ -54,3 +54,16 @@ func test_head_include_loads_the_page_files_that_ship_with_the_game() -> void:
 	assert_false(head_include.contains("http"), "nothing is loaded from another server")
 	assert_true(FileAccess.file_exists("res://web/page.css"))
 	assert_true(FileAccess.file_exists("res://web/page.js"))
+
+
+func test_head_include_loads_the_pairing_scripts_in_order() -> void:
+	var head_include: String = _presets.get_value(OPTIONS, "html/head_include", "")
+	var scripts: PackedStringArray = [
+		"vendor/qrcode-generator/qrcode.js", "vendor/jsqr/jsQR.js", "pairing.js"
+	]
+	var last: int = -1
+	for script: String in scripts:
+		var at: int = head_include.find('src="%s"' % script)
+		assert_gt(at, last, "%s is loaded after the libraries it needs" % script)
+		last = at
+		assert_true(FileAccess.file_exists("res://web/" + script), script)

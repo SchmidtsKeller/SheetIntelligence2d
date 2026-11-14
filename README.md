@@ -110,7 +110,9 @@ On Windows: `tools\export_web.ps1 --serve`. Add `--debug` for a debug build.
 
 **Deployment.** Every push to `main` is deployed to GitHub Pages: <https://schmidtskeller.github.io/SheetIntelligence2d/>. Pages has to be enabled once by the repository owner (*Settings → Pages → Source: GitHub Actions*).
 
-**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost`.
+**Pairing.** In the Web build two browsers connect without a server, by exchanging a QR code or text code in each direction (WebRTC). How it works, what was measured and how to test it on devices is in [docs/pairing.md](docs/pairing.md).
+
+**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost` (a Chrome flag helps on Android, see [docs/pairing.md](docs/pairing.md#testing-on-devices)).
 
 **Thread Support** is off and the Progressive Web App option is not used, because GitHub Pages cannot send the cross-origin isolation headers that threads need. This affects audio latency in *Stream* mode; see the decision in [docs/web-build.md](docs/web-build.md#decision-no-thread-support-no-progressive-web-app).
 

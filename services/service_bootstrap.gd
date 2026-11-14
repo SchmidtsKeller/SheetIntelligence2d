@@ -41,9 +41,12 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	swarm.setup(session, registry.resolve(PerkService) as PerkService)
 
 
-## The transport for this run: the desktop dev transport when the command
-## line asks to host or join a session, otherwise the offline loopback.
+## The transport for this run: WebRTC with pairing codes in the Web build; on
+## desktop the dev transport when the command line asks to host or join a
+## session, otherwise the offline loopback.
 static func create_network_service(config: GameConfig) -> NetworkService:
+	if WebRtcNetworkService.is_available():
+		return WebRtcNetworkService.new()
 	var options: LaunchOptions = LaunchOptions.from_command_line()
 	if options.wants_session() and not OS.has_feature("web") and EnetNetworkService.is_available():
 		var enet: EnetNetworkService = EnetNetworkService.new()

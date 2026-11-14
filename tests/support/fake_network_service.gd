@@ -6,6 +6,12 @@ extends NetworkService
 var local_id: int = 1
 var remote_id: int = 0
 var host: bool = true
+## Whether it pretends to pair with codes, like the WebRTC transport.
+var pairing: bool = false
+## The codes it was given, in order.
+var submitted_codes: PackedStringArray = []
+## When set, codes are refused with this explanation.
+var refusal: String = ""
 
 var _state: ConnectionState = ConnectionState.DISCONNECTED
 
@@ -64,11 +70,18 @@ func get_multiplayer_peer() -> MultiplayerPeer:
 
 
 func requires_pairing_codes() -> bool:
-	return false
+	return pairing
 
 
-func submit_pairing_code(_code: String) -> Error:
-	return ERR_UNAVAILABLE
+func submit_pairing_code(code: String) -> Error:
+	if not pairing:
+		return ERR_UNAVAILABLE
+	submitted_codes.append(code)
+	return ERR_INVALID_DATA if not refusal.is_empty() else OK
+
+
+func get_pairing_problem() -> String:
+	return refusal
 
 
 func _set_state(state: ConnectionState) -> void:

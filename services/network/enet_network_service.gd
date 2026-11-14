@@ -127,6 +127,10 @@ func submit_pairing_code(_code: String) -> Error:
 	return ERR_UNAVAILABLE
 
 
+func get_pairing_problem() -> String:
+	return ""
+
+
 func _create_peer() -> MultiplayerPeer:
 	if not is_inside_tree():
 		push_error("EnetNetworkService: must be in the scene tree to open a session.")

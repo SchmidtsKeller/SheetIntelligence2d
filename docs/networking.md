@@ -15,7 +15,7 @@ GameSession ── roles, screens, lifecycle            Services.session
 NetworkService (contract) ── the transport
   ├─ StubNetworkService     offline: a session of one
   ├─ EnetNetworkService     desktop development, two instances
-  └─ WebRTC transport       the Web build (#7)
+  └─ WebRtcNetworkService  the Web build, paired with codes
 ```
 
 `GameSession` and everything above it never name a transport. They work the same offline, over ENet and over WebRTC.
@@ -158,7 +158,7 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (#7).
+The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (see below).
 
 | Flag | Effect |
 |:--|:--|
@@ -181,6 +181,20 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 **Automated check with two instances.** `tools/test_two_instances.sh` starts a host and a guest, lets them run a scripted scenario against each other and fails if either saw something unexpected: connection, roles and swap, 30 events in order in both directions, smooth movement of the other box, the screen change with its handshake, and the guest's return to the lobby when the host leaves. It accepts the network flags, e.g. `tools/test_two_instances.sh --net-latency=80 --net-jitter=40 --net-loss=10`.
 
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
+
+## The Web build: WebRTC with pairing codes
+
+[WebRtcNetworkService](../services/network/web_rtc_network_service.gd) connects two browsers in the same network without any server (GDD §9.4). WebRTC is built into Web exports only; desktop builds would need a plugin, so they use ENet.
+
+1. The host creates a `WebRTCMultiplayerPeer` server and an offer. Once the browser has found all its addresses (ICE candidates, `GATHERING_STATE_COMPLETE`, or after 3 s), the transport emits `pairing_code_ready` with a [PairingCode](../services/network/pairing_code.gd).
+2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way.
+3. The host hands over the answer, and the devices connect. `session_started` follows when the data channels are open.
+
+A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 15 s after the answer was read, the message says so and mentions networks that block traffic between devices.
+
+The transfer channels are those of the dev transport: `WebRTCMultiplayerPeer` is created with a reliable channel 1 for events and an unreliable ordered channel 2 for snapshots.
+
+The pairing screens (until the lobby has its own) and what was measured in the browsers are described in [pairing.md](pairing.md).
 
 ## Rules for transports
 
