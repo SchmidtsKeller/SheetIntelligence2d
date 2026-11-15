@@ -1,0 +1,104 @@
+[gd_resource type="SpriteFrames" load_steps=20 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/shepherd_sheet.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 0, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(768, 0, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1152, 0, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f4"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1536, 0, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f5"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 384, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f6"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 384, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f7"]
+atlas = ExtResource("1_sheet")
+region = Rect2(768, 384, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f8"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1152, 384, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f9"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1536, 384, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f10"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 768, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f11"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 768, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f12"]
+atlas = ExtResource("1_sheet")
+region = Rect2(768, 768, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f13"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1152, 768, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f14"]
+atlas = ExtResource("1_sheet")
+region = Rect2(1536, 768, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f15"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 1152, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f16"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 1152, 384, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f17"]
+atlas = ExtResource("1_sheet")
+region = Rect2(768, 1152, 384, 384)
+
+[resource]
+animations = [
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f1")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f2")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f3")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f4")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f5")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f6")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f7")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f8")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f9")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f10")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f11")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f12")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f13")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f14")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f15")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f16")},
+{"duration": 1.0, "texture": SubResource("AtlasTexture_f17")}
+],
+"loop": true,
+"name": &"walk",
+"speed": 20.0
+}
+]
