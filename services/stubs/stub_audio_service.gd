@@ -62,13 +62,7 @@ func get_listener() -> Node2D:
 
 
 func get_hearing_range(event_id: StringName) -> float:
-	match AudioEvents.range_class_of(event_id):
-		GameEnums.HearingRange.WHOLE_MAP:
-			return INF
-		GameEnums.HearingRange.LOUD:
-			return _config.hearing_range_loud
-		_:
-			return _config.hearing_range_quiet
+	return AudioMix.hearing_range(_config, event_id)
 
 
 func set_bus_volume(bus: StringName, linear_volume: float) -> void:

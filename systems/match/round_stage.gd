@@ -56,6 +56,7 @@ func _exit_tree() -> void:
 	_session.roles_changed.disconnect(_apply_role)
 	_flow.phase_changed.disconnect(_on_phase_changed)
 	Services.input.set_role(GameEnums.Role.NONE)
+	Services.audio.set_listener(null)
 	Services.combat.end_round()
 	_despawn_round()
 
@@ -177,3 +178,5 @@ func _apply_role() -> void:
 		_vision.viewer = get_sheepherder()
 	else:
 		_vision.viewer = _monster.get_body() if get_monster() != null else null
+	# The player hears from where their character is.
+	Services.audio.set_listener(_vision.viewer)

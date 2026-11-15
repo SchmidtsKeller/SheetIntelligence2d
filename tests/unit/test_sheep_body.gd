@@ -5,11 +5,17 @@ extends TestCase
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 
 
-## Remembers which emitters are playing.
+## Remembers which emitters are playing, and what they follow.
 class RecordingAudioService:
 	extends StubAudioService
 
 	var playing: Dictionary[int, bool] = {}
+	var targets: Dictionary[int, Node2D] = {}
+
+	func start_emitter(event_id: StringName, target: Node2D) -> int:
+		var handle: int = super(event_id, target)
+		targets[handle] = target
+		return handle
 
 	func set_emitter_playing(handle: int, is_playing: bool) -> void:
 		playing[handle] = is_playing
@@ -176,6 +182,19 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 	sheep.kill(GameEnums.DeathCause.SHOT)
 	assert_false(_audio.playing[move_emitter])
 	assert_false(_audio.playing[graze_emitter])
+
+
+func test_sounds_come_from_where_the_sheep_is_shown() -> void:
+	var sheep: SheepBody = _spawn(0, Vector2(50.0, 50.0))
+	sheep.presented_externally = true
+
+	# Shown a moment in the past, behind its body (docs/networking.md).
+	sheep.present(Vector2(20.0, 50.0), 0.0, 0.0, false)
+	sheep.bleat()
+
+	assert_eq(_audio.played[-1]["position"], Vector2(20.0, 50.0))
+	for handle: int in _audio.targets:
+		assert_eq(_audio.targets[handle].global_position, Vector2(20.0, 50.0))
 
 
 # --- Death -------------------------------------------------------------------------

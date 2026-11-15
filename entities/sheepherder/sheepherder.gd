@@ -21,6 +21,10 @@ const SCENE_PATH: String = "res://entities/sheepherder/sheepherder.tscn"
 const EVENT_BELL_REQUEST: StringName = &"sheepherder.bell_request"
 const EVENT_BELL: StringName = &"sheepherder.bell"
 const EVENT_PUSH: StringName = &"sheepherder.push"
+## How long the Sheepherder has to stand still before their steps stop. On
+## the other device they move only in the frames a snapshot is shown, so a
+## single frame without movement is not a stop.
+const STEPS_STOP_DELAY: float = 0.15
 
 ## The entity id in the session, or -1 outside the registry (sandboxes, tests).
 var entity_id: int = -1
@@ -47,6 +51,9 @@ var _bell_cooldown_left: float = 0.0
 var _alive: bool = true
 ## The perk service this Sheepherder registered with.
 var _perks: PerkService
+var _steps_emitter: int = 0
+var _steps_position: Vector2 = Vector2.ZERO
+var _still_time: float = STEPS_STOP_DELAY
 
 @onready var _camera: Camera2D = $Camera
 @onready var _vision_target: VisionTarget = $VisionTarget
@@ -80,6 +87,9 @@ func _ready() -> void:
 	messenger.subscribe(EVENT_PUSH, _on_push)
 	Services.combat.shot_fired.connect(_on_shot_fired)
 	Services.combat.sheepherder_killed.connect(_on_killed)
+	Services.combat.reload_finished.connect(_on_reload_finished)
+	_steps_emitter = Services.audio.start_emitter(AudioEvents.HERDER_STEP, self)
+	_steps_position = global_position
 	# The companions (the dog, the Monster's bat) find the Sheepherder here.
 	_perks = Services.perks
 	_perks.register_character(GameEnums.Role.SHEEPHERDER, self)
@@ -101,6 +111,8 @@ func _exit_tree() -> void:
 		Services.combat.shot_fired.disconnect(_on_shot_fired)
 	if Services.combat.sheepherder_killed.is_connected(_on_killed):
 		Services.combat.sheepherder_killed.disconnect(_on_killed)
+	if Services.combat.reload_finished.is_connected(_on_reload_finished):
+		Services.combat.reload_finished.disconnect(_on_reload_finished)
 	if input.action_pressed.is_connected(_on_action_pressed):
 		input.action_pressed.disconnect(_on_action_pressed)
 	if is_instance_valid(_perks):
@@ -122,6 +134,16 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_sheep(wish)
 	rotation = input.get_aim_direction(global_position).angle()
+
+
+## Footsteps on both devices, from what is shown of the Sheepherder.
+func _process(delta: float) -> void:
+	if global_position != _steps_position:
+		_steps_position = global_position
+		_still_time = 0.0
+	else:
+		_still_time += delta
+	Services.audio.set_emitter_playing(_steps_emitter, _alive and _still_time < STEPS_STOP_DELAY)
 
 
 ## Whether the Sheepherder is alive. The Monster's attack kills them at once
@@ -259,6 +281,13 @@ func _entity_id_of(node: Node) -> int:
 
 func _on_shot_fired(origin: Vector2, end_position: Vector2, _result: int) -> void:
 	_add_effect(ShotEffect.new(origin, end_position))
+
+
+## Only the Sheepherder's own player hears the reload: after the third shot it
+## would tell the Monster of a Spare Bullet (GDD §4.1).
+func _on_reload_finished() -> void:
+	if controlled_locally and not is_bot and _alive:
+		Services.audio.play_event(AudioEvents.RELOAD_CLICK, global_position)
 
 
 ## Effects live in world coordinates, unaffected by the Sheepherder's turning,

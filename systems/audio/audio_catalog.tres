@@ -1,0 +1,97 @@
+[gd_resource type="Resource" script_class="AudioCatalog" format=3]
+
+[ext_resource type="Script" path="res://systems/audio/audio_cue.gd" id="1_fwnrb"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_01.ogg" id="2_7qfr2"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_02.ogg" id="3_auqk6"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_03.ogg" id="4_ju3bc"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_04.ogg" id="5_76ow1"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/grass_move_loop.ogg" id="6_23knf"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/graze_loop.ogg" id="7_5owlm"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bell_01.ogg" id="8_lblx6"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bell_02.ogg" id="9_3x0cf"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bell_03.ogg" id="10_m0ryq"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/herder_step_loop.ogg" id="11_ga7bv"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/gunshot.ogg" id="12_epf4s"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/reload_click.ogg" id="13_8ip3v"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/eat.ogg" id="14_dpfvu"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/spider_screech.ogg" id="15_rklak"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/dog_bark.ogg" id="16_c4rjn"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bat_01.ogg" id="17_4erw2"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bat_02.ogg" id="18_qiwq8"]
+[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bat_03.ogg" id="19_p7f6y"]
+[ext_resource type="Script" path="res://systems/audio/audio_catalog.gd" id="20_j0qpf"]
+
+[sub_resource type="Resource" id="Resource_108rd"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("2_7qfr2"), ExtResource("3_auqk6"), ExtResource("4_ju3bc"), ExtResource("5_76ow1")])
+pitch_variation = 0.06
+
+[sub_resource type="Resource" id="Resource_ibdyj"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("6_23knf")])
+volume_db = -8.0
+
+[sub_resource type="Resource" id="Resource_3dh8v"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("7_5owlm")])
+volume_db = -8.0
+
+[sub_resource type="Resource" id="Resource_heksm"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("8_lblx6"), ExtResource("9_3x0cf"), ExtResource("10_m0ryq")])
+pitch_variation = 0.02
+
+[sub_resource type="Resource" id="Resource_sxnwp"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("11_ga7bv")])
+volume_db = -4.0
+
+[sub_resource type="Resource" id="Resource_dv38d"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("12_epf4s")])
+pitch_variation = 0.04
+
+[sub_resource type="Resource" id="Resource_om3uj"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("13_8ip3v")])
+volume_db = -4.0
+pitch_variation = 0.05
+
+[sub_resource type="Resource" id="Resource_b8to6"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("14_dpfvu")])
+volume_db = -2.0
+pitch_variation = 0.08
+
+[sub_resource type="Resource" id="Resource_vaop8"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("15_rklak")])
+pitch_variation = 0.03
+
+[sub_resource type="Resource" id="Resource_8gfke"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("16_c4rjn")])
+volume_db = -2.0
+pitch_variation = 0.06
+
+[sub_resource type="Resource" id="Resource_ctdxk"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("17_4erw2"), ExtResource("18_qiwq8"), ExtResource("19_p7f6y")])
+volume_db = -3.0
+pitch_variation = 0.05
+
+[resource]
+script = ExtResource("20_j0qpf")
+cues = Dictionary[StringName, ExtResource("1_fwnrb")]({
+&"bat": SubResource("Resource_ctdxk"),
+&"bell": SubResource("Resource_heksm"),
+&"bleat": SubResource("Resource_108rd"),
+&"dog_bark": SubResource("Resource_8gfke"),
+&"eat": SubResource("Resource_b8to6"),
+&"grass_move": SubResource("Resource_ibdyj"),
+&"graze": SubResource("Resource_3dh8v"),
+&"gunshot": SubResource("Resource_dv38d"),
+&"herder_step": SubResource("Resource_sxnwp"),
+&"reload_click": SubResource("Resource_om3uj"),
+&"spider_screech": SubResource("Resource_vaop8")
+})
