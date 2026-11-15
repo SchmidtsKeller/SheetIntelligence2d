@@ -94,6 +94,10 @@ const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"dog_follow_distance_max": 130.0,
 	&"bat_flight_speed": 420.0,
 	&"bat_orbit_radius": 70.0,
+	# Audio (#10)
+	&"audio_whole_map_distance": 8000.0,
+	&"audio_panning_strength": 3.0,
+	&"audio_own_sound_volume_db": -10.0,
 	&"net_tick_rate": 20,
 	&"net_interpolation_delay": 0.1,
 	&"net_max_extrapolation": 0.1,

@@ -99,6 +99,9 @@ const BAT_ORBIT_RADIUS: StringName = &"bat_orbit_radius"
 # --- Audio -------------------------------------------------------------------
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
+const AUDIO_WHOLE_MAP_DISTANCE: StringName = &"audio_whole_map_distance"
+const AUDIO_PANNING_STRENGTH: StringName = &"audio_panning_strength"
+const AUDIO_OWN_SOUND_VOLUME_DB: StringName = &"audio_own_sound_volume_db"
 
 # --- Network -----------------------------------------------------------------
 const NET_TICK_RATE: StringName = &"net_tick_rate"

@@ -43,7 +43,8 @@ class RecordingAudioService:
 
 	func start_emitter(event_id: StringName, target: Node2D) -> int:
 		var handle: int = super(event_id, target)
-		_targets[handle] = target
+		# The sheep's sounds follow its picture, a node inside its scene.
+		_targets[handle] = target.owner if target.owner != null else target
 		_events[handle] = event_id
 		return handle
 

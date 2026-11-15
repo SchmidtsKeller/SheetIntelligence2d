@@ -30,7 +30,7 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	var perks: SessionPerkService = SessionPerkService.new(config, PerkCatalog.load_default())
 	perks.launch_perks = LaunchOptions.from_command_line().perks
 	registry.register(PerkService, perks)
-	registry.register(AudioService, StubAudioService.new(config))
+	registry.register(AudioService, SpatialAudioService.new(config))
 
 	var session: GameSession = GameSession.new()
 	session.configure(config)

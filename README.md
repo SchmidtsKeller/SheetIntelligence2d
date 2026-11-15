@@ -29,6 +29,8 @@ The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn]
 
 The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden). Its perk picker gives the player whose view is shown a perk (Q uses the Monster's invisibility); the Monster's view shows nothing of the Sheepherder's perk.
 
+The sound check ([systems/audio/sandbox/sound_check.tscn](systems/audio/sandbox/sound_check.tscn), **F6**, or the Web build with `?sound-check` in the address) moves one sound around the listener: choose the sound and how it moves, click to place it, and hear whether it comes from the right side and fades out at the end of its range. It says how loud the sound should be in each ear (see [docs/audio.md](docs/audio.md)).
+
 The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/monster/sandbox/monster_sandbox.tscn), **F6**) is a round without rules: you are the Monster among a round's flock, with a Sheepherder who only stands there. Walk with WASD, sprint with Shift, graze with C, bleat with F and eat with E; the status line shows stamina, the eaten count and the attack's cooldown, and a button lets the Sheepherder shoot at you. Started twice with `-- --host` and `-- --join`, it is the same round between two players.
 
 ### Two instances on one computer
@@ -129,7 +131,7 @@ res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
 ├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
-├── systems/          Game config, scene flow, view rule, arena, session, input, flock, vision, perks, match rules, seeded randomness
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, vision, audio, perks, match rules, seeded randomness
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -151,7 +153,7 @@ Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
 | `PerkService` | Perk selection and the modifier-aware stat lookup |
 | `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
 
-Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input, the flock, combat and perks are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input, the flock, combat, perks and audio are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
 
 ### Service registry
 
@@ -266,6 +268,25 @@ What a player sees is decided on their own device by the [VisionSystem](systems/
 **Torches** stand at fixed spots in the arena (`Torches` in [arena.tscn](systems/arena/arena.tscn)). The host lights one when a living Sheepherder walks up to it and announces it with `arena.torch_lit`; it burns for the rest of the round. The flicker, the sway of the flashlight while walking and the dust and embers are presentation only.
 
 The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
+
+### Audio
+
+`Services.audio` is the `SpatialAudioService` ([services/audio/spatial_audio_service.gd](services/audio/spatial_audio_service.gd)). Every sound is played where it happens and heard from the local player's character (GDD §7.2), whether or not its source can be seen.
+
+```gdscript
+Services.audio.play_event(AudioEvents.BLEAT, global_position)                  # a one-shot in the world
+var steps: int = Services.audio.start_emitter(AudioEvents.HERDER_STEP, self)   # a loop that follows a node
+Services.audio.set_emitter_playing(steps, walking)
+Services.audio.set_listener(character)                                         # the round does this
+```
+
+- **Hearing ranges.** [AudioEvents](abstractions/types/audio_events.gd) gives each event its range class: quiet (400 px), loud (800 px) or whole map. A sound fades from full at the listener to silence at the end of its range, and pans by where it is across the screen ([AudioMix](systems/audio/audio_mix.gd)). Whole-map sounds fade out only at `audio_whole_map_distance` (8000 px), so they are heard everywhere and still sound further away.
+- **Catalog.** The [AudioCatalog](systems/audio/audio_catalog.tres) gives every event an [AudioCue](systems/audio/audio_cue.gd): its variations, bus, volume, pitch variation and fade. The sounds are placeholders, listed with their sources in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md); the sound pass (#23) replaces them in the catalog.
+- **No audio tell.** NPC sheep and the Monster share every sound, and a sheep's sounds come from where it is shown, with the same delay as its picture.
+- **Own sounds.** On a player's own device, the looping sounds of their own character (footsteps, rustle, grazing) play `audio_own_sound_volume_db` (−10 dB) quieter, so they don't cover the sounds nearby.
+- **The reload click** is heard only by the Sheepherder's player, so the Spare Bullet stays hidden (GDD §4.1).
+- **Buses:** Master, Effects, Ambience and UI ([default_bus_layout.tres](default_bus_layout.tres)). `set_bus_volume` keeps the volume in `user://settings.cfg` for the next start.
+- **Web build.** Audio starts with the first click, tap or key press (a browser rule), and is muted while the page is hidden. The playback type and what was measured are in [docs/audio.md](docs/audio.md).
 
 ### Perks
 

@@ -39,7 +39,7 @@ func test_role_action_sets() -> void:
 
 
 func test_every_sound_event_has_a_hearing_range_class() -> void:
-	assert_eq(AudioEvents.ALL.size(), 10)
+	assert_eq(AudioEvents.ALL.size(), 11)
 	for event_id: StringName in AudioEvents.ALL:
 		assert_true(AudioEvents.RANGE_CLASS.has(event_id), "'%s' has a range class" % event_id)
 	assert_eq(AudioEvents.RANGE_CLASS.size(), AudioEvents.ALL.size())
@@ -60,6 +60,16 @@ func test_hearing_range_classes_follow_the_design_document() -> void:
 	assert_eq(AudioEvents.range_class_of(AudioEvents.DOG_BARK), GameEnums.HearingRange.LOUD)
 	assert_eq(AudioEvents.range_class_of(AudioEvents.BELL), GameEnums.HearingRange.WHOLE_MAP)
 	assert_eq(AudioEvents.range_class_of(AudioEvents.GUNSHOT), GameEnums.HearingRange.WHOLE_MAP)
+
+
+func test_hearing_range_classes_decided_in_the_audio_task() -> void:
+	assert_eq(AudioEvents.range_class_of(AudioEvents.GRAZE), GameEnums.HearingRange.QUIET)
+	assert_eq(AudioEvents.range_class_of(AudioEvents.HERDER_STEP), GameEnums.HearingRange.QUIET)
+	assert_eq(AudioEvents.range_class_of(AudioEvents.RELOAD_CLICK), GameEnums.HearingRange.QUIET)
+	assert_eq(
+		AudioEvents.range_class_of(AudioEvents.SPIDER_SCREECH), GameEnums.HearingRange.WHOLE_MAP
+	)
+	assert_eq(AudioEvents.range_class_of(AudioEvents.BAT), GameEnums.HearingRange.LOUD)
 
 
 func test_unknown_sound_events_are_quiet() -> void:

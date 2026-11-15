@@ -18,10 +18,32 @@ class RecordingCombatService:
 		return true
 
 
+## Remembers which looping sounds are switched on.
+class RecordingAudioService:
+	extends StubAudioService
+
+	var events: Dictionary[int, StringName] = {}
+	var playing: Dictionary[int, bool] = {}
+
+	func start_emitter(event_id: StringName, target: Node2D) -> int:
+		var handle: int = super(event_id, target)
+		events[handle] = event_id
+		return handle
+
+	func set_emitter_playing(handle: int, is_playing: bool) -> void:
+		playing[handle] = is_playing
+
+	func is_looping(event_id: StringName) -> bool:
+		for handle: int in events:
+			if events[handle] == event_id and playing.get(handle, false):
+				return true
+		return false
+
+
 var _input: StubInputService
 var _combat: RecordingCombatService
 var _swarm: StubSwarmService
-var _audio: StubAudioService
+var _audio: RecordingAudioService
 var _originals: Dictionary = {}
 
 
@@ -30,7 +52,7 @@ func before_each() -> void:
 	_input.set_role(GameEnums.Role.SHEEPHERDER)
 	_combat = RecordingCombatService.new(Services.config)
 	_swarm = StubSwarmService.new()
-	_audio = StubAudioService.new(Services.config)
+	_audio = RecordingAudioService.new(Services.config)
 	_originals[InputService] = Services.replace(InputService, _input)
 	_originals[CombatService] = Services.replace(CombatService, _combat)
 	_originals[SwarmService] = Services.replace(SwarmService, _swarm)
@@ -192,6 +214,54 @@ func test_a_killed_sheepherder_does_nothing_any_more() -> void:
 	assert_false(herder.can_ring_bell())
 	assert_false(herder.ring_bell())
 	assert_signal_not_emitted(herder, &"bell_rung")
+
+
+func test_only_its_own_player_hears_the_reload() -> void:
+	var own: Sheepherder = _spawn(Vector2(10.0, 0.0))
+	var remote: Sheepherder = Sheepherder.build(-1, OTHER_ID, {"x": 20.0, "y": 0.0})
+	add_child_autofree(remote)
+	var bot_data: Dictionary = {"x": 30.0, "y": 0.0, BotInput.DATA_KEY: true}
+	var bot: Sheepherder = Sheepherder.build(-1, LOCAL_ID, bot_data)
+	add_child_autofree(bot)
+
+	_combat.reload_finished.emit()
+
+	var clicks: Array[Vector2] = []
+	for entry: Dictionary in _audio.played:
+		if entry["event"] == AudioEvents.RELOAD_CLICK:
+			clicks.append(entry["position"])
+	# After the third shot, a click would tell the Monster of a Spare Bullet.
+	assert_eq(clicks, [own.global_position] as Array[Vector2])
+
+
+func test_its_steps_are_heard_while_it_walks() -> void:
+	var herder: Sheepherder = _spawn()
+	await wait_frames(2)
+	assert_false(_audio.is_looping(AudioEvents.HERDER_STEP), "standing still")
+
+	_input.move_vector = Vector2.RIGHT
+	await _physics_frames(5)
+	assert_true(_audio.is_looping(AudioEvents.HERDER_STEP), "walking")
+
+	_input.move_vector = Vector2.ZERO
+	await wait_seconds(Sheepherder.STEPS_STOP_DELAY + 0.1)
+	assert_false(_audio.is_looping(AudioEvents.HERDER_STEP), "stopped")
+	_input.move_vector = Vector2.RIGHT
+	await _physics_frames(5)
+	_combat.sheepherder_killed.emit(herder.position)
+	await wait_seconds(Sheepherder.STEPS_STOP_DELAY + 0.1)
+	assert_false(_audio.is_looping(AudioEvents.HERDER_STEP), "dead")
+
+
+func test_the_other_device_hears_the_steps_of_what_it_shows() -> void:
+	var herder: Sheepherder = Sheepherder.build(-1, OTHER_ID, {"x": 0.0, "y": 0.0})
+	add_child_autofree(herder)
+
+	for _frame: int in 5:
+		herder.position.x += 3.0
+		await wait_frames(1)
+
+	assert_true(_audio.is_looping(AudioEvents.HERDER_STEP))
 
 
 # --- Two devices -----------------------------------------------------------------

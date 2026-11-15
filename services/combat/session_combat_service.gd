@@ -87,8 +87,6 @@ func _advance_reload(delta: float) -> void:
 	_reload_left = maxf(_reload_left - delta, 0.0)
 	if _reload_left == 0.0:
 		reload_finished.emit()
-		if is_instance_valid(_sheepherder):
-			Services.audio.play_event(AudioEvents.RELOAD_CLICK, _sheepherder.global_position)
 
 
 func _advance_eating(delta: float) -> void:

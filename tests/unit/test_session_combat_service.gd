@@ -77,7 +77,7 @@ func test_the_firearm_reloads_after_each_shot() -> void:
 	assert_false(_host.is_reloading())
 	assert_true(_host.can_shoot())
 	assert_signal_emit_count(_host, &"reload_finished", 1)
-	assert_eq(_events(AudioEvents.RELOAD_CLICK), [_sheepherder.global_position])
+	assert_eq(_events(AudioEvents.RELOAD_CLICK), [], "the Sheepherder plays the click (#10)")
 
 
 func test_the_last_bullet_empties_the_firearm_for_good() -> void:
