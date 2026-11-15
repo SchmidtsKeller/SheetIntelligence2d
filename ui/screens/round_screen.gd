@@ -10,6 +10,10 @@ extends Node2D
 ## With [code]--host[/code] or [code]--join[/code] on the command line it
 ## starts the session itself (docs/networking.md).
 
+## The layer of the status and the banners: above the world and the
+## [NightVision] (#90), below the [Hud].
+const OVERLAY_LAYER: int = 30
+
 var _session: GameSession
 var _flow: MatchFlow
 var _status: Label
@@ -107,6 +111,7 @@ func _on_session_started() -> void:
 func _build_overlay() -> void:
 	var layer: CanvasLayer = CanvasLayer.new()
 	layer.name = "Overlay"
+	layer.layer = OVERLAY_LAYER
 	add_child(layer)
 	# Top right: the top left is the HUD's.
 	_status = GameLabel.create(GameTheme.HUD_TEXT, "", "Status")

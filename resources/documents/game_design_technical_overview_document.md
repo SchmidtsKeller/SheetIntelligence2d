@@ -21,7 +21,7 @@
    * **Monster** mimics NPC sheep movement and swarm behaviors (wandering, manually triggering grass-eating animations and bleats, responding to the bell) while isolating and consuming NPC sheep.
 3. **Escalation & Evolution Phases:**
    * **Phase 1 (5 Sheep Eaten):** Once the Monster has eaten **5 sheep**, it unlocks the ability to kill the Sheepherder with a single melee attack.
-   * **Phase 2 (All 10 Sheep Eaten):** If the Monster eats all **10 NPC sheep**, it sheds its disguise and evolves into a **giant spider monster**, becoming completely **unkillable** (immune to the Sheepherder's firearm) while hunting down the Sheepherder.
+   * **Phase 2 (All 10 Sheep Eaten):** If the Monster eats all **10 NPC sheep**, it sheds its disguise and evolves into a **giant spider monster** (GSM), becoming completely **unkillable** (immune to the Sheepherder's firearm) while hunting down the Sheepherder.
    Every sheep the Monster eats counts toward both thresholds, including the bodies of sheep the Sheepherder shot (see 3.2).
 4. **Round Resolution & Scoring:** The round ends when a win condition is met or the 180-second timer expires. Points are tallied based on sheep casualties/survival.
 
@@ -85,11 +85,11 @@
   * **Graze (Mimicry Action):** Hold a dedicated button (PC/Mobile) to lower the head and eat grass, matching NPC sheep idle cycles. The Monster can't move while grazing.
   * **Bleat (Mimicry Action):** Press a dedicated button (PC/Mobile) to bleat like an NPC sheep.
   * **Consume Sheep:** Triggered via dedicated button press (PC) or virtual UI button (Mobile) when within melee proximity of an NPC sheep.
-    * *Animation & Lockout:* Eating animation takes **1.0 second**. The Monster **cannot move or abort** during this animation, leaving it vulnerable.
+    * *Animation & Lockout:* Eating animation takes **1.0 second**. During this action, the **entire body** of the Monster *splits open*, revealing an **unending sea of teeth** that completely envelops the victim, swallowing them **whole** before closing again. This horrific visual mechanic is true for both the "hidden form" (when disguised as an NPC Sheep) and the "true form" (when it has spider legs). The Monster **cannot move or abort** during this animation, leaving it vulnerable.
     * *Cooldown:* Default **5.0 seconds** between consumptions.
     * *Evidence:* Blood from killed sheep remains permanently on the ground as physical evidence (no blood appears on the Monster's wool). An eaten sheep's body disappears; only the blood stays.
     * *Bodies of Shot Sheep:* The Monster can also eat the body of a sheep the Sheepherder shot. This works like eating a living sheep and counts toward both evolution thresholds, but gives no points (see 2.3), and the Shepherd Dog doesn't react to it.
-  * **Phase 1 Evolution (5 Sheep Eaten):** Unlocks a one-attack kill on the Sheepherder, using the same melee proximity attack as on sheep. The Sheepherder dies instantly when the attack lands (so they can't shoot back), and the eating animation still plays.
+  * **Phase 1 Evolution (5 Sheep Eaten):** Unlocks a one-attack kill on the Sheepherder, using the same melee proximity attack as on sheep. The Sheepherder dies instantly when the attack lands (so they can't shoot back). The eating animation of the Monster's body splitting open to swallow the victim whole still plays.
   * **Phase 2 Evolution (10 Sheep Eaten — "giant scary monster" (GSM) Form):** Upon eating all 10 sheep, the Monster transforms into a **giant scary monster** (GSM), becoming completely **unkillable** (bullets have no effect) and hunting down the Sheepherder.
 
 ### 3.3 NPC Sheep (The Flock)
@@ -149,7 +149,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Sprint Speed | `270 px/s` | `1.5×` base speed while the sprint button is held; sheep form only |
 | | Sprint Stamina | `3.0s` | Drains while sprinting; refills at `0.5×` speed while not sprinting (`6.0s` from empty to full) |
 | | "Giant Scary Monster" (GSM) Form Speed | `300 px/s` | Unlocked at 10 sheep eaten; unkillable state; faster than sprinting, no sprint in "giant scary monster" (GSM) form |
-| | Eat Animation Duration | `1.0s` | Movement locked; reduced to `0.5s` with *Faster Consumption*; also plays on the Sheepherder kill |
+| | Eat Animation Duration | `1.0s` | Movement locked; reduced to `0.5s` with *Faster Consumption*; triggers full body split to swallow whole; also plays on the Sheepherder kill |
 | | Eat Ability Cooldown | `5.0s` | Cooldown starts after eating animation completes |
 | | Melee Range | `48 px` | Center-to-center distance to eat a sheep or kill the Sheepherder |
 | | Sheepherder Kill Threshold | `5 Sheep Eaten` | Unlocks the one-attack melee kill on the Sheepherder |
@@ -180,7 +180,6 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - See file "art_style_giant_scary_monster.md"
 
 ### 7.2 Audio Design
-
 - **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, the Sheepherder's footsteps, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, "Giant Scary Monster" (GSM) screech upon full evolution.
 - **Music & Ambience:** Ambient wind, realistic, minimal, layered night sounds.
 - **Spatial Audio Rules:** Critical for locating entities hidden in the Fog of War. Directional/distance-attenuated audio cues apply to the Shepherd Dog barking, unseen sheep moving through grass, and Monster consumption sounds.

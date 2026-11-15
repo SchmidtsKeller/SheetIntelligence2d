@@ -207,7 +207,7 @@ func test_an_obstacle_with_placeholder_art_is_tagged_on_its_art() -> void:
 func test_a_sheep_is_tagged_once_on_what_the_vision_system_fades() -> void:
 	# The shipped sheep is painted (#74); two placeholder layers stand in for
 	# art still to come.
-	var placeholder: Texture2D = load("res://assets/evidence/placeholder/blood.svg")
+	var placeholder: Texture2D = PLACEHOLDER_TEXTURE
 	var catalog: SheepAppearanceCatalog = SheepAppearanceCatalog.new()
 	for slot_id: StringName in [&"first", &"second"]:
 		var part: SheepAppearancePart = SheepAppearancePart.new()
