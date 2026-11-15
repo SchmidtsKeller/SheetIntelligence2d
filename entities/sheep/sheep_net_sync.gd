@@ -10,10 +10,12 @@ extends NetTransform2D
 ## one that arrives over the network, which is what keeps the Monster hidden
 ## in the flock (docs/networking.md, uniform presentation).
 ##
-## Grazing travels with the transform rather than as an event, so it is shown
-## at the matching moment and recovers by itself after lost packets.
+## Grazing and running (faster than a sheep can, see [method SheepBody.is_running])
+## travel with the transform rather than as events, so they are shown at the
+## matching moment and recover by themselves after lost packets.
 
 const FLAG_GRAZING: int = 1
+const FLAG_RUNNING: int = 2
 
 ## Shows the sheep live instead of delayed on the device that simulates it.
 ## Only for the sheep the local player steers: its picture has to follow the
@@ -40,6 +42,8 @@ func capture(time: float) -> Array:
 	var position: Vector2 = _body.global_position
 	var heading: float = _body.get_heading()
 	var flags: int = FLAG_GRAZING if _body.is_grazing() else 0
+	if _body.is_running():
+		flags |= FLAG_RUNNING
 	_buffer.push(time, position, heading, flags)
 	return [position.x, position.y, heading, flags]
 
@@ -64,5 +68,7 @@ func present(render_time: float) -> void:
 		# line-of-sight checks see on this device.
 		_body.global_position = position
 	if _body.presented_externally:
-		var grazing: bool = _buffer.sample_flags(render_time) & FLAG_GRAZING != 0
-		_body.present(position, _buffer.sample_rotation(render_time), speed, grazing)
+		var flags: int = _buffer.sample_flags(render_time)
+		var grazing: bool = flags & FLAG_GRAZING != 0
+		var running: bool = flags & FLAG_RUNNING != 0
+		_body.present(position, _buffer.sample_rotation(render_time), speed, grazing, running)
