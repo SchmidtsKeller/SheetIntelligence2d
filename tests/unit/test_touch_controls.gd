@@ -11,6 +11,8 @@ var _input: DeviceInputService
 var _controls: TouchControls
 ## The fingers that are down, to lift them after the test.
 var _fingers: Dictionary[int, Vector2] = {}
+## The same for fingers reported through the Input singleton.
+var _reported_fingers: Dictionary[int, Vector2] = {}
 
 
 func before_each() -> void:
@@ -26,6 +28,8 @@ func before_each() -> void:
 func after_each() -> void:
 	for finger: int in _fingers.keys():
 		_lift(finger)
+	for finger: int in _reported_fingers.keys():
+		_report_touch(finger, _reported_fingers[finger], false)
 	for action: StringName in InputActions.ALL:
 		Input.action_release(action)
 	Input.emulate_touch_from_mouse = false
@@ -283,6 +287,87 @@ func test_hiding_the_controls_lets_go_of_what_was_touched() -> void:
 	assert_false(_input.is_action_held(InputActions.SPRINT))
 
 
+# --- Fingers, as the touchscreen reports them (#102) -------------------------------
+
+
+func test_a_reported_finger_beside_the_buttons_presses_no_action() -> void:
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+
+	_report_touch(0, get_viewport().get_visible_rect().size / 2.0, true)
+	_input.poll()
+
+	assert_signal_not_emitted(_input, &"action_pressed")
+	assert_false(Input.is_action_pressed(InputActions.SHOOT), "a finger is no mouse click")
+
+
+func test_a_reported_finger_on_the_move_stick_presses_no_action() -> void:
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+
+	_report_touch(0, _center_of(_controls.get_move_stick()), true)
+	_input.poll()
+
+	assert_signal_not_emitted(_input, &"action_pressed")
+
+
+func test_a_reported_finger_on_fire_shoots() -> void:
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+
+	_report_touch(0, _center_of(_controls.get_button(InputActions.SHOOT)), true)
+	_input.poll()
+
+	assert_true(_controls.get_button(InputActions.SHOOT).is_pressed())
+	assert_signal_emit_count(_input, &"action_pressed", 1)
+	assert_signal_emitted_with(_input, &"action_pressed", [InputActions.SHOOT])
+
+
+func test_a_reported_finger_on_bell_rings_and_does_not_shoot() -> void:
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+
+	_report_touch(0, _center_of(_controls.get_button(InputActions.BELL)), true)
+	_input.poll()
+
+	assert_signal_emit_count(_input, &"action_pressed", 1)
+	assert_signal_emitted_with(_input, &"action_pressed", [InputActions.BELL])
+
+
+func test_forced_touch_controls_can_be_operated_with_the_mouse() -> void:
+	# --touch-controls on a desktop: Godot makes mouse clicks touches as well.
+	# The bell has no mouse binding, so only its button can ring it.
+	assert_true(Input.emulate_touch_from_mouse)
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+	var click: InputEventMouseButton = InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = (
+		get_tree().root.get_final_transform() * _center_of(_controls.get_button(InputActions.BELL))
+	)
+	click.pressed = true
+
+	Input.parse_input_event(click)
+	Input.flush_buffered_events()
+	_input.poll()
+
+	assert_signal_emitted_with(_input, &"action_pressed", [InputActions.BELL])
+	click = click.duplicate()
+	click.pressed = false
+	Input.parse_input_event(click)
+	Input.flush_buffered_events()
+
+
+func test_a_reported_finger_beside_the_monsters_buttons_presses_no_action() -> void:
+	_input.set_role(Role.MONSTER)
+	watch_signals(_input)
+
+	_report_touch(0, get_viewport().get_visible_rect().size / 2.0, true)
+	_input.poll()
+
+	assert_signal_not_emitted(_input, &"action_pressed")
+
+
 func _visible_buttons() -> Array[StringName]:
 	var actions: Array[StringName] = []
 	for action: StringName in InputActions.SHEEPHERDER_ACTIONS + InputActions.MONSTER_ACTIONS:
@@ -333,3 +418,20 @@ func _lift(finger: int) -> void:
 	_fingers.erase(finger)
 	# Positions are canvas coordinates, not window pixels.
 	get_viewport().push_input(event, true)
+
+
+## A finger at [param position] (canvas coordinates) as a touchscreen reports
+## it: in window pixels, through the Input singleton. There Godot also makes
+## the first finger a left mouse click (emulate_mouse_from_touch) before the
+## touch reaches the controls.
+func _report_touch(finger: int, position: Vector2, pressed: bool) -> void:
+	var event: InputEventScreenTouch = InputEventScreenTouch.new()
+	event.index = finger
+	event.position = get_tree().root.get_final_transform() * position
+	event.pressed = pressed
+	if pressed:
+		_reported_fingers[finger] = position
+	else:
+		_reported_fingers.erase(finger)
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()

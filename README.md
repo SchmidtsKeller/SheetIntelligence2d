@@ -440,7 +440,7 @@ Declared in the InputMap and named in `InputActions`. Only the `InputService` im
 |:--|:--|:--|
 | `move_left` / `move_right` / `move_up` / `move_down` | `A` `D` `W` `S` and arrow keys | both |
 | `aim_left` / `aim_right` / `aim_up` / `aim_down` | none: the mouse aims on PC, the right virtual joystick on touch | Sheepherder |
-| `shoot` | left mouse button | Sheepherder |
+| `shoot` | left mouse button of a real mouse (device `InputEvent.DEVICE_ID_MOUSE`) | Sheepherder |
 | `bell` | `Space` | Sheepherder |
 | `graze` (hold) | `C` | Monster |
 | `bleat` | `F` | Monster |
@@ -462,10 +462,10 @@ Services.input.add_lock(InputActions.MOVE, &"eating")                # gameplay 
 ```
 
 - **Keyboard and mouse:** 8-way movement that is no faster diagonally; the aim points from the character to the mouse pointer.
-- **Touch:** the on-screen controls ([ui/touch/touch_controls.gd](ui/touch/touch_controls.gd)) are Godot's `VirtualJoystick` and `TouchScreenButton` nodes, which trigger the same input actions as the keys. The movement stick is analog; the aim keeps its direction when the aim stick is released. Several fingers work at once.
+- **Touch:** the on-screen controls ([ui/touch/touch_controls.gd](ui/touch/touch_controls.gd)) are Godot's `VirtualJoystick` and `TouchScreenButton` nodes, which trigger the same input actions as the keys. The movement stick is analog; the aim keeps its direction when the aim stick is released. Several fingers work at once. Godot also turns the first finger into a left mouse click (`input_devices/pointing/emulate_mouse_from_touch`, on by default), so a mouse button bound to an action has to name the real mouse as its device: bound to all devices, a finger anywhere on the screen would shoot (#102).
 - **Role-aware:** only the abilities of the current role are reported, and only that role's touch controls are shown. The Sheepherder gets a second stick to aim plus Fire and Bell; the Monster gets Eat, Sprint, Graze, Bleat and Perk.
 - **A press always gets its release:** when the role changes, gameplay input is switched off, an action is locked, the touch controls disappear, or the window or tab loses focus.
-- **Which controls are shown** follows the device in use: touch controls on a touchscreen, switching whenever the player touches the screen or uses keyboard or mouse. `-- --touch-controls` and `-- --desktop-controls` force one of them; forced touch controls can be operated with the mouse.
+- **Which controls are shown** follows the device in use: touch controls on a touchscreen, switching whenever the player touches the screen or uses keyboard or mouse. `-- --touch-controls` and `-- --desktop-controls` force one of them; forced touch controls can be operated with the mouse. A click there is still a real click, though, so the left mouse button shoots wherever it is clicked, which a finger does not.
 
 **Rule:** nothing outside the input layer reads a device or the InputMap.
 
