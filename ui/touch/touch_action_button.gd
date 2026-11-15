@@ -5,15 +5,16 @@ extends Control
 ## The touch handling is Godot's [TouchScreenButton], which presses the same
 ## input action as the keyboard does (GDD §9.2) and supports several fingers
 ## at once. This control gives it a place in the layout and a placeholder
-## look.
+## look in the colours of [UiPalette], marked "Placeholder" until the art
+## pass (#70) paints it.
 
-const FILL: Color = Color(1.0, 1.0, 1.0, 0.16)
-const FILL_PRESSED: Color = Color(1.0, 1.0, 1.0, 0.42)
-const OUTLINE: Color = Color(1.0, 1.0, 1.0, 0.7)
+const FILL: Color = UiPalette.TOUCH_FILL
+const FILL_PRESSED: Color = UiPalette.TOUCH_FILL_PRESSED
+const OUTLINE: Color = UiPalette.TOUCH_OUTLINE
 const FONT_SIZE: int = 20
-const COOLDOWN: Color = Color(0.0, 0.0, 0.0, 0.55)
-const METER: Color = Color(0.92, 0.88, 0.78, 0.95)
-const ACTIVE: Color = Color(0.85, 0.25, 0.2, 0.95)
+const COOLDOWN: Color = UiPalette.TOUCH_COOLDOWN
+const METER: Color = UiPalette.HUD_FILL
+const ACTIVE: Color = UiPalette.HUD_ACTIVE
 
 ## The input action this button triggers.
 var action: StringName
@@ -91,3 +92,7 @@ func _draw() -> void:
 	var text_size: Vector2 = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
 	var baseline: Vector2 = center + Vector2(-text_size.x / 2.0, text_size.y / 4.0)
 	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
+	var placeholder_size: int = PlaceholderArt.font_size_for(size.x * 0.7, 11)
+	PlaceholderArt.draw_word(
+		get_canvas_item(), center + Vector2(0.0, radius * 0.55), placeholder_size
+	)

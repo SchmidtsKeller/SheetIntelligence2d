@@ -4,11 +4,16 @@ extends RefCounted
 ## what comes next (the perk choice) on the right, side by side so that a phone
 ## held sideways shows both without scrolling. On a screen too small for that,
 ## the whole page scrolls.
+##
+## Each column stands on a [GamePanel] board, over the [ScreenBackdrop], in
+## the shared [GameTheme].
 
 
 ## Fills [param screen] with the two columns and returns them:
 ## [code][left, right][/code].
 static func build(screen: Control) -> Array[VBoxContainer]:
+	GameTheme.apply(screen)
+	ScreenBackdrop.fill(screen)
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -20,7 +25,7 @@ static func build(screen: Control) -> Array[VBoxContainer]:
 	scroll.add_child(center)
 	var row: HBoxContainer = HBoxContainer.new()
 	row.name = "Columns"
-	row.add_theme_constant_override(&"separation", 48)
+	row.add_theme_constant_override(&"separation", 32)
 	center.add_child(row)
 	var columns: Array[VBoxContainer] = []
 	for column_name: String in ["Left", "Right"]:
@@ -28,6 +33,11 @@ static func build(screen: Control) -> Array[VBoxContainer]:
 		column.name = column_name
 		column.alignment = BoxContainer.ALIGNMENT_CENTER
 		column.add_theme_constant_override(&"separation", 12)
-		row.add_child(column)
+		row.add_child(GamePanel.create("%sBoard" % column_name, column))
 		columns.append(column)
 	return columns
+
+
+## The board that [param column] stands on: hide it with the column's content.
+static func board_of(column: VBoxContainer) -> GamePanel:
+	return column.get_parent() as GamePanel

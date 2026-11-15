@@ -51,7 +51,7 @@ var _hosting_next: bool = false
 var _camera_allowed: bool = false
 var _round_trip_ms: int = -1
 var _ping_left: float = 0.0
-var _background: ColorRect
+var _background: ScreenBackdrop
 var _layout: CenterContainer
 var _columns: BoxContainer
 var _title: Label
@@ -315,10 +315,8 @@ func _on_pong(payload: Array, _sender_id: int) -> void:
 
 func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_background = ColorRect.new()
-	_background.color = Color(0.06, 0.06, 0.07)
-	_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(_background)
+	GameTheme.apply(self)
+	_background = ScreenBackdrop.fill(self)
 	_layout = CenterContainer.new()
 	_layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_layout)
@@ -338,19 +336,18 @@ func _build() -> void:
 	texts.alignment = BoxContainer.ALIGNMENT_CENTER
 	texts.custom_minimum_size.x = 360.0
 	texts.add_theme_constant_override(&"separation", 12)
-	_columns.add_child(texts)
-	_title = _add_label(texts, 40)
-	_info = _add_label(texts, 20)
+	_columns.add_child(GamePanel.create("Board", texts))
+	_title = _add_label(texts, GameTheme.TITLE)
+	_info = _add_label(texts, GameTheme.BODY)
 	_buttons = VBoxContainer.new()
 	_buttons.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_buttons.add_theme_constant_override(&"separation", 8)
 	texts.add_child(_buttons)
 	# Below the buttons and with room for three lines, so the buttons do not
 	# move under the player's finger when a message appears.
-	_problem = _add_label(texts, 20)
-	_problem.add_theme_color_override(&"font_color", Color(0.95, 0.75, 0.45))
+	_problem = _add_label(texts, GameTheme.WARNING)
 	_problem.custom_minimum_size.y = 90.0
-	_status_bar = _add_label(self, 18)
+	_status_bar = _add_label(self, GameTheme.SMALL)
 	_status_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	_status_bar.offset_top = 8.0
 	get_viewport().size_changed.connect(_fit_to_screen)
@@ -400,20 +397,14 @@ func _update_status_bar() -> void:
 
 
 func _add_button(text: String, action: Callable) -> void:
-	var button: Button = Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(280.0, 52.0)
-	button.pressed.connect(action)
+	var button: GameButton = GameButton.create(text, action)
 	_buttons.add_child(button)
 	if _first_button == null:
 		_first_button = button
 
 
-static func _add_label(parent: Control, font_size: int) -> Label:
-	var label: Label = Label.new()
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override(&"font_size", font_size)
+static func _add_label(parent: Control, style: StringName) -> Label:
+	var label: GameLabel = GameLabel.create(style).wrapped()
 	parent.add_child(label)
 	return label
 

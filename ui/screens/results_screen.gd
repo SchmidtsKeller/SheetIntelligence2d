@@ -22,6 +22,7 @@ var _hint_label: Label
 var _next_role_label: Label
 var _history_label: Label
 var _picker: PerkPicker
+var _next_board: GamePanel
 var _ready_button: Button
 var _lobby_button: Button
 
@@ -98,6 +99,7 @@ func _refresh_next(going_on: bool) -> void:
 	_picker.visible = going_on
 	_ready_button.visible = going_on
 	_hint_label.visible = going_on
+	_next_board.visible = going_on
 	if not going_on:
 		return
 	var score: MatchScore = _flow.get_score()
@@ -235,36 +237,30 @@ func _build_layout() -> void:
 	var columns: Array[VBoxContainer] = TwoColumns.build(self)
 	var past: VBoxContainer = columns[0]
 	var next: VBoxContainer = columns[1]
-	_round_label = _add_label(past, 20)
-	_headline_label = _add_label(past, 32)
-	_details_label = _add_label(past, 16)
-	_match_label = _add_label(past, 26)
-	_history_label = _add_label(past, 16)
+	_next_board = TwoColumns.board_of(next)
+	_round_label = _add_label(past, GameTheme.BODY)
+	_headline_label = _add_label(past, GameTheme.HEADLINE)
+	_details_label = _add_label(past, GameTheme.SMALL)
+	_match_label = _add_label(past, GameTheme.HEADING)
+	_history_label = _add_label(past, GameTheme.SMALL)
 	_lobby_button = _add_button(past, "Back to lobby", _back_to_lobby)
-	_next_role_label = _add_label(next, 22)
+	_next_role_label = _add_label(next, GameTheme.HEADING)
 	_ready_button = _add_button(next, READY, Callable())
 	_ready_button.name = "Ready"
 	_ready_button.toggle_mode = true
 	_ready_button.toggled.connect(_on_ready_toggled)
-	_hint_label = _add_label(next, 16)
+	_hint_label = _add_label(next, GameTheme.SMALL)
 	_picker = PerkPicker.new()
 	next.add_child(_picker)
 
 
-func _add_label(layout: VBoxContainer, font_size: int) -> Label:
-	var label: Label = Label.new()
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override(&"font_size", font_size)
+func _add_label(layout: VBoxContainer, style: StringName) -> Label:
+	var label: GameLabel = GameLabel.create(style)
 	layout.add_child(label)
 	return label
 
 
 func _add_button(layout: VBoxContainer, text: String, action: Callable) -> Button:
-	var button: Button = Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(240.0, 56.0)
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if action.is_valid():
-		button.pressed.connect(action)
+	var button: GameButton = GameButton.create(text, action)
 	layout.add_child(button)
 	return button

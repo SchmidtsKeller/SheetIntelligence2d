@@ -1,0 +1,317 @@
+IMAGES STILL TO BE CREATED
+==========================
+
+Every texture or drawn shape in the game that a painted image will replace.
+In the running game each of them says "Placeholder" (pink letters) until its
+image exists. Remove an entry when its image is in the game.
+
+Where the work is tracked:
+  #30  Create the painted image assets (49 sprites, sheets and tiles):
+       characters, creatures, environment, blood. Section D below points to
+       its file names instead of repeating them.
+  #70  Design and create the buttons and UI elements in the game's painted
+       style: sections A, B and C (menus, HUD, touch controls). #30 leaves
+       these out on purpose.
+  #22  Art direction pass: wires the images into the scenes and the theme.
+
+Style for all of them: resources/documents/art_style_constraints.md
+(atmospheric realism painting, oil on canvas, heavy chiaroscuro, muted
+earthy palette: raw umber, burnt sienna, olive, charcoal; sickly yellow or
+cold white highlights; blood and danger in oxidized crimson). World sprites:
+strict top-down view, facing the top edge, no baked-in shadows (the engine
+lights them). UI images: the same materials and palette, but text and icons
+must stay readable on a phone held sideways (contrast at least 4.5:1, touch
+targets at least 48 px).
+
+Format of an entry:
+  <image id>  what it is
+    used in:  file  ->  node (the id is also given in code, e.g. image_id)
+    size:     pixels to paint at (aspect ratio), transparency
+    style:    notes beyond the general style
+    covered:  the issue and file name where it is planned
+
+All UI ids are referenced in code: GameTheme (ui/theme/game_theme.gd) passes
+them to PlaceholderStyleBox, the components pass them to PlaceholderBadge.
+
+
+A. MENUS (lobby, pairing, perk choice, scoreboard, boot)        -> #70
+--------------------------------------------------------------------------
+
+ui_logo  The title "Hide in Sheep Clothing" as a painted logo.
+  used in:  ui/screens/lobby_screen.gd  ->  Scroll/.../LeftBoard/Left/Title
+            ui/screens/boot_screen.tscn ->  Layout/Title
+            (both via GameLabel.mark_as_logo, ui/components/game_label.gd)
+  size:     1024x256 (4:1), transparent; shown about 440x76 px
+  style:    painted, worn lettering in sickly yellow on nothing; may carry a
+            hint of wool or a sheep's ear turning into a claw. Must read at
+            300 px wide on a phone.
+  covered:  #70
+
+ui_backdrop  The picture behind every menu screen.
+  used in:  ui/components/screen_backdrop.gd (ScreenBackdrop, node "Backdrop")
+            in the lobby, the scoreboard, the boot screen and the pairing
+            panel; style BackdropPanel in ui/theme/game_theme.gd
+  size:     1920x1080 (16:9), opaque. The window keeps the height and shows
+            more or less width ("expand"), so it must survive cropping to
+            4:3 and widening to 21:9: keep the middle quiet, detail at the
+            edges.
+  style:    a pasture at night seen from above, almost black, a few sheep
+            shapes and one faint lantern glow; very low contrast behind the
+            boards so text on top stays readable.
+  covered:  #70
+
+ui_board  The board behind a group of texts and buttons.
+  used in:  ui/components/game_panel.gd (GamePanel): LeftBoard, RightBoard
+            (ui/lobby/two_columns.gd, lobby and scoreboard), Board (the
+            pairing panel); style BoardPanel in ui/theme/game_theme.gd
+  size:     256x256 nine-patch (StyleBoxTexture), 32 px margins, opaque or
+            mostly opaque; stretches to 300..560 px wide and 200..700 px high.
+            Content margins today: 22 px left/right, 16 px top/bottom.
+  style:    stained parchment nailed to weathered wood, or a dark wooden
+            board with iron corners; the middle must be calm and even.
+  covered:  #70
+
+ui_button  The menu button, in six states.
+  used in:  ui/components/game_button.gd (GameButton.Kind.MENU): every action
+            button: Host a game, Join a game, the two offline matches,
+            Ready, Leave, Back to lobby, Copy code, Scan, Cancel, ...
+            styles "Button" in ui/theme/game_theme.gd
+  size:     384x96 nine-patch per state, 24 px margins; shown at least
+            300x56 px. States: normal, hover, pressed (also a toggled Ready),
+            hover_pressed, disabled, focus (a frame only, drawn on top of the
+            others: transparent middle).
+  style:    a worn wooden plank or iron-banded leather tag; pressed sinks in
+            and warms to burnt sienna; disabled is darker and duller, not
+            greyed out to blue.
+  covered:  #70
+
+ui_choice_button  The wide toggle button of the perk choice, in six states.
+  used in:  ui/components/game_button.gd (GameButton.Kind.CHOICE) in
+            ui/lobby/perk_picker.gd -> PerkPicker/Perk_<id>;
+            style ChoiceButton in ui/theme/game_theme.gd
+  size:     512x128 nine-patch per state, 24 px margins; shown 460 px wide and
+            64..180 px high (the description wraps to up to six lines). The
+            left 68 px hold the perk icon: keep that part plain.
+            States as ui_button; "pressed" is the chosen perk and must stand
+            out clearly (highlight border today).
+  style:    a parchment card or a slip of paper pinned to the board.
+  covered:  #70
+
+perk_icon_<id>  One icon per perk, plus one for "no perk".
+  ids:      wide_flashlight, long_flashlight, faster_reload, shepherd_dog,
+            spare_bullet (Sheepherder); faster_consumption, invisibility,
+            allied_bat (Monster); none
+  used in:  PerkDefinition.icon in systems/perks/definitions/<id>.tres (empty
+            today), shown by ui/lobby/perk_picker.gd through
+            GameButton.set_choice_icon (a 44x44 slot) and, for the active
+            perks, as the HUD's Perk icon (76x76) and the Perk touch button
+            (108x108)
+  size:     128x128, transparent
+  style:    one simple, high-contrast object per perk (a lantern with a wide
+            beam, a long beam, a cartridge, a dog's head, a hidden bullet,
+            gnashing teeth, a fading silhouette, a bat), painted but with a
+            clear silhouette; must read at 44 px. "none": an empty hook or
+            a crossed-out circle.
+  covered:  #70
+
+
+B. HUD (during a round)                                          -> #70
+--------------------------------------------------------------------------
+
+hud_action_<action>  The icon of an action.
+  actions:  shoot (Fire), bell, graze, bleat, eat, sprint; the Perk action
+            uses the perk's icon (see perk_icon_<id>)
+  used in:  ui/hud/hud.gd -> Root/Actions/<Name> (HudGauge, Style.ICON, 76x76,
+            keyboard and mouse) and ui/touch/touch_controls.gd ->
+            Root/<Action>Button (TouchActionButton, 108x108, touchscreen).
+            Today the name is written in the circle instead.
+  size:     128x128, transparent glyph that sits on the round base
+            (hud_icon_base / touch_button_base)
+  style:    pale parchment glyphs (rifle, hand bell, grass tuft, open mouth,
+            fangs, running legs); readable at 64 px.
+  covered:  #70
+
+hud_icon_base  The round base of an action icon on PC.
+  used in:  ui/hud/hud_gauge.gd (_draw_icon), Root/Actions/<Name>
+  size:     128x128, transparent outside the circle; the cooldown slice and
+            the meter ring stay drawn in code on top of it.
+  style:    a dark iron disc with a worn rim; an "active" variant with a
+            crimson glow (hud_icon_base_active).
+  covered:  #70
+
+hud_bar_frame, hud_bar_fill, hud_bar_fill_active  The bars.
+  used in:  ui/hud/hud_gauge.gd (_draw_bar): Root/SheepherderPanel/Reload,
+            Root/MonsterPanel/Evolution, Root/MonsterPanel/Stamina
+  size:     frame 320x24 nine-patch (8 px margins); fills 320x24, stretched
+            horizontally; shown 300x18 px
+  style:    frame of dark leather or iron; fill pale parchment; active fill
+            oxidized crimson (sprinting, the kill unlocked).
+  covered:  #70
+
+hud_milestone_kill, hud_milestone_spider  The two marks on the evolution bar.
+  used in:  ui/hud/hud_gauge.gd (marks, white lines today):
+            Root/MonsterPanel/Evolution at 5 and 10 eaten sheep
+  size:     32x48, transparent
+  style:    a small skull (kill unlocked) and a spider's leg (spider).
+  covered:  #70
+
+hud_bullet, hud_bullet_empty  One bullet of the magazine.
+  used in:  ui/hud/hud_gauge.gd (_draw_pips): Root/SheepherderPanel/Bullets
+            (3, or 4 with Spare Bullet)
+  size:     64x64, transparent; shown about 28x28
+  style:    a brass cartridge seen from the side; empty: its dull outline.
+  covered:  #70
+
+hud_timer_plate  A plate behind the round timer. (Not drawn yet.)
+  used in:  ui/hud/hud.gd -> Root/Timer
+  size:     256x80 nine-patch, transparent edges
+  style:    a dented tin plate or a scrap of parchment.
+  covered:  #70
+
+
+C. TOUCH CONTROLS                                                -> #70
+--------------------------------------------------------------------------
+
+touch_joystick_base, touch_joystick_tip  The two virtual sticks.
+  used in:  ui/touch/touch_controls.gd -> Root/MoveStick, Root/AimStick
+            (VirtualJoystick, 220x220; tip 0.36 of it). Today Godot's default
+            circles with a "Placeholder" badge.
+  size:     base 256x256, tip 128x128, transparent
+  style:    base: a faint ring scratched into dark wood or iron, mostly
+            see-through (the game is behind it); tip: a worn brass knob.
+  covered:  #70
+
+touch_button_base, touch_button_base_pressed, touch_button_base_active
+  The round base of a touch action button.
+  used in:  ui/touch/touch_action_button.gd (TouchActionButton, 108x108):
+            Root/ShootButton, BellButton, GrazeButton, BleatButton, EatButton,
+            SprintButton, PerkButton; the action glyph (hud_action_<action>)
+            goes on top, the cooldown slice and the meter ring stay in code.
+  size:     256x256 each, transparent outside the circle
+  style:    like hud_icon_base, but more see-through (it covers the game):
+            pressed is lighter, active glows crimson.
+  covered:  #70
+
+
+D. THE WORLD (characters, creatures, scenery, blood)             -> #30
+--------------------------------------------------------------------------
+Every texture below lives in an assets/**/placeholder/ folder. In the game
+each sprite using one carries a "Placeholder" tag (PlaceholderWatcher,
+systems/art/placeholder_watcher.gd); the tag disappears by itself once the
+sprite uses a texture outside such a folder. Sizes, prompts and the exact
+look are in #30; only what #30 does not cover is described here.
+
+Sheep (entities/sheep/appearance/sheep_appearance_catalog.tres; layers built
+by entities/sheep/sheep_body.gd under Facing/Pose/Visual/Body and .../Head;
+one tag per sheep, on Facing). The Monster in sheep form uses exactly the
+same images: no art of its own (no tell).
+  assets/sheep/placeholder/wool.svg            slot wool
+      covered: #30 sheep_body_idle.png (+ the walk, graze, bleat and death
+               sheets)
+  assets/sheep/placeholder/head.svg            slot head
+      covered: #30 sheep_body_idle.png (the head is part of the body there;
+               the code keeps a head anchor for grazing and bleating)
+  assets/sheep/placeholder/pattern_spots.svg   slot pattern
+      covered: #30 sheep_marking_02_back_spots.png
+  assets/sheep/placeholder/pattern_saddle.svg  slot pattern
+      covered: #30 sheep_marking_03_saddle_patch.png
+  assets/sheep/placeholder/pattern_rump.svg    slot pattern
+      covered: #30 sheep_marking_04_dark_rump.png
+  assets/sheep/placeholder/pattern_patches.svg slot pattern
+      NOT in #30.  sheep_marking_06_patches.png, 512x512, transparent:
+               three or four irregular dark grey-brown patches on the flanks;
+               must line up with sheep_body_idle.png like the other layers.
+  assets/sheep/placeholder/marking_stripe.svg  slot marking (paint stripe)
+      covered: #30 sheep_marking_05_white_blaze.png is a coat marking, not
+               paint; if the farmer's paint marks stay, add:
+      NOT in #30.  sheep_paint_stripe.png, 512x512, transparent: a smeared
+               stripe of faded red-brown marking paint along the spine.
+  assets/sheep/placeholder/marking_dot.svg     slot marking (paint dot)
+      NOT in #30.  sheep_paint_dot.png, 512x512, transparent: one round dab
+               of faded marking paint on the back.
+  assets/sheep/placeholder/marking_cross.svg   slot marking (paint cross)
+      NOT in #30.  sheep_paint_cross.png, 512x512, transparent: a painted
+               cross of faded marking paint on the rump.
+  assets/sheep/placeholder/collar_bell.svg     slot accessory
+      covered: #30 sheep_accessory_01_bell_collar.png
+  assets/sheep/placeholder/ribbon.svg          slot accessory
+      covered: #30 sheep_accessory_03_ribbon.png
+  assets/sheep/placeholder/ear_tag.svg         slot accessory
+      covered: #30 sheep_accessory_02_ear_tag.png
+
+The Monster's spider form (drawn in code: entities/monster/spider_visual.gd,
+shown in the sheep's Facing node, so the sheep's tag covers it)
+      covered: #30 spider_idle.png, spider_walk_sheet.png,
+               spider_attack_sheet.png, spider_transform_sheet.png
+
+Sheepherder (entities/sheepherder/sheepherder.tscn -> Art)
+  assets/sheepherder/placeholder/sheepherder.svg
+      covered: #30 sheepherder_idle.png (+ walk, shoot, reload, bell ring,
+               death sheets)
+
+Companions
+  assets/companions/placeholder/shepherd_dog.svg
+      (entities/companions/shepherd_dog.tscn -> Art)
+      covered: #30 dog_idle.png, dog_walk_sheet.png, dog_alert_sheet.png
+  assets/companions/placeholder/allied_bat.svg
+      (entities/companions/allied_bat.tscn -> Art)
+      covered: #30 bat_fly_sheet.png, bat_harass_sheet.png
+
+Blood (entities/evidence/blood_decal.tscn -> Art)
+  assets/evidence/placeholder/blood.svg
+      covered: #30 fx_blood_decal_01..03.png
+
+Obstacles (entities/obstacles/<name>.tscn -> Art)
+  assets/arena/placeholder/tree.svg       covered: #30 tree_01.png, tree_02.png
+  assets/arena/placeholder/bush.svg       covered: #30 bush_01.png
+  assets/arena/placeholder/barn.svg       covered: #30 barn_01.png
+  assets/arena/placeholder/shed.svg       covered: #30 shed_01.png
+  assets/arena/placeholder/hay_bale.svg   covered: #30 hay_bale_01.png
+
+Ground and borders (systems/arena/arena.tscn, built by systems/arena/arena.gd)
+  assets/arena/placeholder/grass.svg      Ground/Grass (tiled)
+      covered: #30 ground_grass_tile.png
+  assets/arena/placeholder/grass_patch.svg  GroundDetails/* (scattered)
+      covered: #30 ground_grass_patch_01.png
+  assets/arena/placeholder/fence.svg      Borders/Fence*/Art (tiled)
+      covered: #30 fence_straight.png, fence_corner.png
+  assets/arena/placeholder/water.svg      Borders/River/Art (tiled)
+      covered: #30 river_water_tile.png, river_bank_straight.png,
+               river_bank_corner.png
+  assets/arena/placeholder/hill.svg       GroundDetails/* (scattered)
+      NOT in #30.  ground_hill_01.png, 1024x640 (about 3:2), transparent
+               edges: a gentle rise in the pasture, darker grass on the
+               shaded side, no hard outline; it lies flat on the ground and
+               must not look like an obstacle.
+  assets/arena/placeholder/flowers.svg    GroundDetails/* (scattered)
+      NOT in #30.  ground_flowers_01.png, 256x256, transparent: a small
+               clump of pale, wilted meadow flowers seen from above; muted,
+               only the petals catch the light.
+
+Torches (entities/torch/torch.tscn -> Art; the flame and embers stay in code)
+  assets/arena/placeholder/torch.svg
+      NOT in #30.  torch_01.png, 256x256, transparent: a wooden post with an
+               iron fire basket seen from above, charred wood and soot; no
+               flame painted in (the code draws it and lights the area).
+
+
+E. DRAWN IN CODE ON PURPOSE (no image planned; listed so nothing is missed)
+--------------------------------------------------------------------------
+  Flashlight cone, darkness and torch light   entities/sheepherder/
+      flashlight_*.gd, entities/torch/torch.gd, systems/vision/ (#22)
+  Muzzle flash and shot line                  entities/sheepherder/effects/
+      shot_effect.gd (#22)
+  Bell ring                                   entities/sheepherder/effects/
+      bell_ring_effect.gd (#22)
+  Cooldown slices and meter rings on icons and touch buttons
+      ui/hud/hud_gauge.gd, ui/touch/touch_action_button.gd
+  The QR code of the pairing panel (generated)  ui/pairing/pairing_panel.gd
+  Debug overlays and sandboxes                (development only)
+
+
+F. ALREADY THERE, NOT WIRED IN YET
+--------------------------------------------------------------------------
+resources/animations/{dog,monster,npc,shepherd}/*/assets/*_sheet.png hold
+generated sprite sheets (shepherd dog, spider, NPC sheep, sheepherder) with
+SpriteFrames resources. No scene uses them yet. Check them against #30
+before painting the same animations again.

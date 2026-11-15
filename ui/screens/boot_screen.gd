@@ -16,6 +16,9 @@ const SOUND_CHECK_PARAMETER: String = "sound-check"
 
 
 func _ready() -> void:
+	GameTheme.apply(self)
+	ScreenBackdrop.fill(self)
+	GameLabel.mark_as_logo(_title)
 	_title.text = ProjectSettings.get_setting("application/config/name", "")
 	var missing: Array[Script] = ServiceBootstrap.find_missing(Services)
 	if not missing.is_empty():
