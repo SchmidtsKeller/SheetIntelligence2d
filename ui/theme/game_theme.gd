@@ -7,7 +7,10 @@ extends RefCounted
 ##
 ## Buttons, choice buttons, boards and the touch joysticks are painted
 ## ([PaintedUi], #83). The menu backdrop is still a [PlaceholderStyleBox] that
-## says so, and the fonts are the fallback until the art pass (#70).
+## says so. Text is set in IM Fell English (#86), old print with worn ink.
+## Its digits are old-style figures, which blur at small sizes, so the small
+## HUD texts and numbers read during a round use the plain
+## [method readable_font] instead.
 
 ## The game's name in large letters, until the logo exists.
 const TITLE: StringName = &"TitleLabel"
@@ -31,13 +34,17 @@ const BOARD_PANEL: StringName = &"BoardPanel"
 ## Behind a whole menu screen.
 const BACKDROP_PANEL: StringName = &"BackdropPanel"
 
+## The game's typeface: IM Fell English (SIL Open Font License,
+## assets/fonts/OFL.txt).
+const FONT: FontFile = preload("res://assets/fonts/IMFellEnglish-Regular.ttf")
+
 const DEFAULT_FONT_SIZE: int = 20
 const LABEL_SIZES: Dictionary[StringName, int] = {
 	TITLE: 40,
 	HEADLINE: 32,
 	HEADING: 26,
 	BODY: 20,
-	SMALL: 16,
+	SMALL: 18,
 	WARNING: 20,
 	HUD_TITLE: 40,
 	HUD_TIMER: 34,
@@ -64,6 +71,11 @@ static func get_theme() -> Theme:
 	return _theme
 
 
+## For small HUD texts with numbers: Godot's plain built-in font.
+static func readable_font() -> Font:
+	return ThemeDB.fallback_font
+
+
 ## Gives [param control] and everything below it the shared theme.
 static func apply(control: Control) -> void:
 	control.theme = get_theme()
@@ -81,6 +93,7 @@ static func get_board_theme() -> Theme:
 ## A new theme with every style of the game.
 static func build() -> Theme:
 	var theme: Theme = Theme.new()
+	theme.default_font = FONT
 	theme.default_font_size = DEFAULT_FONT_SIZE
 	_add_labels(theme)
 	_add_buttons(theme)
@@ -95,6 +108,8 @@ static func _add_labels(theme: Theme) -> void:
 		theme.set_type_variation(variation, &"Label")
 		theme.set_font_size(&"font_size", variation, LABEL_SIZES[variation])
 	theme.set_color(&"font_color", TITLE, UiPalette.HIGHLIGHT)
+	for variation: StringName in [HUD_TEXT, HUD_MESSAGE]:
+		theme.set_font(&"font", variation, readable_font())
 	theme.set_color(&"font_color", WARNING, UiPalette.WARNING)
 	for variation: StringName in HUD_OUTLINES:
 		theme.set_constant(&"outline_size", variation, HUD_OUTLINES[variation])
