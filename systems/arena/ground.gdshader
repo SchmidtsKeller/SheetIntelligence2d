@@ -11,23 +11,28 @@
 // map (each terrain's gloss, plus where it is wet) makes the light glint.
 // Flat, dry ground is lit exactly as without them, so the brightness the
 // lights were tuned for (#63) stays.
+//
+// The terrains are layers of two texture arrays, not ten textures (#101).
+// WebGL 2 in browsers and on phones offers 16 texture units. Godot's canvas
+// renderer binds its own textures to unit 0 and to the six units below the
+// top one (9 to 14 of 16), and a material's textures start at unit 1: eight
+// fit. With twelve, the lit variant of this shader did not link on the Web.
 shader_type canvas_item;
+
+// Layers of the terrain arrays.
+const float GRASS = 0.0;
+const float CLOVER = 1.0;
+const float PATH = 2.0;
+const float GRAVEL = 3.0;
+const float MUD = 4.0;
 
 // Path (R), gravel (G), mud (B), clover (A); the rest is grass.
 uniform sampler2D layout_map : filter_linear, repeat_disable;
 // Hills (R), wetness (G), cart ruts (B), which tiling shows (A).
 uniform sampler2D relief_map : filter_linear, repeat_disable;
 // Each terrain: color with gloss in alpha, and its normal map.
-uniform sampler2D grass_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform sampler2D grass_normal : hint_normal, filter_linear_mipmap, repeat_enable;
-uniform sampler2D clover_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform sampler2D clover_normal : hint_normal, filter_linear_mipmap, repeat_enable;
-uniform sampler2D path_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform sampler2D path_normal : hint_normal, filter_linear_mipmap, repeat_enable;
-uniform sampler2D gravel_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform sampler2D gravel_normal : hint_normal, filter_linear_mipmap, repeat_enable;
-uniform sampler2D mud_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform sampler2D mud_normal : hint_normal, filter_linear_mipmap, repeat_enable;
+uniform sampler2DArray terrain_albedo : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2DArray terrain_normal : hint_normal, filter_linear_mipmap, repeat_enable;
 
 // Size of the arena in pixels; the sprite covers it.
 uniform vec2 world_size = vec2(3200.0, 2400.0);
@@ -60,8 +65,7 @@ struct Terrain {
 
 void add_terrain(
 	inout Terrain sum,
-	sampler2D albedo,
-	sampler2D normal_map,
+	float layer,
 	float weight,
 	vec2 uv_a,
 	vec2 uv_b,
@@ -72,10 +76,12 @@ void add_terrain(
 	if (weight < 0.004) {
 		return;
 	}
-	vec4 a = textureGrad(albedo, uv_a, grad_a.xy, grad_a.zw);
-	vec4 b = textureGrad(albedo, uv_b, grad_b.xy, grad_b.zw);
-	vec2 na = textureGrad(normal_map, uv_a, grad_a.xy, grad_a.zw).xy * 2.0 - 1.0;
-	vec2 nb = textureGrad(normal_map, uv_b, grad_b.xy, grad_b.zw).xy * 2.0 - 1.0;
+	vec3 at_a = vec3(uv_a, layer);
+	vec3 at_b = vec3(uv_b, layer);
+	vec4 a = textureGrad(terrain_albedo, at_a, grad_a.xy, grad_a.zw);
+	vec4 b = textureGrad(terrain_albedo, at_b, grad_b.xy, grad_b.zw);
+	vec2 na = textureGrad(terrain_normal, at_a, grad_a.xy, grad_a.zw).xy * 2.0 - 1.0;
+	vec2 nb = textureGrad(terrain_normal, at_b, grad_b.xy, grad_b.zw).xy * 2.0 - 1.0;
 	// The second tiling is turned by 90 degrees, and its normals with it.
 	nb = vec2(nb.y, -nb.x);
 	vec4 texel = mix(a, b, variant);
@@ -104,11 +110,11 @@ void fragment() {
 
 	float grass = max(1.0 - mix_map.r - mix_map.g - mix_map.b - mix_map.a, 0.0);
 	Terrain sum = Terrain(vec3(0.0), 0.0, vec2(0.0), 0.0);
-	add_terrain(sum, grass_albedo, grass_normal, grass, uv_a, uv_b, grad_a, grad_b, variant);
-	add_terrain(sum, clover_albedo, clover_normal, mix_map.a, uv_a, uv_b, grad_a, grad_b, variant);
-	add_terrain(sum, path_albedo, path_normal, mix_map.r, uv_a, uv_b, grad_a, grad_b, variant);
-	add_terrain(sum, gravel_albedo, gravel_normal, mix_map.g, uv_a, uv_b, grad_a, grad_b, variant);
-	add_terrain(sum, mud_albedo, mud_normal, mix_map.b, uv_a, uv_b, grad_a, grad_b, variant);
+	add_terrain(sum, GRASS, grass, uv_a, uv_b, grad_a, grad_b, variant);
+	add_terrain(sum, CLOVER, mix_map.a, uv_a, uv_b, grad_a, grad_b, variant);
+	add_terrain(sum, PATH, mix_map.r, uv_a, uv_b, grad_a, grad_b, variant);
+	add_terrain(sum, GRAVEL, mix_map.g, uv_a, uv_b, grad_a, grad_b, variant);
+	add_terrain(sum, MUD, mix_map.b, uv_a, uv_b, grad_a, grad_b, variant);
 	float total = max(sum.weight, 0.0001);
 	vec3 color = sum.color / total;
 	float gloss = sum.gloss / total;

@@ -85,13 +85,13 @@ Made for this project by the team, not third-party assets, from the team's React
 
 ## Painted ground (#76)
 
-Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.
+Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts. The tiles lie one below the other in `terrain_albedo.png` (colour and gloss) and `terrain_normal.png` (normal maps), one layer each of a texture array (#101).
 
-| Files in `arena/ground/` | Source image |
+| Layer of `arena/ground/terrain_albedo.png` and `terrain_normal.png` | Source image |
 |:--|:--|
-| `grass.png`, `grass_normal.png` | `terrain_grass_turf_1794741903241.jpg` |
-| `clover.png`, `clover_normal.png` | `terrain_clover_meadow_1794741902823.jpg` |
-| `path.png`, `path_normal.png` | `terrain_dirt_path_1794741905313.jpg` |
-| `gravel.png`, `gravel_normal.png` | `terrain_gravel_dirt_1794741903283.jpg` |
-| `mud.png`, `mud_normal.png` | `terrain_mud_puddle_1794741903398.jpg` |
+| 0, grass | `terrain_grass_turf_1794741903241.jpg` |
+| 1, clover | `terrain_clover_meadow_1794741902823.jpg` |
+| 2, path | `terrain_dirt_path_1794741905313.jpg` |
+| 3, gravel | `terrain_gravel_dirt_1794741903283.jpg` |
+| 4, mud | `terrain_mud_puddle_1794741903398.jpg` |
 | `layout.png`, `relief.png` | generated |

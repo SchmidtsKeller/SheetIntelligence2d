@@ -8,11 +8,15 @@ extends SceneTree
 ##
 ## The folder holds the five painted terrain images of the team's AI Studio
 ## ground page ([code]terrain_grass_turf_*.jpg[/code] and the others in
-## [constant TERRAINS]). For each terrain this writes:
-## [br]- [code]<name>.png[/code]: the image made seamless and scaled to
-## [constant TILE_SIZE], with its gloss (the reflection map) in alpha.
-## [br]- [code]<name>_normal.png[/code]: the normal map of its height, which
-## is the image's brightness.
+## [constant TERRAINS]). Each terrain becomes a tile of [constant TILE_SIZE],
+## one below the other in the order of [constant TERRAINS], which are the
+## layers of the texture arrays the ground shader samples (#101):
+## [br]- [constant ALBEDO_FILE]: the images made seamless and scaled, with
+## their gloss (the reflection map) in alpha.
+## [br]- [constant NORMAL_FILE]: the normal maps of their height, which is
+## their brightness.
+## [br]Both are imported as Texture2DArray with one slice per terrain (their
+## [code].import[/code] files say so).
 ## [br]And for the arena, a texel per [constant MAP_CELL] px:
 ## [br]- [code]layout.png[/code]: how much path (R), gravel (G), mud (B) and
 ## clover (A) lies there; the rest is grass.
@@ -21,6 +25,8 @@ extends SceneTree
 ## [br]Run [code]godot --headless --path . --import[/code] afterwards.
 
 const OUTPUT: String = "res://assets/arena/ground"
+const ALBEDO_FILE: String = "terrain_albedo.png"
+const NORMAL_FILE: String = "terrain_normal.png"
 const TILE_SIZE: int = 512
 ## Width of the cross-fade that makes an image seamless.
 const SEAM_BORDER: int = 72
@@ -55,10 +61,16 @@ func _init() -> void:
 		quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT))
-	for terrain: Dictionary in TERRAINS:
-		if not _bake_terrain(arguments[0], terrain):
+	var strip_size: Vector2i = Vector2i(TILE_SIZE, TILE_SIZE * TERRAINS.size())
+	var albedo: Image = Image.create_empty(strip_size.x, strip_size.y, false, Image.FORMAT_RGBA8)
+	var normal: Image = Image.create_empty(strip_size.x, strip_size.y, false, Image.FORMAT_RGB8)
+	for index: int in TERRAINS.size():
+		var at: Vector2i = Vector2i(0, TILE_SIZE * index)
+		if not _bake_terrain(arguments[0], TERRAINS[index], albedo, normal, at):
 			quit(1)
 			return
+	albedo.save_png(ProjectSettings.globalize_path(OUTPUT.path_join(ALBEDO_FILE)))
+	normal.save_png(ProjectSettings.globalize_path(OUTPUT.path_join(NORMAL_FILE)))
 	_bake_maps()
 	quit(0)
 
@@ -66,7 +78,11 @@ func _init() -> void:
 # --- Terrain textures --------------------------------------------------------------
 
 
-func _bake_terrain(folder: String, terrain: Dictionary) -> bool:
+## Bakes [param terrain] into the strips [param albedo_strip] and
+## [param normal_strip], with its tile's top left corner at [param at].
+func _bake_terrain(
+	folder: String, terrain: Dictionary, albedo_strip: Image, normal_strip: Image, at: Vector2i
+) -> bool:
 	var source_path: String = ""
 	for file: String in DirAccess.get_files_at(folder):
 		if file.begins_with(terrain.prefix) and file.ends_with(".jpg"):
@@ -98,8 +114,9 @@ func _bake_terrain(folder: String, terrain: Dictionary) -> bool:
 			var color: Color = albedo.get_pixel(x, y)
 			color.a = _gloss(terrain.name, _at(height, x, y), mean, slope.length())
 			glossy.set_pixel(x, y, color)
-	glossy.save_png(ProjectSettings.globalize_path(OUTPUT.path_join(terrain.name + ".png")))
-	normal.save_png(ProjectSettings.globalize_path(OUTPUT.path_join(terrain.name + "_normal.png")))
+	var tile: Rect2i = Rect2i(0, 0, TILE_SIZE, TILE_SIZE)
+	albedo_strip.blit_rect(glossy, tile, at)
+	normal_strip.blit_rect(normal, tile, at)
 	print("%s: %dx%d from %s" % [terrain.name, TILE_SIZE, TILE_SIZE, source_path.get_file()])
 	return true
 
