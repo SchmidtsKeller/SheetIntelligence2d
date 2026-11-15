@@ -110,7 +110,6 @@ func test_a_player_picks_one_perk_from_their_pool() -> void:
 	assert_true(_perks.select_perk(HERDER, PerkIds.SPARE_BULLET), "a new choice replaces it")
 	assert_false(_perks.select_perk(HERDER, PerkIds.INVISIBILITY), "a Monster perk")
 	assert_false(_perks.select_perk(MONSTER, &"no_such_perk"))
-	assert_false(_perks.select_perk(MONSTER, PerkIds.NONE))
 
 	assert_eq(_perks.get_selected_perk(HERDER), PerkIds.SPARE_BULLET)
 	assert_eq(_perks.get_selected_perk(MONSTER), PerkIds.NONE)
@@ -119,6 +118,14 @@ func test_a_player_picks_one_perk_from_their_pool() -> void:
 		_perks.get_available_perks(MONSTER),
 		[PerkIds.FASTER_CONSUMPTION, PerkIds.INVISIBILITY, PerkIds.ALLIED_BAT]
 	)
+
+
+func test_a_player_may_go_without_a_perk() -> void:
+	_perks.select_perk(HERDER, PerkIds.SPARE_BULLET)
+
+	assert_true(_perks.select_perk(HERDER, PerkIds.NONE))
+
+	assert_eq(_perks.get_selected_perk(HERDER), PerkIds.NONE)
 
 
 func test_each_perk_has_the_effect_the_gdd_gives_it() -> void:
