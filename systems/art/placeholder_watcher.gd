@@ -32,6 +32,8 @@ func _check(sprite_id: int) -> void:
 	var sprite: Sprite2D = instance_from_id(sprite_id) as Sprite2D
 	if sprite == null or not sprite.is_inside_tree():
 		return
+	if not PlaceholderArt.marks_shown:
+		return
 	if not PlaceholderArt.is_placeholder(sprite.texture) or PlaceholderTag.is_covered(sprite):
 		return
 	PlaceholderTag.attach(sprite, sprite.get_rect())

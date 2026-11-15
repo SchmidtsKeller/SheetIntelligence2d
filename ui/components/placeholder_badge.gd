@@ -51,6 +51,8 @@ func _ready() -> void:
 
 
 func _draw() -> void:
+	if not PlaceholderArt.marks_shown:
+		return
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	if framed:
 		draw_rect(rect, UiPalette.HUD_BACKGROUND)

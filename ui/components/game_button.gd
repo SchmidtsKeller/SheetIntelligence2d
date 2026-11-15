@@ -21,6 +21,17 @@ var kind: Kind = Kind.MENU
 var _icon_slot: Control
 
 
+## Leaves room on the left for an icon, or takes it back.
+func _make_room_for_icon(room: bool) -> void:
+	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		remove_theme_stylebox_override(state)
+		if not room:
+			continue
+		var box: StyleBox = get_theme_stylebox(state).duplicate()
+		box.content_margin_left = GameTheme.CHOICE_ICON_SPACE
+		add_theme_stylebox_override(state, box)
+
+
 ## A button saying [param label] that calls [param action] when pressed.
 static func create(
 	label: String, action: Callable = Callable(), button_kind: Kind = Kind.MENU
@@ -43,11 +54,14 @@ static func create(
 	return button
 
 
-## Shows [param texture] as the choice's icon, or a placeholder slot naming
-## [param image_id] while there is none.
+## Shows [param texture] as the choice's icon, with room for it on the left.
+## Without a texture there is no icon and no room for one, unless placeholders
+## are marked ([member PlaceholderArt.marks_shown]); then a slot names
+## [param image_id].
 func set_choice_icon(texture: Texture2D, image_id: String) -> void:
 	if _icon_slot != null:
 		_icon_slot.queue_free()
+		_icon_slot = null
 	if texture != null:
 		var picture: TextureRect = TextureRect.new()
 		picture.name = "Icon"
@@ -55,8 +69,11 @@ func set_choice_icon(texture: Texture2D, image_id: String) -> void:
 		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_icon_slot = picture
-	else:
+	elif PlaceholderArt.marks_shown:
 		_icon_slot = PlaceholderBadge.icon_slot(image_id, ICON_SIDE)
+	_make_room_for_icon(_icon_slot != null)
+	if _icon_slot == null:
+		return
 	_icon_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_icon_slot)
 	_icon_slot.set_anchors_preset(Control.PRESET_CENTER_LEFT)

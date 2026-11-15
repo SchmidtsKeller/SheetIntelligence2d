@@ -1,9 +1,8 @@
 class_name HudGauge
 extends Control
 ## One element of the in-game HUD: a bar, a row of pips or a round icon, with
-## a caption. Placeholder looks, like the touch controls: each says
-## "Placeholder" until the art pass (#70) paints them; the colours come from
-## [UiPalette].
+## a caption. Bars and icons are painted when they have a [member texture] or a
+## [member bar_fill] (#96); otherwise they are drawn plainly.
 
 enum Style {
 	## A horizontal bar filled to [member value], with [member marks].
@@ -68,6 +67,25 @@ var marks: Array[float] = []:
 	set(positions):
 		marks = positions
 		queue_redraw()
+## An icon gauge's painted icon (its base painted in), or the picture in front
+## of a row of pips; [code]null[/code] draws the plain disc and the caption.
+var texture: Texture2D:
+	set(picture):
+		if picture != texture:
+			texture = picture
+			queue_redraw()
+## A bar gauge's painted fill, shown as far as [member value]; with it the bar
+## gets its painted frame.
+var bar_fill: Texture2D:
+	set(picture):
+		if picture != bar_fill:
+			bar_fill = picture
+			# Loaded here, not while drawing: a texture loaded for the first time
+			# inside _draw is drawn white.
+			_bar_frame = PaintedUi.box("hud_bar_empty", "hud_bar") if picture != null else null
+			queue_redraw()
+var _bar_frame: StyleBoxTexture
+
 ## The pips of a [constant Style.PIPS] gauge.
 var pips: Array[bool] = []:
 	set(entries):
@@ -96,21 +114,44 @@ func _draw() -> void:
 
 
 func _draw_bar() -> void:
-	var bar: Rect2 = Rect2(Vector2.ZERO, Vector2(size.x, size.y * 0.45))
-	draw_rect(bar, BACKGROUND)
-	var filled: Rect2 = Rect2(bar.position, Vector2(bar.size.x * value, bar.size.y))
-	draw_rect(filled, ACTIVE if active else FILL)
+	var bar: Rect2 = Rect2(Vector2.ZERO, Vector2(size.x, size.y * 0.55))
+	var inside: Rect2 = bar
+	if bar_fill != null:
+		inside = _draw_painted_bar(bar)
+	else:
+		draw_rect(bar, BACKGROUND)
+		var filled: Rect2 = Rect2(bar.position, Vector2(bar.size.x * value, bar.size.y))
+		draw_rect(filled, ACTIVE if active else FILL)
 	for mark: float in marks:
-		var x: float = bar.size.x * mark
-		draw_line(Vector2(x, -3.0), Vector2(x, bar.size.y + 3.0), MARK, 3.0)
+		var x: float = inside.position.x + inside.size.x * mark
+		draw_line(Vector2(x, inside.position.y - 3.0), Vector2(x, inside.end.y + 3.0), MARK, 3.0)
 	_draw_text(caption, Vector2(0.0, size.y - 2.0), SMALL_FONT_SIZE)
+
+
+## The painted bar: its stone frame, and inside it the fill as far as
+## [member value], reddened while [member active]. Returns the inside.
+func _draw_painted_bar(bar: Rect2) -> Rect2:
+	draw_style_box(_bar_frame, bar)
+	var margin: Vector2 = PaintedUi.FRAMES["hud_bar"]
+	var inside: Rect2 = bar.grow_individual(-margin.x, -margin.y, -margin.x, -margin.y)
+	var source_size: Vector2 = bar_fill.get_size() - 2.0 * margin
+	var shown: Rect2 = Rect2(inside.position, Vector2(inside.size.x * value, inside.size.y))
+	var source: Rect2 = Rect2(margin, Vector2(source_size.x * value, source_size.y))
+	if value > 0.0:
+		var tint: Color = Color(1.0, 0.6, 0.55) if active else Color.WHITE
+		draw_texture_rect_region(bar_fill, shown, source, tint)
+	return inside
 
 
 func _draw_pips() -> void:
 	var diameter: float = size.y * 0.6
 	var radius: float = diameter / 2.0
+	var start: float = 0.0
+	if texture != null:
+		draw_texture_rect(texture, Rect2(Vector2.ZERO, Vector2(diameter, diameter)), false)
+		start = diameter + 8.0
 	for index: int in pips.size():
-		var center: Vector2 = Vector2(radius + index * (diameter + 6.0), radius)
+		var center: Vector2 = Vector2(start + radius + index * (diameter + 6.0), radius)
 		draw_circle(center, radius, FILL if pips[index] else EMPTY)
 	_draw_text(caption, Vector2(0.0, size.y - 2.0), SMALL_FONT_SIZE)
 
@@ -118,15 +159,23 @@ func _draw_pips() -> void:
 func _draw_icon() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0 - 4.0
-	draw_circle(center, radius, BACKGROUND)
+	if texture != null:
+		var side: float = radius * 2.0
+		var area: Rect2 = Rect2(center - Vector2(radius, radius), Vector2(side, side))
+		draw_texture_rect(texture, area, false)
+	else:
+		draw_circle(center, radius, BACKGROUND)
 	if cooldown > 0.0:
 		_draw_slice(center, radius, cooldown)
 	if value > 0.0:
 		draw_arc(center, radius + 1.0, -PI / 2.0, -PI / 2.0 + TAU * value, 48, FILL, 4.0, true)
 	draw_arc(center, radius, 0.0, TAU, 48, ACTIVE if active else EMPTY, 2.0, true)
-	var font: Font = get_theme_default_font()
-	var text_size: Vector2 = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
-	_draw_text(caption, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0), FONT_SIZE)
+	if texture == null:
+		var font: Font = get_theme_default_font()
+		var text_size: Vector2 = font.get_string_size(
+			caption, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE
+		)
+		_draw_text(caption, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0), FONT_SIZE)
 	if not hint.is_empty():
 		_draw_text(hint, Vector2(2.0, SMALL_FONT_SIZE), SMALL_FONT_SIZE)
 

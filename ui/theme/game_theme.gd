@@ -6,8 +6,8 @@ extends RefCounted
 ## (the constants below); none of them styles a control of its own.
 ##
 ## Buttons, choice buttons, boards and the touch joysticks are painted
-## ([PaintedUi], #83). The menu backdrop is still a [PlaceholderStyleBox] that
-## says so. All text is set in IM Fell English (#86), old print with worn
+## ([PaintedUi], #83, #96). The menu backdrop has no painting yet: a plain
+## dark [PlaceholderStyleBox]. All text is set in IM Fell English (#86), old print with worn
 ## ink; it is also the project's default font, so nothing falls back to
 ## another face. Its digits are old-style figures, so the small HUD texts are
 ## a little larger than they would be in a modern face.
@@ -57,7 +57,8 @@ const HUD_OUTLINES: Dictionary[StringName, int] = {
 	HUD_MESSAGE: 6,
 	HUD_TEXT: 4,
 }
-## Room on the left of a choice button for its icon.
+## Room on the left of a choice button that has an icon (see
+## [method GameButton.set_choice_icon]).
 const CHOICE_ICON_SPACE: float = 68.0
 
 static var _theme: Theme
@@ -122,11 +123,12 @@ static func _add_buttons(theme: Theme) -> void:
 	theme.set_color(&"font_outline_color", &"Button", UiPalette.HUD_BACKGROUND)
 	# Choices (a perk) are parchment on wood, with ink.
 	theme.set_type_variation(CHOICE_BUTTON, &"Button")
-	_set_button_styles(theme, CHOICE_BUTTON, "ui_choice_button", 12.0)
+	_set_button_styles(theme, CHOICE_BUTTON, "ui_choice_button", 24.0)
+	theme.set_font_size(&"font_size", CHOICE_BUTTON, 17)
 	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
 		var box: StyleBox = theme.get_stylebox(state, CHOICE_BUTTON)
-		box.content_margin_left = CHOICE_ICON_SPACE
-	theme.set_font_size(&"font_size", CHOICE_BUTTON, 17)
+		box.content_margin_top = 13.0
+		box.content_margin_bottom = 13.0
 	theme.set_color(&"font_color", CHOICE_BUTTON, PaintedUi.INK)
 	theme.set_color(&"font_hover_color", CHOICE_BUTTON, PaintedUi.INK)
 	theme.set_color(&"font_focus_color", CHOICE_BUTTON, PaintedUi.INK)
@@ -160,11 +162,11 @@ static func _set_button_styles(
 
 static func _add_panels(theme: Theme) -> void:
 	theme.set_type_variation(BOARD_PANEL, &"PanelContainer")
-	var board: StyleBoxTexture = PaintedUi.box("ui_board", "ui_board")
-	board.content_margin_left = 22.0
-	board.content_margin_right = 22.0
-	board.content_margin_top = 16.0
-	board.content_margin_bottom = 16.0
+	var board: StyleBoxTexture = PaintedUi.box("ui_board_large", "ui_board_large")
+	board.content_margin_left = 24.0
+	board.content_margin_right = 24.0
+	board.content_margin_top = 26.0
+	board.content_margin_bottom = 26.0
 	theme.set_stylebox(&"panel", BOARD_PANEL, board)
 	theme.set_type_variation(BACKDROP_PANEL, &"Panel")
 	var backdrop: PlaceholderStyleBox = _box(UiPalette.BACKDROP, Color.TRANSPARENT, "ui_backdrop")

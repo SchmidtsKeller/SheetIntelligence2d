@@ -21,7 +21,7 @@ extends CanvasLayer
 const MESSAGE_TIME: float = 2.5
 const EDGE: float = 24.0
 const ICON_SIZE: Vector2 = Vector2(76.0, 76.0)
-const BAR_SIZE: Vector2 = Vector2(300.0, 40.0)
+const BAR_SIZE: Vector2 = Vector2(300.0, 54.0)
 
 ## Elements and the role that sees them; NONE means both roles.
 const HERDER_ELEMENTS: Array[String] = ["Bullets", "Reload", "Shoot", "Bell"]
@@ -287,12 +287,16 @@ func _build() -> void:
 	_herder_panel = _panel(root, "SheepherderPanel")
 	_add(_herder_panel, HudGauge.new("Bullets", HudGauge.Style.PIPS, Vector2(BAR_SIZE.x, 46.0)))
 	_add(_herder_panel, HudGauge.new("Reload", HudGauge.Style.BAR, BAR_SIZE))
+	(_elements["Bullets"] as HudGauge).texture = PaintedUi.texture("icon_bullets")
+	(_elements["Reload"] as HudGauge).bar_fill = PaintedUi.texture("hud_bar_fill_gold")
 	_monster_panel = _panel(root, "MonsterPanel")
 	_add(_monster_panel, HudGauge.new("Evolution", HudGauge.Style.BAR, BAR_SIZE))
 	var sheep_count: GameLabel = GameLabel.create(GameTheme.HUD_TEXT, "", "SheepCount")
 	sheep_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_add(_monster_panel, sheep_count)
 	_add(_monster_panel, HudGauge.new("Stamina", HudGauge.Style.BAR, BAR_SIZE))
+	(_elements["Evolution"] as HudGauge).bar_fill = PaintedUi.texture("hud_bar_fill_gold")
+	(_elements["Stamina"] as HudGauge).bar_fill = PaintedUi.texture("hud_bar_fill_olive")
 
 	# Keyboard and mouse: the actions in a row at the bottom, with their keys.
 	_actions = HBoxContainer.new()
@@ -306,6 +310,7 @@ func _build() -> void:
 	root.add_child(_actions)
 	for element_name: String in ACTION_ICONS:
 		var icon: HudGauge = HudGauge.new(element_name, HudGauge.Style.ICON, ICON_SIZE)
+		icon.texture = PaintedUi.action_icon(ACTION_ICONS[element_name])
 		icon.caption = element_name
 		icon.hint = Services.input.get_action_hint(ACTION_ICONS[element_name])
 		_add(_actions, icon)
