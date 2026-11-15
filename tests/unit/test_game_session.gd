@@ -200,6 +200,18 @@ func test_roles_are_assigned_when_the_session_starts() -> void:
 	assert_signal_emitted(_pair.guest, &"roles_changed")
 
 
+func test_the_guest_gets_the_roles_when_the_host_started_first() -> void:
+	# Over WebRTC the host can start its session, and send the roles, before
+	# the guest has started its own.
+	_pair.host_network.simulate_started()
+	_pair.guest_network.simulate_started()
+
+	var host_role: GameEnums.Role = _pair.host.get_local_role()
+	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(host_role))
+	assert_true(_pair.host.assign_roles(GameEnums.opposite_role(host_role)))
+	assert_eq(_pair.guest.get_local_role(), host_role, "later events follow")
+
+
 func test_first_round_roles_are_random() -> void:
 	# GDD §2.3: roles are assigned at random for round 1.
 	_pair.connect_both()

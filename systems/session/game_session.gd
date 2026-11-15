@@ -264,6 +264,8 @@ func _on_network_session_started() -> void:
 		assign_random_roles()
 		state.send_all()
 	session_started.emit()
+	# What the other device sent before this one started, e.g. the roles.
+	messenger.receive_early_events()
 
 
 func _on_network_session_ended(reason: NetworkService.DisconnectReason, message: String) -> void:

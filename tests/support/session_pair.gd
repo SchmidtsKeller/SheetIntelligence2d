@@ -60,8 +60,8 @@ static func link(host_messenger: NetMessenger, guest_messenger: NetMessenger) ->
 		host_messenger.receive(reliable, message.duplicate(true), GUEST_ID)
 
 
-## Brings the session up on both sides, guest first, as a real guest is ready
-## by the time the host hears of it.
+## Brings the session up on both sides, guest first. Over WebRTC the host can
+## also start first (docs/networking.md, rules for transports).
 func connect_both() -> void:
 	guest_network.simulate_started()
 	host_network.simulate_started()

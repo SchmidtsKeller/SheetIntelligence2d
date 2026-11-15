@@ -201,6 +201,45 @@ func test_reset_starts_the_sequence_again_on_both_sides() -> void:
 	assert_eq(_numbers_of(_guest_log), [1, 2, 3])
 
 
+func test_events_that_arrive_before_the_session_are_handled_once_it_starts() -> void:
+	_guest.configure(GUEST_ID, 0, false)
+	_host.broadcast(WORLD_EVENT, [1])
+	_host.broadcast(WORLD_EVENT, [2])
+	_host.send_snapshot(1, ["dropped"])
+	assert_eq(_guest_log, [], "nothing is handled before the session starts")
+
+	# As the session starts it.
+	_guest.reset()
+	_guest.configure(GUEST_ID, HOST_ID, false)
+	_guest.receive_early_events()
+	_host.broadcast(WORLD_EVENT, [3])
+
+	assert_eq(_numbers_of(_guest_log), [1, 2, 3])
+
+
+func test_early_events_of_a_session_that_never_started_are_forgotten() -> void:
+	_guest.configure(GUEST_ID, 0, false)
+	_host.broadcast(WORLD_EVENT, [1])
+
+	# The attempt ends, as the session does it.
+	_guest.configure(1, 0, true)
+	_guest.configure(GUEST_ID, HOST_ID, false)
+	_guest.receive_early_events()
+
+	assert_eq(_guest_log, [])
+
+
+func test_early_events_count_only_from_the_device_the_session_is_with() -> void:
+	_guest.configure(GUEST_ID, 0, false)
+	_guest.receive(true, [0, WORLD_EVENT, [9]], 7)
+	_host.broadcast(WORLD_EVENT, [1])
+
+	_guest.configure(GUEST_ID, HOST_ID, false)
+	_guest.receive_early_events()
+
+	assert_eq(_numbers_of(_guest_log), [1])
+
+
 func test_subscribers_get_only_their_event() -> void:
 	var seen: Array[Array] = []
 	var handler: Callable = func(payload: Array, _sender_id: int) -> void: seen.append(payload)
