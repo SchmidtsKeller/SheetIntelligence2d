@@ -101,3 +101,7 @@ enum DisconnectReason {
 ## [constant ERR_INVALID_DATA] for a code that cannot be read; the session
 ## attempt stays alive so the player can try again.
 @abstract func submit_pairing_code(code: String) -> Error
+
+## Why the last code given to [method submit_pairing_code] was refused, in
+## words for the player; empty if it was not.
+@abstract func get_pairing_problem() -> String

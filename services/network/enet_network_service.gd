@@ -14,6 +14,16 @@ extends NetworkService
 const ENET_CLASS: StringName = &"ENetMultiplayerPeer"
 const HOST_PEER_ID: int = 1
 
+## ENet measures how long round trips take and adjusts its packet throttle
+## every this many milliseconds (ENet's default).
+const THROTTLE_INTERVAL_MS: int = 5000
+## How fast the throttle opens again when round trips get shorter (ENet's
+## default). It only matters while the other device still has a throttle.
+const THROTTLE_ACCELERATION: int = 2
+## How fast the throttle closes when round trips get longer. 0 switches the
+## throttle off: ENet then sends every unreliable packet.
+const THROTTLE_DECELERATION: int = 0
+
 ## A joining device gives up after this many seconds.
 var connect_timeout: float = 10.0
 
@@ -127,6 +137,10 @@ func submit_pairing_code(_code: String) -> Error:
 	return ERR_UNAVAILABLE
 
 
+func get_pairing_problem() -> String:
+	return ""
+
+
 func _create_peer() -> MultiplayerPeer:
 	if not is_inside_tree():
 		push_error("EnetNetworkService: must be in the scene tree to open a session.")
@@ -180,6 +194,7 @@ func _act_on_reports() -> void:
 	if _reported_connected_id != 0 and _state == ConnectionState.CONNECTING:
 		_remote_id = _reported_connected_id
 		_set_state(ConnectionState.CONNECTED)
+		_switch_off_packet_throttle()
 		session_started.emit()
 	_reported_connected_id = 0
 	if _reported_failure:
@@ -190,6 +205,27 @@ func _act_on_reports() -> void:
 		_reported_disconnect = false
 		if _state != ConnectionState.DISCONNECTED:
 			_end(DisconnectReason.REMOTE_CLOSE, "The other player left the session.")
+
+
+## Makes ENet send every snapshot.
+## [br]ENet drops unreliable packets on the sending device, at random, while
+## its "packet throttle" is closed, and it closes the throttle whenever a
+## round trip takes longer than the ones before. That is meant to relieve a
+## congested line. Here the connection is polled once per frame, so a round
+## trip measures 1 or 2 frames depending on how the frames of the two
+## instances happen to fall, and ENet takes that for congestion: in some
+## sessions the throttle closes within seconds and most snapshots are never
+## sent, so the other device shows everything standing still and jumping.
+## The few small snapshots of this game cannot congest a line, so the
+## throttle is switched off. ENet tells the other device, which then keeps
+## the same setting for its side of the connection.
+func _switch_off_packet_throttle() -> void:
+	var connection: Object = _peer.call(&"get_peer", _remote_id)
+	if connection == null:
+		return
+	connection.call(
+		&"throttle_configure", THROTTLE_INTERVAL_MS, THROTTLE_ACCELERATION, THROTTLE_DECELERATION
+	)
 
 
 func _close_retired_peers() -> void:

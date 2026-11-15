@@ -2,18 +2,20 @@ class_name StubPerkService
 extends PerkService
 ## Perk-less [PerkService]: every stat has its plain [GameConfig] value.
 ##
-## Selections are stored and validated against the role pools, but a selected
-## perk has no effect, modifiers are accepted and ignored, and there are no
-## active perks.
+## Selections are stored and validated against the role pools of the
+## [PerkCatalog], but a selected perk has no effect, modifiers are accepted and
+## ignored, and there are no active perks.
 
 var _config: GameConfig
+var _catalog: PerkCatalog
 var _selected: Dictionary[GameEnums.Role, StringName] = {}
 var _locked: bool = false
 var _next_handle: int = 1
 
 
-func _init(config: GameConfig = null) -> void:
+func _init(config: GameConfig = null, catalog: PerkCatalog = null) -> void:
 	_config = config if config != null else GameConfig.new()
+	_catalog = catalog if catalog != null else PerkCatalog.load_default()
 
 
 func get_stat(stat: StringName) -> float:
@@ -44,11 +46,11 @@ func remove_modifiers_from(_source: StringName) -> void:
 
 
 func get_available_perks(role: GameEnums.Role) -> Array[StringName]:
-	return PerkIds.pool_for(role)
+	return _catalog.pool_for(role)
 
 
 func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool:
-	if _locked or not PerkIds.is_valid_for(role, perk_id):
+	if _locked or not _catalog.is_valid_for(role, perk_id):
 		return false
 	_selected[role] = perk_id
 	perk_selected.emit(role, perk_id)
@@ -76,6 +78,10 @@ func activate_perk(_role: GameEnums.Role) -> bool:
 	return false
 
 
+func end_perk(_role: GameEnums.Role) -> bool:
+	return false
+
+
 func is_perk_active(_role: GameEnums.Role) -> bool:
 	return false
 
@@ -86,3 +92,15 @@ func get_perk_cooldown_remaining(_role: GameEnums.Role) -> float:
 
 func get_perk_charge(_role: GameEnums.Role) -> float:
 	return 0.0
+
+
+func register_character(_role: GameEnums.Role, _character: Node2D) -> void:
+	pass
+
+
+func unregister_character(_character: Node2D) -> void:
+	pass
+
+
+func get_character(_role: GameEnums.Role) -> Node2D:
+	return null

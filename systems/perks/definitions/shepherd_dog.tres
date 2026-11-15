@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/effects/dog_effect.gd" id="3_dog"]
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_mdblu"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_km4gw"]
+
+[resource]
+script = ExtResource("2_km4gw")
+id = &"shepherd_dog"
+role = 1
+kind = 2
+display_name = "Friendly Shepherd Dog"
+description = "A dog that stays near you. It barks and faces the Monster while the Monster eats a living sheep nearby."
+effect = ExtResource("3_dog")

@@ -24,6 +24,10 @@ signal roles_changed
 ## Both devices have loaded [param screen] and may start using it.
 signal screen_entered(screen: SceneFlowController.Screen)
 
+## This device made a pairing code the other player has to read: the host's
+## offer or the guest's answer (see [method requires_pairing_codes]).
+signal pairing_code_ready(code: String)
+
 const KEY_HOST_ROLE: StringName = &"session.host_role"
 
 const EVENT_SCREEN: StringName = &"session.screen"
@@ -49,6 +53,11 @@ var last_end_message: String = ""
 
 var _network: NetworkService
 var _active: bool = false
+## The transport that stands in for [member _network] during an offline
+## session on a build whose own transport needs a second device, and the one
+## it replaced. Both [code]null[/code] otherwise.
+var _offline_network: NetworkService = null
+var _replaced_network: NetworkService = null
 var _random: RandomNumberGenerator = RandomNumberGenerator.new()
 
 ## The screen change in progress; 0 when both devices are settled.
@@ -92,33 +101,86 @@ func configure(config: GameConfig) -> void:
 func bind_network(network: NetworkService) -> void:
 	if _network == network:
 		return
+	if _offline_network != null:
+		# Another transport is chosen: the stand-in and what it replaced are history.
+		_offline_network.queue_free()
+		_offline_network = null
+		_replaced_network = null
 	if _network != null:
 		_network.session_started.disconnect(_on_network_session_started)
 		_network.session_ended.disconnect(_on_network_session_ended)
+		_network.pairing_code_ready.disconnect(pairing_code_ready.emit)
 		if _active:
 			_end(NetworkService.DisconnectReason.LOCAL_CLOSE, "The connection was replaced.")
 	_network = network
 	if _network != null:
 		_network.session_started.connect(_on_network_session_started)
 		_network.session_ended.connect(_on_network_session_ended)
+		_network.pairing_code_ready.connect(pairing_code_ready.emit)
 
 
 # --- Connection ----------------------------------------------------------------
 
 
 ## Starts a session as the host. See [method NetworkService.host_session].
+## A running offline session ends first: the player wants company now.
 func host(options: Dictionary = {}) -> Error:
+	_leave_offline()
 	return _network.host_session(options)
 
 
 ## Joins a session as the guest. See [method NetworkService.join_session].
+## A running offline session ends first.
 func join(options: Dictionary = {}) -> Error:
+	_leave_offline()
 	return _network.join_session(options)
+
+
+## Starts a session of this device alone, on every build: where the transport
+## needs a second device (the Web build pairs with codes), an offline one
+## stands in until the session ends, and then the real one is back. The
+## character nobody plays is a bot's (see [RoundStage]).
+func play_offline() -> Error:
+	if _active:
+		return ERR_ALREADY_IN_USE
+	if _network != null and not _network.is_offline():
+		if _network.get_connection_state() != NetworkService.ConnectionState.DISCONNECTED:
+			return ERR_ALREADY_IN_USE
+		var offline: StubNetworkService = StubNetworkService.new()
+		offline.name = "OfflineNetwork"
+		add_child(offline)
+		var replaced: NetworkService = _network
+		bind_network(offline)
+		_offline_network = offline
+		_replaced_network = replaced
+	return _network.host_session()
+
+
+## Whether this device plays alone: an offline session is running.
+func is_offline() -> bool:
+	return _active and _network.is_offline()
 
 
 ## Leaves the session.
 func leave() -> void:
 	_network.close_session()
+
+
+## Whether the players connect by exchanging pairing codes (the Web build's
+## WebRTC) rather than by address.
+func requires_pairing_codes() -> bool:
+	return _network != null and _network.requires_pairing_codes()
+
+
+## Hands over the code the other device shows. See
+## [method NetworkService.submit_pairing_code].
+func submit_pairing_code(code: String) -> Error:
+	return _network.submit_pairing_code(code) if _network != null else ERR_UNCONFIGURED
+
+
+## Why the last code was refused, for the player; empty if it was not.
+func get_pairing_problem() -> String:
+	return _network.get_pairing_problem() if _network != null else ""
 
 
 ## Whether a session is up.
@@ -241,6 +303,8 @@ func _on_network_session_started() -> void:
 		assign_random_roles()
 		state.send_all()
 	session_started.emit()
+	# What the other device sent before this one started, e.g. the roles.
+	messenger.receive_early_events()
 
 
 func _on_network_session_ended(reason: NetworkService.DisconnectReason, message: String) -> void:
@@ -258,7 +322,25 @@ func _end(reason: NetworkService.DisconnectReason, message: String) -> void:
 	_reset_transition()
 	if was_active:
 		_return_to_lobby()
+	_restore_network()
 	session_ended.emit(reason, message)
+
+
+func _leave_offline() -> void:
+	if _offline_network != null and _network == _offline_network:
+		leave()
+
+
+## After an offline session: the transport it stood in for is back.
+func _restore_network() -> void:
+	if _offline_network == null or _network != _offline_network:
+		return
+	var offline: NetworkService = _offline_network
+	var replaced: NetworkService = _replaced_network
+	_offline_network = null
+	_replaced_network = null
+	bind_network(replaced)
+	offline.queue_free()
 
 
 ## A round cannot go on without the other player.

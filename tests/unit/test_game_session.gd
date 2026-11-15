@@ -48,6 +48,22 @@ func test_session_starts_on_both_devices() -> void:
 	assert_signal_emit_count(_pair.guest, &"session_started", 1)
 
 
+func test_pairing_codes_pass_through_the_session() -> void:
+	var session: GameSession = _pair.host
+	assert_false(session.requires_pairing_codes())
+	watch_signals(session)
+
+	_pair.host_network.pairing = true
+	_pair.host_network.refusal = "Wrong code."
+	_pair.host_network.pairing_code_ready.emit("OFFER")
+
+	assert_true(session.requires_pairing_codes())
+	assert_signal_emitted_with(session, &"pairing_code_ready", ["OFFER"])
+	assert_eq(session.submit_pairing_code("ANSWER"), ERR_INVALID_DATA)
+	assert_eq(_pair.host_network.submitted_codes, PackedStringArray(["ANSWER"]))
+	assert_eq(session.get_pairing_problem(), "Wrong code.")
+
+
 func test_connection_state_follows_the_transport() -> void:
 	assert_eq(_pair.guest.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
 
@@ -168,7 +184,105 @@ func test_offline_session_is_a_session_of_one() -> void:
 	session.leave()
 
 
+func test_playing_offline_needs_no_second_device_even_where_codes_pair() -> void:
+	var session: GameSession = _pairing_session()
+	var pairing: FakeNetworkService = session.get_child(-1) as FakeNetworkService
+
+	assert_eq(session.play_offline(), OK)
+
+	assert_true(session.is_active())
+	assert_true(session.is_offline())
+	assert_true(session.is_host())
+	assert_false(session.has_remote_player())
+	assert_false(session.requires_pairing_codes(), "an offline transport stands in")
+	assert_eq(pairing.get_connection_state(), NetworkService.ConnectionState.DISCONNECTED)
+	session.leave()
+
+
+func test_after_playing_offline_the_pairing_transport_is_back() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+
+	session.leave()
+
+	assert_false(session.is_active())
+	assert_false(session.is_offline())
+	assert_true(session.requires_pairing_codes())
+	assert_eq(session.host(), OK, "the pairing transport hosts again")
+	assert_eq(session.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+
+
+func test_hosting_ends_the_offline_session_first() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+	watch_signals(session)
+
+	assert_eq(session.host(), OK)
+
+	_assert_pairing_after_offline(session)
+
+
+func test_joining_ends_the_offline_session_first() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+	watch_signals(session)
+
+	assert_eq(session.join(), OK)
+
+	_assert_pairing_after_offline(session)
+
+
+func test_playing_offline_twice_is_refused() -> void:
+	var session: GameSession = _pairing_session()
+	session.play_offline()
+
+	assert_eq(session.play_offline(), ERR_ALREADY_IN_USE)
+	session.leave()
+
+
+func test_playing_offline_is_refused_while_pairing() -> void:
+	var session: GameSession = _pairing_session()
+	session.host()
+
+	assert_eq(session.play_offline(), ERR_ALREADY_IN_USE)
+	assert_false(session.is_offline())
+	session.leave()
+
+
+func test_an_offline_transport_plays_offline_by_itself() -> void:
+	var session: GameSession = add_child_autofree(GameSession.new())
+	var network: StubNetworkService = add_child_autofree(StubNetworkService.new())
+	session.scene_flow = _pair.host_flow
+	session.bind_network(network)
+
+	assert_eq(session.play_offline(), OK)
+
+	assert_true(session.is_offline())
+	assert_eq(session.get_child_count(), 3, "no stand-in: messenger, state and entities only")
+	session.leave()
+
+
 # --- Roles -----------------------------------------------------------------------
+
+
+func _assert_pairing_after_offline(session: GameSession) -> void:
+	assert_signal_emit_count(session, &"session_ended", 1)
+	assert_false(session.is_active())
+	assert_true(session.requires_pairing_codes())
+	assert_eq(session.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+	session.leave()
+
+
+## A session bound to a transport that pairs with codes, like the Web build's.
+## The transport is the session's last child.
+func _pairing_session() -> GameSession:
+	var session: GameSession = add_child_autofree(GameSession.new())
+	var network: FakeNetworkService = FakeNetworkService.new()
+	network.pairing = true
+	session.add_child(network)
+	session.scene_flow = _pair.host_flow
+	session.bind_network(network)
+	return session
 
 
 func test_roles_are_assigned_when_the_session_starts() -> void:
@@ -182,6 +296,18 @@ func test_roles_are_assigned_when_the_session_starts() -> void:
 	assert_eq(_pair.guest.get_remote_role(), host_role, "the guest knows the host's role")
 	assert_eq(_pair.host.get_remote_role(), _pair.guest.get_local_role())
 	assert_signal_emitted(_pair.guest, &"roles_changed")
+
+
+func test_the_guest_gets_the_roles_when_the_host_started_first() -> void:
+	# Over WebRTC the host can start its session, and send the roles, before
+	# the guest has started its own.
+	_pair.host_network.simulate_started()
+	_pair.guest_network.simulate_started()
+
+	var host_role: GameEnums.Role = _pair.host.get_local_role()
+	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(host_role))
+	assert_true(_pair.host.assign_roles(GameEnums.opposite_role(host_role)))
+	assert_eq(_pair.guest.get_local_role(), host_role, "later events follow")
 
 
 func test_first_round_roles_are_random() -> void:

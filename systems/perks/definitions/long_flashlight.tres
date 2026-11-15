@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="1_yh3kv"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="2_ysfdt"]
+
+[sub_resource type="Resource" id="Resource_dvccj"]
+script = ExtResource("1_yh3kv")
+stat = &"flashlight_cone_length"
+value_stat = &"perk_long_flashlight_length"
+
+[resource]
+script = ExtResource("2_ysfdt")
+id = &"long_flashlight"
+role = 1
+display_name = "Long Flashlight"
+description = "A longer flashlight cone at the normal width, which lights half as much area again."
+modifiers = Array[ExtResource("1_yh3kv")]([SubResource("Resource_dvccj")])

@@ -3,7 +3,9 @@ extends RefCounted
 ## Identifiers of all perks (GDD §4). Each player picks exactly one per round.
 ##
 ## Ids are [StringName]s so the perk catalog can stay data-driven: a perk
-## resource names its id, and nothing has to be recompiled to add one.
+## resource names its id, and nothing has to be recompiled to add one. The
+## catalog ([PerkCatalog]) also says which role's pool each perk is in; the
+## constants here are for code that has to name a particular perk.
 
 ## No perk selected.
 const NONE: StringName = &""
@@ -27,33 +29,3 @@ const FASTER_CONSUMPTION: StringName = &"faster_consumption"
 const INVISIBILITY: StringName = &"invisibility"
 ## Companion / active: a bat shrinks the Sheepherder's flashlight cone.
 const ALLIED_BAT: StringName = &"allied_bat"
-
-const SHEEPHERDER_POOL: Array[StringName] = [
-	WIDE_FLASHLIGHT,
-	LONG_FLASHLIGHT,
-	FASTER_RELOAD,
-	SHEPHERD_DOG,
-	SPARE_BULLET,
-]
-
-const MONSTER_POOL: Array[StringName] = [
-	FASTER_CONSUMPTION,
-	INVISIBILITY,
-	ALLIED_BAT,
-]
-
-
-## The perks a player with [param role] may choose from.
-static func pool_for(role: GameEnums.Role) -> Array[StringName]:
-	match role:
-		GameEnums.Role.SHEEPHERDER:
-			return SHEEPHERDER_POOL
-		GameEnums.Role.MONSTER:
-			return MONSTER_POOL
-		_:
-			return []
-
-
-## Whether [param perk_id] belongs to the pool of [param role].
-static func is_valid_for(role: GameEnums.Role, perk_id: StringName) -> bool:
-	return pool_for(role).has(perk_id)

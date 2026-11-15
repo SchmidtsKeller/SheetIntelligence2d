@@ -35,29 +35,6 @@ func test_role_action_sets() -> void:
 	assert_false(InputActions.role_aims(GameEnums.Role.MONSTER), "the Monster has nothing to aim")
 
 
-# --- Perks (GDD §4) --------------------------------------------------------------
-
-
-func test_sheepherder_has_five_perks_and_the_monster_three() -> void:
-	assert_eq(PerkIds.SHEEPHERDER_POOL.size(), 5)
-	assert_eq(PerkIds.MONSTER_POOL.size(), 3)
-	assert_eq(PerkIds.pool_for(GameEnums.Role.SHEEPHERDER), PerkIds.SHEEPHERDER_POOL)
-	assert_eq(PerkIds.pool_for(GameEnums.Role.MONSTER), PerkIds.MONSTER_POOL)
-	assert_eq(PerkIds.pool_for(GameEnums.Role.NONE), [])
-
-
-func test_perk_pools_do_not_overlap() -> void:
-	for perk_id: StringName in PerkIds.SHEEPHERDER_POOL:
-		assert_does_not_have(PerkIds.MONSTER_POOL, perk_id)
-		assert_true(PerkIds.is_valid_for(GameEnums.Role.SHEEPHERDER, perk_id))
-		assert_false(PerkIds.is_valid_for(GameEnums.Role.MONSTER, perk_id))
-
-
-func test_no_perk_is_never_a_valid_choice() -> void:
-	assert_false(PerkIds.is_valid_for(GameEnums.Role.SHEEPHERDER, PerkIds.NONE))
-	assert_false(PerkIds.is_valid_for(GameEnums.Role.MONSTER, PerkIds.NONE))
-
-
 # --- Sound events (GDD §5, §7.2) -------------------------------------------------
 
 

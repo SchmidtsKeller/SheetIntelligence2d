@@ -80,13 +80,15 @@ func get_stat_int(stat: StringName) -> int:
 ## The perk selected for [param role], or [constant PerkIds.NONE].
 @abstract func get_selected_perk(role: GameEnums.Role) -> StringName
 
-## Locks both selections at round start and applies the perks' effects.
+## Locks both selections at round start and applies the perks' effects. Host
+## only; the guest follows. Lock before [method CombatService.begin_round],
+## which reads the magazine size.
 @abstract func lock_selection() -> void
 
 ## Whether selections are locked for the running round.
 @abstract func is_selection_locked() -> bool
 
-## Removes both selections and all modifiers after a round.
+## Removes both selections and all modifiers after a round. Host only.
 @abstract func clear_selection() -> void
 
 # --- Active perks ------------------------------------------------------------
@@ -94,6 +96,19 @@ func get_stat_int(stat: StringName) -> int:
 ## Triggers the active perk of [param role]. Returns [code]false[/code] if the
 ## role has no active perk, it is on cooldown, or it cannot be used right now.
 @abstract func activate_perk(role: GameEnums.Role) -> bool
+
+## Ends the running active perk of [param role] early, if the perk allows that
+## (e.g. invisibility). Returns [code]false[/code] if nothing was ended.
+@abstract func end_perk(role: GameEnums.Role) -> bool
+
+
+## What the perk button does: ends the running active perk of [param role]
+## early if it allows that, otherwise triggers it.
+func use_perk(role: GameEnums.Role) -> bool:
+	if is_perk_active(role):
+		return end_perk(role)
+	return activate_perk(role)
+
 
 ## Whether the active perk of [param role] is running (e.g. invisible right now).
 @abstract func is_perk_active(role: GameEnums.Role) -> bool
@@ -104,3 +119,13 @@ func get_stat_int(stat: StringName) -> int:
 ## What is left of the running effect, from 1 (full) to 0 (used up), e.g. the
 ## invisibility meter. 0 when the perk is not running.
 @abstract func get_perk_charge(role: GameEnums.Role) -> float
+
+## Tells the perk service which character plays [param role], so its active
+## perk can act on it. Called on both devices by the character itself.
+@abstract func register_character(role: GameEnums.Role, character: Node2D) -> void
+
+## Forgets [param character] again, e.g. when it leaves the round.
+@abstract func unregister_character(character: Node2D) -> void
+
+## The character registered for [param role], or [code]null[/code].
+@abstract func get_character(role: GameEnums.Role) -> Node2D

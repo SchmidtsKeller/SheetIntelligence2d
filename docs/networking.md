@@ -15,7 +15,7 @@ GameSession ── roles, screens, lifecycle            Services.session
 NetworkService (contract) ── the transport
   ├─ StubNetworkService     offline: a session of one
   ├─ EnetNetworkService     desktop development, two instances
-  └─ WebRTC transport       the Web build (#7)
+  └─ WebRtcNetworkService  the Web build, paired with codes
 ```
 
 `GameSession` and everything above it never name a transport. They work the same offline, over ENet and over WebRTC.
@@ -119,6 +119,25 @@ Everything that follows from an attack (the dead sheep, the blood, the eaten cou
 
 The Monster's grazing travels in its snapshots like a sheep's, and its eating animation starts from `combat.eat`.
 
+**Perks** (see [SessionPerkService](../services/perks/session_perk_service.gd)). Both players' selections and the lock are synced state (`perks.sheepherder`, `perks.monster`, `perks.locked`), so both devices apply the same modifiers. A device asks only for the role its player plays; a device on its own plays both.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `perks.select_request` | Either device, to the host | `[role, perk_id]` |
+| `perks.activate_request` | Either device, to the host | `[role]` |
+| `perks.end_request` | Either device, to the host | `[role]` |
+| `perks.started` | Host | `[role]` |
+| `perks.ended` | Host | `[role, cooldown]` |
+
+The meter of a running perk is kept on both devices for the HUD, but only the host ends it.
+
+**Companions** are entities owned by the host: it simulates them, and the guest shows them through their `NetTransform2D`. The kinds are registered when the selection is locked, on both devices, so they are known before the host spawns one.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `companion.dog_bark` | Host | `[entity_id]` |
+| `companion.bat_arrived` | Host | `[entity_id]`; both devices shrink the cone for the disruption time |
+
 ## Session
 
 `Services.session` answers what every system needs to know:
@@ -132,7 +151,7 @@ session.get_local_role()       # GameEnums.Role
 session.roles_changed          # signal, both devices
 ```
 
-**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1) and swaps them with `swap_roles()` after every round. The assignment is synced state, so both devices always agree.
+**Roles.** The host assigns roles at random when the session starts (GDD §2.3: random in round 1), and the match flow swaps them after every round, when the results screen is up. The assignment is synced state, so both devices always agree.
 
 **Screens.** `session.request_screen(SceneFlowController.Screen.ROUND)` on the host takes both devices along: both load the scene, each reports when it is ready, and only then `screen_entered` is emitted on both. Start a round on `screen_entered`, not in `_ready`, so neither device starts ahead of the other.
 
@@ -145,6 +164,32 @@ session.state.set_value(&"round.number", 3)        # host only
 session.state.get_value(&"round.number", 1)        # both devices
 session.state.value_changed.connect(_on_value)     # both devices
 ```
+
+## Round and match state
+
+The host's [MatchFlow](../systems/match/match_flow.gd) (`Services.match_flow`) decides the phase of the round, when the time is up, who won and how the match stands. The guest decides none of it; it only shows what the host published. All of it is synced state, so a device can never miss a step:
+
+| Key | Value |
+|:--|:--|
+| `match.phase` | `[sequence, phase, round number, the host's clock when the phase began, its duration]`; a duration of −1 means the phase has no end of its own |
+| `match.score` | The whole match so far: the number of rounds, and for every round played the host's role and the round's record (`MatchScore.to_data()`) |
+
+The score is published before the phase `RESOLVED`, so whoever reacts to the phase finds the round's record already there.
+
+**The timer is not sent.** A phase carries the moment it began, on the host's clock, and how long it lasts; each device counts down from that by itself. The guest therefore has to know how far its clock is from the host's. It asks every `GameConfig.net_clock_sync_interval` (0.5 s):
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `match.clock_ping` | The guest, to the host | `[the guest's clock]` |
+| `match.clock_pong` | The host, to the guest | `[the guest's clock from the ping, the host's clock]` |
+
+From the last 16 answers, [ClockSync](../systems/match/clock_sync.gd) takes the one with the shortest round trip, the one least held up on the way. The estimate is off by at most half of that round trip, and only by as much as the two directions differ. Both timers agree within 0.1 s; the two-instance check measures a few milliseconds on a good connection.
+
+**Same tick.** Whatever can end a round is reported by the host's combat service, and the flow notes it at once, in that order: the first lethal event decides. The flow itself runs last in the frame (`process_priority` 100) and only then looks at the timer and ends the round. So a kill in the tick in which the time runs out counts, and of a shot and a kill that land in the same tick the one the host resolved first wins. The guest's requests are events and arrive in order, so "first" always means the order in which the host received them.
+
+**Gameplay input** is switched on both devices by the phase: on in `ACTIVE`, off in every other phase of a match. The combat service is started when the round's characters are in place and ended on both devices the moment the round is decided, so nothing can be shot or eaten after that. The rules count only what the combat service reports during `ACTIVE`.
+
+**Disconnect.** When the session ends, the flow drops the match on the remaining device: the phase goes back to `IDLE`, the score is emptied, combat ends, input is enabled again and `match_aborted` is emitted. The session takes that device to the lobby as it does from any round.
 
 ## How to add a replicated entity
 
@@ -179,7 +224,9 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (#7).
+The two instances connect by themselves over the desktop dev transport (ENet). It only accepts connections from the same computer unless the host adds `--lan`; a guest on another computer joins with `--join=<address>`. `--port=<number>` changes the port (default 24565). The Web build never uses this transport; it connects through pairing codes (see below).
+
+ENet has a packet throttle: while round trips take longer than before, it drops unreliable packets on the sending device, to relieve a congested line. The dev transport switches it off (`EnetNetworkService._switch_off_packet_throttle`). The connection is polled once per frame, so a round trip measures 1 or 2 frames depending on how the frames of the two instances fall, and ENet took that for congestion: in about one session in five the throttle closed within seconds, most snapshots were never sent, and the other device showed everything standing still and jumping. Snapshots are still unreliable and can get lost on a real network; `--net-loss` tests that.
 
 | Flag | Effect |
 |:--|:--|
@@ -203,7 +250,25 @@ godot --path . res://systems/session/demo/net_demo.tscn -- --join
 
 `tools/test_two_instances.sh monster` does the same for a round's lethal part, in the [Monster sandbox](../entities/monster/sandbox/monster_sandbox.tscn) with scripted players and a shortened cooldown: the guest's Monster walks, sprints, grazes, bleats, eats sheep until it is the spider, takes a bullet and kills the host's Sheepherder. Both instances check that they saw the same thing, and the host that the Monster moved without jumps. It accepts the network flags as well.
 
+`tools/test_two_instances.sh match` plays a whole Best of 5 on the real round and results screens, with scripted players and short rounds. Every round ends another way: the Monster kills the Sheepherder, the Sheepherder shoots the Monster, the time runs out with nothing done, it runs out at 5 to 5 points, and the Monster kills after the Sheepherder has wasted every bullet. Both instances check the roles of every round, each round's record and the match result against the script, that no button did anything in a countdown, and that both end in the lobby without a match. The host also compares the guest's timer with its own (within 0.1 s) and the guest's record of the match with its own. It accepts the network flags as well.
+
+`tools/test_two_instances.sh companions` checks the companion perks the same way, with `--perk=shepherd_dog,allied_bat`. The host's Sheepherder has the dog, and the guest's Monster eats a sheep near it and then sends the bat. Both instances check four things: the dog stayed near the Sheepherder, they heard its bark, the cone was shrunk for the disruption time, and the cooldown started when the bat left.
+
 **Offline.** Without a flag nothing connects. `Services.session.host()` then starts an offline session: this device is the host, there is no remote player, and all the code above runs unchanged. Sandbox scenes and unit tests use this.
+
+## The Web build: WebRTC with pairing codes
+
+[WebRtcNetworkService](../services/network/web_rtc_network_service.gd) connects two browsers in the same network without any server (GDD §9.4). WebRTC is built into Web exports only; desktop builds would need a plugin, so they use ENet.
+
+1. The host creates a `WebRTCMultiplayerPeer` server and an offer. Once the browser has found all its addresses (ICE candidates, `GATHERING_STATE_COMPLETE`, or after 3 s), the transport emits `pairing_code_ready` with a [PairingCode](../services/network/pairing_code.gd).
+2. The guest hands the offer to `submit_pairing_code`, and gets its answer the same way. The answer says that the guest waits for the host to start the encryption (`a=setup:passive`), so the handshake starts only once the host has the answer ([pairing.md](pairing.md#who-starts-the-encryption)).
+3. The host hands over the answer, and the devices connect. `session_started` follows when the data channels are open.
+
+A pairing code holds one session description with its candidates written in, trimmed and compressed, as Base32 text with a format version, a session id (so the host refuses another host's answer) and a checksum. `get_pairing_problem` says in words why a code was refused. There are no STUN or TURN servers, so a connection only works where the devices reach each other directly; when it fails or takes longer than 30 s after the answer was read, the message says so and mentions networks that block traffic between devices. Browsers hide the device's addresses behind `.local` names unless the page uses or may use the camera, so the pairing screens turn it on until the code is made ([pairing.md](pairing.md#hidden-addresses)).
+
+The transfer channels are those of the dev transport: `WebRTCMultiplayerPeer` is created with a reliable channel 1 for events and an unreliable ordered channel 2 for snapshots.
+
+The pairing screens (until the lobby has its own) and what was measured in the browsers are described in [pairing.md](pairing.md).
 
 ## Rules for transports
 
@@ -211,3 +276,4 @@ Learned while building the dev transport; they apply to the WebRTC transport as 
 
 - **Install the peer before it connects.** Godot's multiplayer API only knows a device whose connection it saw being made. A peer that is assigned after it connected leads to "unknown peer ID" errors on the first RPC. The transport therefore sets `multiplayer.multiplayer_peer` when hosting or joining starts, and reports `session_started` from the API's `peer_connected` signal.
 - **Never replace or close a connection from inside its own poll.** Signals such as `peer_disconnected` are emitted while the connection is being polled; closing it right there crashes the engine. Note what was reported and act on it in `_process`.
+- **Events can arrive before this device's session has started.** The multiplayer API polls before nodes run `_process`, so in the frame a connection opens, it hands over what the other device already sent (over WebRTC, often the host's roles) before the transport reports `session_started`. The messenger keeps events that arrive while it has no remote, and the session hands them on once it has started (`NetMessenger.receive_early_events`). Without that, the first events were lost, and every later one waited for them: in 7 of 10 pairings of two Chromes, the ping was never measured, and in 4 the guest had no role (#59). Snapshots that arrive early are dropped.

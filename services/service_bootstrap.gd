@@ -27,23 +27,34 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	registry.register(InputService, DeviceInputService.new())
 	registry.register(NetworkService, create_network_service(config))
 	registry.register(CombatService, SessionCombatService.new())
-	registry.register(PerkService, StubPerkService.new(config))
+	var perks: SessionPerkService = SessionPerkService.new(config, PerkCatalog.load_default())
+	perks.launch_perks = LaunchOptions.from_command_line().perks
+	registry.register(PerkService, perks)
 	registry.register(AudioService, StubAudioService.new(config))
 
 	var session: GameSession = GameSession.new()
 	session.configure(config)
 	registry.register(GameSession, session)
 	session.bind_network(registry.resolve(NetworkService) as NetworkService)
+	perks.setup(session)
 
 	# The flock replicates through the session, so it comes after it.
 	var swarm: FlockSwarmService = FlockSwarmService.new()
 	registry.register(SwarmService, swarm)
 	swarm.setup(session, registry.resolve(PerkService) as PerkService)
 
+	# The match runs on the session and on the services above.
+	var match_flow: MatchFlow = MatchFlow.new()
+	registry.register(MatchFlow, match_flow)
+	match_flow.setup(session)
 
-## The transport for this run: the desktop dev transport when the command
-## line asks to host or join a session, otherwise the offline loopback.
+
+## The transport for this run: WebRTC with pairing codes in the Web build; on
+## desktop the dev transport when the command line asks to host or join a
+## session, otherwise the offline loopback.
 static func create_network_service(config: GameConfig) -> NetworkService:
+	if WebRtcNetworkService.is_available():
+		return WebRtcNetworkService.new()
 	var options: LaunchOptions = LaunchOptions.from_command_line()
 	if options.wants_session() and not OS.has_feature("web") and EnetNetworkService.is_available():
 		var enet: EnetNetworkService = EnetNetworkService.new()

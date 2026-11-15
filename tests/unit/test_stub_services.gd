@@ -13,7 +13,7 @@ func test_bootstrap_registers_an_implementation_for_every_contract() -> void:
 	assert_is(registry.resolve(NetworkService), StubNetworkService)
 	assert_is(registry.resolve(SwarmService), FlockSwarmService, "and so is the flock")
 	assert_is(registry.resolve(CombatService), SessionCombatService, "combat is real by now")
-	assert_is(registry.resolve(PerkService), StubPerkService)
+	assert_is(registry.resolve(PerkService), SessionPerkService, "perks are real by now")
 	assert_is(registry.resolve(AudioService), StubAudioService)
 	registry.clear()
 
@@ -379,7 +379,10 @@ func test_perk_stub_accepts_only_perks_from_the_role_pool() -> void:
 	assert_eq(perks.get_selected_perk(GameEnums.Role.SHEEPHERDER), PerkIds.SPARE_BULLET)
 	assert_eq(perks.get_selected_perk(GameEnums.Role.MONSTER), PerkIds.NONE)
 	assert_signal_emit_count(perks, &"perk_selected", 1)
-	assert_eq(perks.get_available_perks(GameEnums.Role.MONSTER), PerkIds.MONSTER_POOL)
+	assert_eq(
+		perks.get_available_perks(GameEnums.Role.MONSTER),
+		[PerkIds.FASTER_CONSUMPTION, PerkIds.INVISIBILITY, PerkIds.ALLIED_BAT]
+	)
 
 
 func test_perk_stub_locks_and_clears_the_selection() -> void:

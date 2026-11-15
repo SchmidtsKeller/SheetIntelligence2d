@@ -1,8 +1,8 @@
 # "No Built-in Tell" audit
 
-GDD §3.2: nothing passive may distinguish the Monster from an NPC sheep. The Sheepherder may find it by what its player does, and by nothing else. This document is the checklist for that rule, how each point is checked, and the result for the Monster as built in #16.
+GDD §3.2: nothing passive may distinguish the Monster from an NPC sheep. The Sheepherder may find it by what its player does, and by nothing else. This document is the checklist for that rule, how each point is checked, and the result for the Monster as built in #16 and for the round around it as built in #17.
 
-Repeat the audit whenever the sheep body, the flock, the session's replication, the vision system or the Monster itself changes.
+Repeat the audit whenever the sheep body, the flock, the session's replication, the vision system, the round's setup or the Monster itself changes.
 
 ## How the Monster is built
 
@@ -29,6 +29,7 @@ The rule is kept by construction rather than by imitation. The Monster has no bo
 | 8 | **Collision:** the Sheepherder pushes it like a sheep; sheep keep the same distance | Automated (`pushed_like_a_sheep`): the same push moves both bodies equally on the device that simulates them. Same collision shape, layer and mask (point 2); the flock treats the Monster as a neighbour | Pass |
 | 9 | **Flashlight:** lit, half lit and dark alike | Automated (`lit_like_a_sheep`): the vision system fades both to the same value with the same colour in the light, at its edge and in the dark | Pass |
 | 10 | **Nothing else on screen:** no marker, name, outline, HUD entry or sound that only the Monster has | By reading the code: `Monster` adds nothing to the Sheepherder's device besides itself; the sandbox's status line does not say where the Monster is | Pass |
+| 11 | **Before the round starts:** during the countdown the flock already wanders, but the Monster's player cannot move yet | Automated (`tests/unit/test_round_screen.gd`, `the_sheepherder_starts_in_their_corner_far_from_the_flock`): the Sheepherder starts in their corner and the Monster in the flock's area, further apart than the flashlight reaches, and the Sheepherder cannot walk before the round is active either (`nobody_can_act_before_the_countdown_is_over`). So the one sheep that cannot move yet is not in the light | Pass |
 
 ## Differences that exist and cannot be seen
 

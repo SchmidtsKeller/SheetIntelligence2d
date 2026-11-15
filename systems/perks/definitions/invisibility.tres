@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PerkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/effects/invisibility_effect.gd" id="1_oo8pn"]
+[ext_resource type="Script" path="res://systems/perks/perk_modifier.gd" id="2_buc6s"]
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="3_sa4qp"]
+
+[resource]
+script = ExtResource("3_sa4qp")
+id = &"invisibility"
+role = 2
+kind = 1
+display_name = "Temporary Invisibility"
+description = "Turn invisible for a few seconds: standing still lasts longest, walking drains it fast. You can't eat while invisible, bullets still hit you and you can still be heard. Press again to end it early."
+effect = ExtResource("1_oo8pn")
+triggered = true

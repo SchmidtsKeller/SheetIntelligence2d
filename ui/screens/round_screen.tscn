@@ -1,14 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://ui/screens/placeholder_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://ui/screens/round_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://systems/match/round_stage.gd" id="2_stage"]
 
-[node name="RoundScreen" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="RoundScreen" type="Node2D"]
 script = ExtResource("1_screen")
-title = "Round"
-description = "Placeholder. The arena, the flock and both players will be here."
+
+[node name="Stage" type="Node2D" parent="."]
+script = ExtResource("2_stage")

@@ -138,14 +138,14 @@ func test_every_screen_has_an_existing_scene() -> void:
 		)
 
 
-func test_placeholder_screens_can_be_instantiated() -> void:
+func test_the_placeholder_lobby_can_be_instantiated() -> void:
 	var flow: SceneFlowController = get_node(^"/root/SceneFlow")
 
-	for screen: SceneFlowController.Screen in [Screen.LOBBY, Screen.ROUND, Screen.RESULTS]:
-		var scene: PackedScene = load(flow.screen_scenes[screen])
-		var instance: Node = add_child_autofree(scene.instantiate())
-		assert_is(instance, Control)
-		assert_gt(instance.get_child_count(), 0, "the placeholder builds its content")
+	var scene: PackedScene = load(flow.screen_scenes[Screen.LOBBY])
+	var instance: Node = add_child_autofree(scene.instantiate())
+
+	assert_is(instance, Control)
+	assert_gt(instance.get_child_count(), 0, "the placeholder builds its content")
 
 
 func test_screen_names_are_readable() -> void:

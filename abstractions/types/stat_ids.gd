@@ -14,6 +14,9 @@ const FLOCK_SIZE: StringName = &"flock_size"
 const HERDER_POINTS_PER_SURVIVING_SHEEP: StringName = &"herder_points_per_surviving_sheep"
 const HERDER_POINTS_PER_SHOT_SHEEP: StringName = &"herder_points_per_shot_sheep"
 const MONSTER_POINTS_PER_EATEN_SHEEP: StringName = &"monster_points_per_eaten_sheep"
+const ROUND_SETUP_DURATION: StringName = &"round_setup_duration"
+const ROUND_COUNTDOWN_DURATION: StringName = &"round_countdown_duration"
+const ROUND_RESOLVED_DURATION: StringName = &"round_resolved_duration"
 
 # --- Sheepherder -------------------------------------------------------------
 const HERDER_MOVE_SPEED: StringName = &"herder_move_speed"
@@ -86,6 +89,13 @@ const BAT_DISRUPTION_DURATION: StringName = &"bat_disruption_duration"
 const BAT_CONE_SHRINK: StringName = &"bat_cone_shrink"
 const BAT_COOLDOWN: StringName = &"bat_cooldown"
 
+# --- Companions --------------------------------------------------------------
+const DOG_MOVE_SPEED: StringName = &"dog_move_speed"
+const DOG_FOLLOW_DISTANCE_MIN: StringName = &"dog_follow_distance_min"
+const DOG_FOLLOW_DISTANCE_MAX: StringName = &"dog_follow_distance_max"
+const BAT_FLIGHT_SPEED: StringName = &"bat_flight_speed"
+const BAT_ORBIT_RADIUS: StringName = &"bat_orbit_radius"
+
 # --- Audio -------------------------------------------------------------------
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
@@ -95,6 +105,25 @@ const NET_TICK_RATE: StringName = &"net_tick_rate"
 const NET_INTERPOLATION_DELAY: StringName = &"net_interpolation_delay"
 const NET_MAX_EXTRAPOLATION: StringName = &"net_max_extrapolation"
 const NET_CONNECT_TIMEOUT: StringName = &"net_connect_timeout"
+const NET_CLOCK_SYNC_INTERVAL: StringName = &"net_clock_sync_interval"
+
+# --- Bots --------------------------------------------------------------------
+const BOT_MONSTER_REST_MIN: StringName = &"bot_monster_rest_min"
+const BOT_MONSTER_REST_MAX: StringName = &"bot_monster_rest_max"
+const BOT_MONSTER_HUNT_RANGE: StringName = &"bot_monster_hunt_range"
+const BOT_MONSTER_SAFE_DISTANCE: StringName = &"bot_monster_safe_distance"
+const BOT_MONSTER_HUNT_TIME: StringName = &"bot_monster_hunt_time"
+const BOT_MONSTER_ATTACK_RANGE: StringName = &"bot_monster_attack_range"
+const BOT_HERDER_REACTION_TIME: StringName = &"bot_herder_reaction_time"
+const BOT_HERDER_AIM_ERROR_DEG: StringName = &"bot_herder_aim_error_deg"
+const BOT_HERDER_SHOOT_SUSPICION: StringName = &"bot_herder_shoot_suspicion"
+const BOT_HERDER_SPRINT_SUSPICION: StringName = &"bot_herder_sprint_suspicion"
+const BOT_HERDER_BLOOD_SUSPICION: StringName = &"bot_herder_blood_suspicion"
+const BOT_HERDER_BLOOD_RADIUS: StringName = &"bot_herder_blood_radius"
+const BOT_HERDER_SUSPICION_DECAY: StringName = &"bot_herder_suspicion_decay"
+const BOT_HERDER_FLOCK_DISTANCE: StringName = &"bot_herder_flock_distance"
+const BOT_HERDER_SWEEP_INTERVAL: StringName = &"bot_herder_sweep_interval"
+const BOT_HERDER_BELL_INTERVAL: StringName = &"bot_herder_bell_interval"
 
 # --- View --------------------------------------------------------------------
 const VIEW_MAX_WORLD_WIDTH: StringName = &"view_max_world_width"

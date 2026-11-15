@@ -57,6 +57,9 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 
 ## Values that are project decisions rather than GDD parameters.
 const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
+	&"round_setup_duration": 0.0,
+	&"round_countdown_duration": 3.0,
+	&"round_resolved_duration": 3.0,
 	&"flock_walk_time_min": 1.5,
 	&"flock_walk_time_max": 4.0,
 	&"flock_pause_time_min": 0.8,
@@ -80,12 +83,35 @@ const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"bell_follow_time": 6.0,
 	&"sheep_acceleration": 900.0,
 	&"sheep_turn_rate_deg": 540.0,
+	&"dog_move_speed": 260.0,
+	&"dog_follow_distance_min": 50.0,
+	&"dog_follow_distance_max": 130.0,
+	&"bat_flight_speed": 420.0,
+	&"bat_orbit_radius": 70.0,
 	&"net_tick_rate": 20,
 	&"net_interpolation_delay": 0.1,
 	&"net_max_extrapolation": 0.1,
 	&"net_connect_timeout": 10.0,
+	&"net_clock_sync_interval": 0.5,
 	&"view_max_world_width": 1600.0,
 	&"view_max_world_height": 900.0,
+	# The computer opponent of an offline match (#57).
+	&"bot_monster_rest_min": 3.0,
+	&"bot_monster_rest_max": 8.0,
+	&"bot_monster_hunt_range": 450.0,
+	&"bot_monster_safe_distance": 250.0,
+	&"bot_monster_hunt_time": 10.0,
+	&"bot_monster_attack_range": 220.0,
+	&"bot_herder_reaction_time": 0.6,
+	&"bot_herder_aim_error_deg": 2.5,
+	&"bot_herder_shoot_suspicion": 1.0,
+	&"bot_herder_sprint_suspicion": 0.5,
+	&"bot_herder_blood_suspicion": 0.6,
+	&"bot_herder_blood_radius": 140.0,
+	&"bot_herder_suspicion_decay": 0.02,
+	&"bot_herder_flock_distance": 240.0,
+	&"bot_herder_sweep_interval": 1.4,
+	&"bot_herder_bell_interval": 25.0,
 }
 
 

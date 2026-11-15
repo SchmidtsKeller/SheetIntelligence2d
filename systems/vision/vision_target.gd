@@ -19,6 +19,9 @@ enum Kind {
 	GROUND_MARK,
 }
 
+## How visible a [member cloaked] entity is to its own player.
+const CLOAKED_ALPHA: float = 0.4
+
 @export var kind: Kind = Kind.ENTITY
 ## The part that is shown or hidden. Defaults to the parent.
 @export var visual: CanvasItem
@@ -33,7 +36,22 @@ var shown: float = 1.0:
 		shown = clampf(value, 0.0, 1.0)
 		_apply()
 
+## Seen by nobody but the player whose character it is, who sees it faded to
+## [constant CLOAKED_ALPHA]: the invisible Monster (GDD §4.2).
+var cloaked: bool = false:
+	set(value):
+		cloaked = value
+		_apply()
+
 var _effects: Array[CanvasItem] = []
+
+
+## The vision target of [param entity], or [code]null[/code] if it has none.
+static func of(entity: Node) -> VisionTarget:
+	for child: Node in entity.get_children():
+		if child is VisionTarget:
+			return child
+	return null
 
 
 func _ready() -> void:
@@ -71,7 +89,7 @@ func get_sample_points() -> PackedVector2Array:
 
 func _apply() -> void:
 	if visual != null:
-		visual.modulate.a = shown
+		visual.modulate.a = shown * (CLOAKED_ALPHA if cloaked else 1.0)
 	for index: int in range(_effects.size() - 1, -1, -1):
 		if is_instance_valid(_effects[index]):
 			_effects[index].visible = shown >= 0.5

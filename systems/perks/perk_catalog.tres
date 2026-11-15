@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PerkCatalog" format=3]
+
+[ext_resource type="Script" path="res://systems/perks/perk_definition.gd" id="1_uddt3"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/wide_flashlight.tres" id="2_h0a46"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/long_flashlight.tres" id="3_wrhal"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/faster_reload.tres" id="4_n3g45"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/shepherd_dog.tres" id="5_mx2bm"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/spare_bullet.tres" id="6_vrq4m"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/faster_consumption.tres" id="7_wxba5"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/invisibility.tres" id="8_y62wg"]
+[ext_resource type="Resource" path="res://systems/perks/definitions/allied_bat.tres" id="9_do86x"]
+[ext_resource type="Script" path="res://systems/perks/perk_catalog.gd" id="10_2w8mr"]
+
+[resource]
+script = ExtResource("10_2w8mr")
+perks = Array[ExtResource("1_uddt3")]([ExtResource("2_h0a46"), ExtResource("3_wrhal"), ExtResource("4_n3g45"), ExtResource("5_mx2bm"), ExtResource("6_vrq4m"), ExtResource("7_wxba5"), ExtResource("8_y62wg"), ExtResource("9_do86x")])

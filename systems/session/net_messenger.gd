@@ -51,6 +51,9 @@ var _next_receive_sequence: int = 0
 ## Events that arrived ahead of an earlier one, by sequence number.
 var _waiting_events: Dictionary[int, Array] = {}
 var _latest_snapshot_tick: int = -1
+## Events that arrived before this device's session started, with their
+## sender: [code][message, sender_id][/code] (see [method receive_early_events]).
+var _early_events: Array[Array] = []
 
 var _time: float = 0.0
 ## Incoming messages held back by the simulated conditions:
@@ -68,14 +71,18 @@ func _process(delta: float) -> void:
 
 
 ## Tells the messenger who is who. Called by the session when it starts.
-## [param remote_id] is 0 when there is no other device (offline).
+## [param remote_id] is 0 when there is no other device (offline); then the
+## events that arrived early are forgotten, as no session will take them.
 func configure(local_id: int, remote_id: int, is_host: bool) -> void:
 	_local_id = local_id
 	_remote_id = remote_id
 	_is_host = is_host
+	if remote_id == 0:
+		_early_events.clear()
 
 
-## Forgets all message state. Called when a session starts and when it ends.
+## Forgets all message state, except the events that arrived before the
+## session started. Called when a session starts and when it ends.
 func reset() -> void:
 	_next_send_sequence = 0
 	_next_receive_sequence = 0
@@ -156,7 +163,13 @@ func send_snapshot(tick: int, payload: Array) -> void:
 
 
 ## Takes a message from the other device. Called by the RPCs, and by tests.
+## Before this device's session has started, events are kept for
+## [method receive_early_events] and snapshots are dropped.
 func receive(reliable: bool, message: Array, sender_id: int) -> void:
+	if not has_remote():
+		if reliable:
+			_early_events.append([message, sender_id])
+		return
 	if sim_latency <= 0.0 and sim_jitter <= 0.0 and sim_loss <= 0.0:
 		_deliver(reliable, message, sender_id)
 		return
@@ -173,6 +186,20 @@ func receive(reliable: bool, message: Array, sender_id: int) -> void:
 			}
 		)
 	)
+
+
+## Takes the events that arrived before this device's session started. The
+## other device can start its session and send a moment earlier: a transport
+## starts the session in [code]_process[/code], after the multiplayer API has
+## already handed over what came with the connection (docs/networking.md).
+## The session calls this once it has started; events from any device other
+## than the remote are dropped.
+func receive_early_events() -> void:
+	var early: Array[Array] = _early_events
+	_early_events = []
+	for entry: Array in early:
+		if entry[1] == _remote_id:
+			receive(true, entry[0], entry[1])
 
 
 ## Moves time forward and delivers the messages whose simulated delay is over.
@@ -257,8 +284,12 @@ func _may_send(event_id: StringName) -> bool:
 func _send_event(event_id: StringName, payload: Array) -> void:
 	if not has_remote():
 		return
-	transmitter.call(true, [_next_send_sequence, event_id, payload])
+	# The number is taken before the event leaves: a transport that delivers at
+	# once can make this device send again before the call returns, and that
+	# event must not get the same number.
+	var sequence: int = _next_send_sequence
 	_next_send_sequence += 1
+	transmitter.call(true, [sequence, event_id, payload])
 
 
 func _transmit_rpc(reliable: bool, message: Array) -> void:
@@ -273,7 +304,8 @@ func _transmit_rpc(reliable: bool, message: Array) -> void:
 @rpc("any_peer", "call_remote", "reliable", 1)
 func _rpc_event(message: Array) -> void:
 	var sender_id: int = multiplayer.get_remote_sender_id()
-	if sender_id == _remote_id:
+	# Without a remote, the session has not started yet: kept for later.
+	if sender_id == _remote_id or not has_remote():
 		receive(true, message, sender_id)
 
 

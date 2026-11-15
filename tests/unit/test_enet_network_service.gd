@@ -201,6 +201,15 @@ func test_snapshots_cross_the_real_connection() -> void:
 	)
 
 
+func test_a_connection_never_holds_snapshots_back() -> void:
+	await _connect_both()
+	# The setting reaches the other device as a message of its own.
+	await wait_frames(5)
+
+	assert_eq(_throttle_deceleration(_host), 0, "the host sends every snapshot")
+	assert_eq(_throttle_deceleration(_guest), 0, "the guest sends every snapshot")
+
+
 func _connect_both() -> void:
 	assert_eq(_host.host_session({"port": _port}), OK, "host on port %d" % _port)
 	assert_eq(_guest.join_session({"address": "127.0.0.1", "port": _port}), OK)
@@ -218,6 +227,19 @@ func _wait_until(condition: Callable) -> void:
 		if condition.call():
 			return
 		await get_tree().process_frame
+
+
+## How fast ENet closes its packet throttle on the connection of
+## [param service]. While the throttle is closed ENet drops snapshots before
+## it sends them; 0 means it never closes.
+static func _throttle_deceleration(service: EnetNetworkService) -> int:
+	var connection: Object = service.get_multiplayer_peer().call(
+		&"get_peer", service.get_remote_peer_id()
+	)
+	var statistic: int = ClassDB.class_get_integer_constant(
+		&"ENetPacketPeer", &"PEER_PACKET_THROTTLE_DECELERATION"
+	)
+	return int(connection.call(&"get_statistic", statistic))
 
 
 static func _create_messenger(parent: Node) -> NetMessenger:

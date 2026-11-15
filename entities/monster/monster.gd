@@ -12,7 +12,7 @@ extends Node2D
 ##
 ## On the device of the Monster's player the sheep is steered from
 ## [InputService]: a [SheepPlayerDriver] moves it, grazes and bleats, and this
-## node adds the sprint and the attack. The attack is asked of
+## node adds the sprint, the attack and the perk button. The attack is asked of
 ## [CombatService], whose host decides it; what it reports is shown here on
 ## both devices: the eating, the spider form and the Monster's death.
 
@@ -29,6 +29,15 @@ const EVENT_BLEAT: StringName = &"monster.bleat"
 var entity_id: int = -1
 ## Whether this device steers the Monster.
 var controlled_locally: bool = true
+## Whether a bot plays the Monster (offline): it is steered on this device, but
+## through its own [member input] and without a camera.
+var is_bot: bool = false
+## The controls the Monster listens to when it is steered on this device.
+## Defaults to [code]Services.input[/code], the player's; a bot's Monster has a
+## [BotInput].
+var input: InputService:
+	get:
+		return input if input != null else Services.input
 ## The session that carries the Monster's events. Defaults to
 ## [code]Services.session[/code].
 var session: GameSession:
@@ -44,6 +53,8 @@ var _driver: SheepPlayerDriver
 var _camera: Camera2D
 ## The flock the body was registered with as a neighbour.
 var _swarm: SwarmService
+## The perk service the body was registered with as the Monster's character.
+var _perks: PerkService
 ## How far the sheep reaches for the vision system, to restore it after the
 ## spider.
 var _sheep_radius: float = 0.0
@@ -68,11 +79,13 @@ static func build(
 	var body: SheepBody = SHEEP_SCENE.instantiate()
 	body.set_visual_seed(data.get("seed", 0))
 	body.position = Vector2(data.get("x", 0.0), data.get("y", 0.0))
+	var bot: bool = BotInput.is_bot_data(data)
 	var sync: SheepNetSync = SheepNetSync.new()
 	sync.name = "NetSync"
 	# Its own player sees the Monster follow the input; everyone else sees it
-	# through the same delay as every sheep.
-	sync.live_on_owner = true
+	# through the same delay as every sheep. A bot's Monster has no player of
+	# its own, so it is shown like the flock everywhere.
+	sync.live_on_owner = not bot
 	body.add_child(sync)
 	var monster: Monster = Monster.new()
 	monster.name = NODE_NAME
@@ -80,6 +93,9 @@ static func build(
 	if for_session != null:
 		monster.session = for_session
 	monster.controlled_locally = owner_id == monster.session.messenger.get_local_id()
+	if bot:
+		monster.is_bot = true
+		monster.input = BotInput.new(GameEnums.Role.MONSTER)
 	body.add_child(monster)
 	return body
 
@@ -129,8 +145,16 @@ func _ready() -> void:
 	# The flock treats the Monster's sheep as one of its own.
 	_swarm = Services.swarm
 	_swarm.register_neighbour(_body)
+	# Its active perk (invisibility) acts on the sheep, on both devices.
+	_perks = Services.perks
+	_perks.register_character(GameEnums.Role.MONSTER, _body)
 	if controlled_locally:
 		_take_control()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE and is_bot and is_instance_valid(input):
+		input.free()
 
 
 func _exit_tree() -> void:
@@ -141,6 +165,8 @@ func _exit_tree() -> void:
 	session.messenger.unsubscribe(EVENT_BLEAT, _on_bleat_event)
 	if is_instance_valid(_swarm):
 		_swarm.unregister_neighbour(_body)
+	if is_instance_valid(_perks):
+		_perks.unregister_character(_body)
 
 
 func _physics_process(delta: float) -> void:
@@ -150,7 +176,6 @@ func _physics_process(delta: float) -> void:
 	if _form == GameEnums.MonsterForm.SPIDER:
 		_body.speed_override = perks.get_stat(StatIds.SPIDER_MOVE_SPEED)
 		return
-	var input: InputService = Services.input
 	var moving: bool = (
 		not input.get_move_vector().is_zero_approx()
 		and not _body.is_grazing()
@@ -214,9 +239,12 @@ func _take_control() -> void:
 	_driver = SheepPlayerDriver.new()
 	_driver.name = "Driver"
 	_driver.body = _body
+	_driver.input = input
 	add_child(_driver)
 	_body.bleated.connect(_on_own_bleat)
-	Services.input.action_pressed.connect(_on_action_pressed)
+	input.action_pressed.connect(_on_action_pressed)
+	if is_bot:
+		return
 	# No limits at the borders: the Monster stays in the middle of its player's
 	# screen wherever it stands (GDD §3.2).
 	_camera = Camera2D.new()
@@ -228,8 +256,11 @@ func _take_control() -> void:
 
 
 func _on_action_pressed(action: StringName) -> void:
-	if action == InputActions.EAT:
-		Services.combat.request_eat()
+	match action:
+		InputActions.EAT:
+			Services.combat.request_eat()
+		InputActions.PERK:
+			Services.perks.use_perk(GameEnums.Role.MONSTER)
 
 
 ## The other device hears the Monster bleat like any sheep.
