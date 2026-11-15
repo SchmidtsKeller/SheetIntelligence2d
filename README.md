@@ -118,7 +118,7 @@ On Windows: `tools\export_web.ps1 --serve`. Add `--debug` for a debug build.
 
 **Pairing.** In the Web build two browsers connect without a server, by exchanging a QR code or text code in each direction (WebRTC). How it works, what was measured and how to test it on devices is in [docs/pairing.md](docs/pairing.md).
 
-**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost` (a Chrome flag helps on Android, see [docs/pairing.md](docs/pairing.md#testing-on-devices)).
+**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` doesn't start on another device at all, unless its browser treats that address as secure. Godot needs a secure context, even without threads. [docs/pairing.md](docs/pairing.md#testing-on-devices) has the Chrome and Firefox settings.
 
 **Thread Support** is off and the Progressive Web App option is not used, because GitHub Pages cannot send the cross-origin isolation headers that threads need. This affects audio latency in *Stream* mode; see the decision in [docs/web-build.md](docs/web-build.md#decision-no-thread-support-no-progressive-web-app).
 
