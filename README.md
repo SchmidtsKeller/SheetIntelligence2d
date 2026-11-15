@@ -223,7 +223,7 @@ Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena
 godot --headless --path . --script res://tools/cut_art_sheets.gd
 ```
 
-What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
+The HUD's action icons, bars and bullet icon and the large board are painted too (#96). Nothing on screen says "Placeholder" any more: what has no image yet is drawn plainly or left out (`PlaceholderArt.marks_shown` brings the marks back while developing). What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
 
 **Font (#86).** All text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink: through the shared theme, and as the project's default font (`gui/theme/custom_font`) for everything else. Its digits are old-style figures, so the small HUD texts are set a little larger.
 
