@@ -138,9 +138,10 @@ func _dust_points() -> PackedVector2Array:
 ## fading out like [method LightRules.cone_falloff] up to the edge. Generated
 ## once per angle and fade.
 static func cone_texture(angle_deg: float, fade_share: float, fade_angle_deg: float) -> Texture2D:
-	var key: String = "%d/%d/%d" % [
-		roundi(angle_deg * 10.0), roundi(fade_share * 1000.0), roundi(fade_angle_deg * 10.0)
-	]
+	var key: String = (
+		"%d/%d/%d"
+		% [roundi(angle_deg * 10.0), roundi(fade_share * 1000.0), roundi(fade_angle_deg * 10.0)]
+	)
 	if _textures.has(key):
 		return _textures[key]
 	var half_angle: float = deg_to_rad(angle_deg) / 2.0
