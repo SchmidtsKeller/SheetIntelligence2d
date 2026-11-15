@@ -255,6 +255,27 @@ func test_mouse_button_shoots() -> void:
 	Input.flush_buffered_events()
 
 
+func test_mouse_clicks_made_from_touches_do_not_shoot() -> void:
+	# Godot makes the first finger on a touchscreen a left mouse click as well.
+	# A finger shoots on the Fire button only (#102).
+	_input.set_role(Role.SHEEPHERDER)
+	watch_signals(_input)
+	var click: InputEventMouseButton = InputEventMouseButton.new()
+	click.device = InputEvent.DEVICE_ID_EMULATION
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+
+	Input.parse_input_event(click)
+	Input.flush_buffered_events()
+	_input.poll()
+
+	assert_signal_not_emitted(_input, &"action_pressed")
+	click = click.duplicate()
+	click.pressed = false
+	Input.parse_input_event(click)
+	Input.flush_buffered_events()
+
+
 func test_held_action_is_reported_once_however_long_it_is_held() -> void:
 	_input.set_role(Role.MONSTER)
 	watch_signals(_input)
