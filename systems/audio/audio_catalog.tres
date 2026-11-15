@@ -1,10 +1,14 @@
 [gd_resource type="Resource" script_class="AudioCatalog" format=3]
 
 [ext_resource type="Script" path="res://systems/audio/audio_cue.gd" id="1_fwnrb"]
-[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_01.ogg" id="2_7qfr2"]
-[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_02.ogg" id="3_auqk6"]
-[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_03.ogg" id="4_ju3bc"]
-[ext_resource type="AudioStream" path="res://assets/audio/placeholder/bleat_04.ogg" id="5_76ow1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_01.wav" id="21_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_02.wav" id="22_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_03.wav" id="23_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_04.wav" id="24_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_05.wav" id="25_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_06.wav" id="26_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_07.wav" id="27_bleat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sheep/bleat_08.wav" id="28_bleat"]
 [ext_resource type="AudioStream" path="res://assets/audio/placeholder/grass_move_loop.ogg" id="6_23knf"]
 [ext_resource type="AudioStream" path="res://assets/audio/placeholder/graze_loop.ogg" id="7_5owlm"]
 [ext_resource type="AudioStream" path="res://assets/audio/placeholder/bell_01.ogg" id="8_lblx6"]
@@ -23,7 +27,7 @@
 
 [sub_resource type="Resource" id="Resource_108rd"]
 script = ExtResource("1_fwnrb")
-streams = Array[AudioStream]([ExtResource("2_7qfr2"), ExtResource("3_auqk6"), ExtResource("4_ju3bc"), ExtResource("5_76ow1")])
+streams = Array[AudioStream]([ExtResource("21_bleat"), ExtResource("22_bleat"), ExtResource("23_bleat"), ExtResource("24_bleat"), ExtResource("25_bleat"), ExtResource("26_bleat"), ExtResource("27_bleat"), ExtResource("28_bleat")])
 pitch_variation = 0.06
 
 [sub_resource type="Resource" id="Resource_ibdyj"]

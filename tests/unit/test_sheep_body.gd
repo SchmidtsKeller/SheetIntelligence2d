@@ -304,6 +304,31 @@ func test_the_eaten_animation_follows_the_effective_eat_duration() -> void:
 	perks.free()
 
 
+func test_a_devouring_sheep_splits_open_once_over_the_eat_duration() -> void:
+	var sheep: SheepBody = _spawn(4242)
+	var layer: AnimatedSprite2D = _layer(sheep, sheep.catalog.slots[0]) as AnimatedSprite2D
+	await _physics_frames(3)
+	assert_ne(layer.animation, SheepBody.FRAMES_EAT)
+
+	assert_true(sheep.devour(0.5))
+
+	assert_eq(layer.animation, SheepBody.FRAMES_EAT)
+	assert_eq(layer.frame, 0, "from its first frame, whatever the seed")
+	var frames: SpriteFrames = layer.sprite_frames
+	var length: float = (
+		frames.get_frame_count(SheepBody.FRAMES_EAT)
+		/ frames.get_animation_speed(SheepBody.FRAMES_EAT)
+	)
+	assert_almost_eq(layer.speed_scale, length / 0.5, 0.001, "stretched to the eat duration")
+	await wait_seconds(0.3)
+	assert_eq(layer.animation, SheepBody.FRAMES_EAT)
+	assert_gt(layer.frame, 0)
+
+	await wait_seconds(0.4)
+	assert_eq(sheep.get_state(), SheepBody.State.IDLE)
+	assert_eq(layer.animation, SheepBody.FRAMES_IDLE, "back to standing after the meal")
+
+
 func test_a_sheep_cannot_die_twice() -> void:
 	var sheep: SheepBody = _spawn()
 	sheep.kill(GameEnums.DeathCause.EATEN)

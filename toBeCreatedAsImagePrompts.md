@@ -212,7 +212,7 @@ For a sound generator. Mono, 44.1 kHz, Ogg Vorbis, peak about −3 dBFS, no musi
 
 | File | Length | Prompt |
 |:--|:--|:--|
-| `bleat_01.ogg` … `bleat_04.ogg` | 0.8–1.5 s each | `A single adult sheep bleating once, close and dry, outdoors at night. Four takes that differ in pitch and shape: a short flat "baa", a long wavering one, a low hoarse one, a nervous higher one.` |
+| `bleat_01.ogg` … `bleat_04.ogg` (done: replaced by the team's recordings `assets/audio/sheep/bleat_01.wav` … `bleat_08.wav`, #95) | 0.8–1.5 s each | `A single adult sheep bleating once, close and dry, outdoors at night. Four takes that differ in pitch and shape: a short flat "baa", a long wavering one, a low hoarse one, a nervous higher one.` |
 | `grass_move_loop.ogg` | 4–8 s, loop | `Steady rustling of tall dry grass as a sheep walks through it slowly, close and dry, no footsteps on hard ground, seamless loop.` |
 | `graze_loop.ogg` | 6–12 s, loop | `A sheep grazing up close: soft tearing of grass blades and slow chewing, calm, dry, seamless loop.` |
 | `herder_step_loop.ogg` | 4 s, loop | `Heavy leather boots walking at an even pace on damp grass and soft earth, one step every half second, close and dry, seamless loop.` |
