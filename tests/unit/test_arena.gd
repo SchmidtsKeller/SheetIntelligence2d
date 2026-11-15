@@ -240,9 +240,24 @@ func test_the_painted_ground_covers_the_arena() -> void:
 	)
 	assert_eq(covered, _arena.get_bounds())
 	assert_true(ground.is_in_group(Groups.STATIC_SCENERY))
-	for terrain: String in ["grass", "clover", "path", "gravel", "mud"]:
-		assert_not_null(material.get_shader_parameter(terrain + "_albedo"), terrain)
-		assert_not_null(material.get_shader_parameter(terrain + "_normal"), terrain)
+	for array: StringName in [&"terrain_albedo", &"terrain_normal"]:
+		var terrains: TextureLayered = material.get_shader_parameter(array) as TextureLayered
+		if assert_not_null(terrains, array):
+			assert_eq(terrains.get_layers(), 5, "grass, clover, path, gravel and mud")
+
+
+func test_the_painted_ground_fits_the_texture_units_of_a_phone() -> void:
+	# WebGL 2 offers 16 texture units. Godot's canvas renderer binds its own
+	# textures to unit 0 and units 9 to 14, and a material's start at unit 1:
+	# with more than eight, the ground was not drawn on the Web (#101).
+	var shader: Shader = load("res://systems/arena/ground.gdshader")
+	var textures: int = 0
+	for uniform: Dictionary in shader.get_shader_uniform_list():
+		if uniform["type"] == TYPE_OBJECT:
+			textures += 1
+
+	assert_gt(textures, 0)
+	assert_lte(textures, 8)
 
 
 func test_ground_details_are_static_scenery() -> void:
