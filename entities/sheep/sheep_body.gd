@@ -104,8 +104,9 @@ func _ready() -> void:
 	_apply_appearance()
 	_apply_presentation_mode()
 	_animation.animation_finished.connect(_on_animation_finished)
-	_move_emitter = Services.audio.start_emitter(AudioEvents.GRASS_MOVE, self)
-	_graze_emitter = Services.audio.start_emitter(AudioEvents.GRAZE, self)
+	# Its sounds come from where it is shown, like everything else of it.
+	_move_emitter = Services.audio.start_emitter(AudioEvents.GRASS_MOVE, _facing)
+	_graze_emitter = Services.audio.start_emitter(AudioEvents.GRAZE, _facing)
 	_play_state_animation()
 
 
@@ -177,7 +178,7 @@ func bleat() -> bool:
 	if not is_alive() or _voice.is_playing():
 		return false
 	_voice.play(ANIMATION_BLEAT)
-	Services.audio.play_event(AudioEvents.BLEAT, global_position)
+	Services.audio.play_event(AudioEvents.BLEAT, _facing.global_position)
 	bleated.emit()
 	return true
 

@@ -192,6 +192,16 @@ extends Resource
 @export_range(0.0, 4000.0, 1.0, "suffix:px") var hearing_range_quiet: float = 400.0
 ## Hearing range of loud sounds (bleating, Monster eating, dog barking).
 @export_range(0.0, 4000.0, 1.0, "suffix:px") var hearing_range_loud: float = 800.0
+## Not from the GDD: how far whole-map sounds (bell, gunshot) carry before
+## they would fade out. Twice the arena's diagonal, so they are heard
+## everywhere and still sound further away the further they are.
+@export_range(0.0, 20000.0, 1.0, "suffix:px") var audio_whole_map_distance: float = 8000.0
+## How strongly stereo panning follows the direction of a sound, as a factor
+## on the project's 2D panning strength.
+@export_range(0.0, 10.0, 0.05) var audio_panning_strength: float = 3.0
+## Volume of a player's own looping sounds (footsteps, rustle, grazing) on
+## their own device, so they don't cover the sounds nearby.
+@export_range(-40.0, 0.0, 0.5, "suffix:dB") var audio_own_sound_volume_db: float = -10.0
 
 @export_group("Network")
 ## State snapshots each device sends per second.

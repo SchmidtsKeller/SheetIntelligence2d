@@ -14,7 +14,7 @@ func test_bootstrap_registers_an_implementation_for_every_contract() -> void:
 	assert_is(registry.resolve(SwarmService), FlockSwarmService, "and so is the flock")
 	assert_is(registry.resolve(CombatService), SessionCombatService, "combat is real by now")
 	assert_is(registry.resolve(PerkService), SessionPerkService, "perks are real by now")
-	assert_is(registry.resolve(AudioService), StubAudioService)
+	assert_is(registry.resolve(AudioService), SpatialAudioService, "and so is audio")
 	registry.clear()
 
 
