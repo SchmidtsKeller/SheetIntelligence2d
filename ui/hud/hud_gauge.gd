@@ -84,14 +84,14 @@ var bar_fill: Texture2D:
 			# inside _draw is drawn white.
 			_bar_frame = PaintedUi.box("hud_bar_empty", "hud_bar") if picture != null else null
 			queue_redraw()
-var _bar_frame: StyleBoxTexture
-
 ## The pips of a [constant Style.PIPS] gauge.
 var pips: Array[bool] = []:
 	set(entries):
 		if entries != pips:
 			pips = entries
 			queue_redraw()
+
+var _bar_frame: StyleBoxTexture
 
 
 func _init(gauge_name: String, gauge_style: Style, gauge_size: Vector2) -> void:

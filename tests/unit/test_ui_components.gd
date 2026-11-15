@@ -11,6 +11,7 @@ func after_each() -> void:
 	# Tests of the marking switch it on for themselves.
 	PlaceholderArt.marks_shown = false
 
+
 # --- Theme -----------------------------------------------------------------------
 
 
@@ -28,8 +29,7 @@ func test_the_text_is_set_in_the_games_font() -> void:
 	assert_eq(GameTheme.FONT.resource_path, "res://assets/fonts/IMFellEnglish-Regular.ttf")
 	assert_eq(theme.get_font(&"font", GameTheme.HEADING), GameTheme.FONT)
 	assert_eq(theme.get_font(&"font", GameTheme.HUD_TEXT), GameTheme.FONT, "the HUD too")
-	var project_font: String = ProjectSettings.get_setting("gui/theme/custom_font", "")
-	assert_eq(project_font, GameTheme.FONT.resource_path, "and everything outside the theme")
+	assert_eq(ThemeDB.fallback_font, GameTheme.FONT, "and everything outside the theme")
 
 
 func test_every_label_style_has_its_font_size() -> void:

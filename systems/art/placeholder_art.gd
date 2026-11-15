@@ -10,12 +10,6 @@ extends RefCounted
 ## disappears by itself.
 
 const WORD: String = "Placeholder"
-
-## Whether placeholders are marked at all. Off: nothing in the game says
-## "Placeholder" and no empty stand-in slots are shown (#96); what is missing
-## is listed in toBeCreatedAsImage.txt. Switch it on to find the stand-ins
-## while developing.
-static var marks_shown: bool = false
 ## Part of the path of every placeholder texture.
 const FOLDER: String = "/placeholder/"
 ## Loud on purpose, so a placeholder is never mistaken for final art.
@@ -24,6 +18,12 @@ const OUTLINE_COLOR: Color = Color(0.0, 0.0, 0.0, 0.75)
 const OUTLINE_SIZE: int = 3
 const MIN_FONT_SIZE: int = 7
 const MAX_FONT_SIZE: int = 14
+
+## Whether placeholders are marked at all. Off: nothing in the game says
+## "Placeholder" and no empty stand-in slots are shown (#96); what is missing
+## is listed in toBeCreatedAsImage.txt. Switch it on to find the stand-ins
+## while developing.
+static var marks_shown: bool = false
 
 
 ## Whether [param texture] is placeholder art.

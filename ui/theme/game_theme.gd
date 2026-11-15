@@ -77,6 +77,15 @@ static func apply(control: Control) -> void:
 	control.theme = get_theme()
 
 
+## Makes [constant FONT] the font of everything that has no theme font: text
+## outside [GameTheme], and code that draws with [member ThemeDB.fallback_font].
+## Done at start-up by the [code]SceneFlow[/code] autoload, not through the
+## project setting [code]gui/theme/custom_font[/code]: that one is loaded before
+## a fresh checkout has imported the font, which fails the import (#96).
+static func use_font_everywhere() -> void:
+	ThemeDB.fallback_font = FONT
+
+
 ## The theme for what stands on a painted board: the same styles, with text in
 ## dark ink, because the board is light parchment.
 static func get_board_theme() -> Theme:
