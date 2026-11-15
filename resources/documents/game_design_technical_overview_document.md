@@ -17,7 +17,7 @@
 
 1. **Setup (Lobby):** Before the first round, both players pair once via local P2P (QR or text code, see 9.4). Before every round, each player selects **one Perk** (which may be a passive trait, an active ability, or a Companion).
 2. **Active Round:**
-   * **Sheepherder** patrols the 2D map using a directional light source to inspect the flock, uses herding abilities (ringing a bell) to observe swarm behavior, and attempts to deduce which sheep is the Monster.
+   * **Sheepherder** patrols the 2D map using a rifle-mounted flashlight to inspect the flock, uses herding abilities (ringing a bell) to observe swarm behavior, and attempts to deduce which sheep is the Monster.
    * **Monster** mimics NPC sheep movement and swarm behaviors (wandering, manually triggering grass-eating animations and bleats, responding to the bell) while isolating and consuming NPC sheep.
 3. **Escalation & Evolution Phases:**
    * **Phase 1 (5 Sheep Eaten):** Once the Monster has eaten **5 sheep**, it unlocks the ability to kill the Sheepherder with a single melee attack.
@@ -53,13 +53,13 @@
   * *PC:* WASD directional movement on the 2D plane.
   * *Mobile:* On-screen virtual movement joystick.
 - **Vision & Fog of War Mechanics:**
-  * Equipped with a directional Light-Source (Flashlight/Torch) casting a light cone restricted by specific width and length parameters.
+  * Equipped with a flashlight attached to the end of a single-shot rifle, casting a light cone restricted by specific width and length parameters. The Sheepherder holds the rifle in both hands, aiming the flashlight and the weapon wherever they point. 
   * *Aiming/Rotation:* Rotates 360 degrees around the Sheepherder to match viewing direction (controlled via Mouse cursor on PC; secondary virtual joystick on Mobile).
   * *Strict Fog of War Rules:* Outside the light, the map lies in night darkness: darker and colder, not black. **Static map elements** (trees, bushes, barns, ground details, torches) stay readable in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless light falls on them, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible in the light. Players must rely on spatial audio cues to track unseen movement.
   * *Light falloff:* The cone is fully lit. Beyond its end the light fades out softly over a further `60 %` of the cone's length, and beside it over `12°` on each side. An entity in the fade is shown as dim as the light there and counts as seen while at least half lit.
   * *Torches:* Torches stand at fixed spots in the arena. The Sheepherder lights one by walking up to it; it burns for the rest of the round and lights a circle around it (blocked by obstacles), which counts for the Sheepherder's sight like the flashlight. Light depends only on position, never on which sheep stands there.
 - **Combat & Firearm Mechanics:**
-  * Equipped with a single-shot firearm with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
+  * Equipped with the aforementioned single-shot rifle with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
   * **Reloading:** Reloads automatically after each shot, using a long reload timer. Once all bullets are expended, the weapon is permanently empty for the rest of the round.
   * **Friendly Fire / Consequence:** Shooting an NPC sheep kills it immediately (depleting the flock and costing the Sheepherder **2 points**; the Monster gets nothing for it). The shot sheep's body stays on the ground for the rest of the round, with blood next to it. Shooting the Monster before it evolves into the spider results in an instant Sheepherder victory.
