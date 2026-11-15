@@ -26,6 +26,9 @@ lights them). UI images: the same materials and palette, but text and icons
 must stay readable on a phone held sideways (contrast at least 4.5:1, touch
 targets at least 48 px).
 
+Ready-to-paste generation prompts for every entry below, and for the
+placeholder sounds, are in toBeCreatedAsImagePrompts.md (#86).
+
 Format of an entry:
   <image id>  what it is
     used in:  file  ->  node (the id is also given in code, e.g. image_id)

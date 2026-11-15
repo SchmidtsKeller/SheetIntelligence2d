@@ -34,6 +34,12 @@ Made for this project by the team, not third-party assets. The painted top-down 
 | `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
 | `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
 
+## Font (#86)
+
+| File in `assets/fonts/` | Font | Author | Licence |
+|:--|:--|:--|:--|
+| `IMFellEnglish-Regular.ttf` | [IM Fell English](https://fonts.google.com/specimen/IM+Fell+English), from the [Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/imfellenglish) (`IMFeENrm28P.ttf`, renamed) | Igino Marini | SIL Open Font License 1.1, `assets/fonts/OFL.txt` |
+
 ## Painted UI and map pieces (#83)
 
 Made for this project by the team, not third-party assets. Two painted collage sheets from the team's React art page (`assetsInsideReactPageTemp/`): "Asset Pack 2: UI buttons & boards" and "Asset Pack 4: environment & obstacles". The sources are kept in `resources/art_sources/` (not in the build); `tools/cut_art_sheets.gd` cut them into one PNG per piece and made the flat background transparent.
