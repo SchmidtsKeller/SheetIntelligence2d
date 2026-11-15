@@ -18,7 +18,9 @@ const NEAR_ALPHA: float = 0.55
 const FAR_ALPHA: float = 0.12
 const FADE_LENGTH: float = 700.0
 const DOT_RADIUS: float = 4.0
-const DOT_ALPHA: float = 0.85
+## Muted and see-through, so it marks the spot without glaring (#87).
+const DOT_COLOR: Color = Color(0.7, 0.18, 0.15)
+const DOT_ALPHA: float = 0.45
 ## Strength while no shot is possible.
 const DIM: float = 0.3
 ## Longer than any arena: its edge stops the line first.
@@ -76,8 +78,8 @@ func _draw() -> void:
 		points.append(Vector2(_length, 0.0))
 		colors.append(_color(FAR_ALPHA))
 	draw_polyline_colors(points, colors, WIDTH, true)
-	draw_circle(Vector2(_length, 0.0), DOT_RADIUS, _color(DOT_ALPHA))
+	draw_circle(Vector2(_length, 0.0), DOT_RADIUS, _color(DOT_ALPHA, DOT_COLOR))
 
 
-func _color(alpha: float) -> Color:
-	return Color(COLOR, alpha * _strength)
+func _color(alpha: float, base: Color = COLOR) -> Color:
+	return Color(base, alpha * _strength)
