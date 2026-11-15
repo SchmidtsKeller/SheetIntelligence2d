@@ -14,6 +14,7 @@ The preset "Web" in [export_presets.cfg](../export_presets.cfg):
 | VRAM texture compression | desktop and mobile | The same build runs in desktop and mobile browsers |
 | Head Include | `page.css`, `page.js`, `vendor/qrcode-generator/qrcode.js`, `vendor/jsqr/jsQR.js`, `pairing.js` | Page rules, and the JavaScript that ships with the game (in this order: `pairing.js` needs the libraries) |
 | Excluded from the build | `tests/`, `tools/`, `web/`, `docs/`, `build/` | Not part of the game |
+| Not imported at all | `resources/` (it holds a `.gdignore`) | Source material: concept art, documents and full-size animation sheets. Imported, it added about 100 MB to `index.pck` (#79). What the game needs goes into `assets/` |
 
 The engine's default HTML shell is used. The game is served as its own page, not inside another site's frame (GDD §9.4).
 

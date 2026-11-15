@@ -46,6 +46,17 @@ func test_tests_and_tools_are_not_shipped() -> void:
 		assert_has(excluded, folder)
 
 
+func test_source_art_is_not_imported_or_shipped() -> void:
+	# resources/ holds over 200 MB of concept art and full-size animation sheets
+	# the game does not load. A .gdignore keeps Godot from importing it, and what
+	# is not imported is not exported into index.pck (#79).
+	assert_true(FileAccess.file_exists("res://resources/.gdignore"), "resources/ has a .gdignore")
+	assert_false(
+		ResourceLoader.exists("res://resources/concept/hunter1.jpg"),
+		"Godot does not import the source art"
+	)
+
+
 func test_head_include_loads_the_page_files_that_ship_with_the_game() -> void:
 	var head_include: String = _presets.get_value(OPTIONS, "html/head_include", "")
 
