@@ -14,6 +14,7 @@ var _session: GameSession
 var _flow: MatchFlow
 var _status: Label
 var _banner: Label
+var _hud: Hud
 
 @onready var _stage: RoundStage = $Stage
 
@@ -22,6 +23,8 @@ func _ready() -> void:
 	_session = Services.session
 	_flow = Services.match_flow
 	_build_overlay()
+	_hud = Hud.new(_stage)
+	add_child(_hud)
 	if _session.is_active():
 		# Arriving with the session's screen change, the flow starts the round
 		# when both devices are ready.
@@ -52,17 +55,21 @@ func get_stage() -> RoundStage:
 	return _stage
 
 
-## The line at the top: the round, this player's role and the timer.
+func get_hud() -> Hud:
+	return _hud
+
+
+## The line at the top: the round and this player's role. The timer is on
+## the HUD.
 func get_status_text() -> String:
 	if not _flow.is_match_running():
 		return ""
 	return (
-		"Round %d of %d  |  You are the %s  |  %s"
+		"Round %d of %d  |  You are the %s"
 		% [
 			_flow.get_round_number(),
 			_flow.get_rounds_total(),
 			GameEnums.role_name(_session.get_local_role()),
-			format_time(_flow.get_round_time_left()),
 		]
 	)
 
@@ -89,9 +96,7 @@ func get_banner_text() -> String:
 ## [param seconds] as minutes and seconds, rounded up: the timer shows 0:00
 ## only when the time is over.
 static func format_time(seconds: float) -> String:
-	var whole: int = maxi(ceili(seconds), 0)
-	@warning_ignore("integer_division")
-	return "%d:%02d" % [whole / 60, whole % 60]
+	return HudReadout.format_time(seconds)
 
 
 func _on_session_started() -> void:
@@ -103,9 +108,13 @@ func _build_overlay() -> void:
 	var layer: CanvasLayer = CanvasLayer.new()
 	layer.name = "Overlay"
 	add_child(layer)
+	# Top right: the top left is the HUD's.
 	_status = Label.new()
 	_status.name = "Status"
-	_status.position = Vector2(12.0, 12.0)
+	_status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_status.position += Vector2(-12.0, 12.0)
 	layer.add_child(_status)
 	_banner = Label.new()
 	_banner.name = "Banner"
