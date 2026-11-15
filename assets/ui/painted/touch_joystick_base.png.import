@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://oi8wx1t2kpqq"
-path="res://.godot/imported/torch.svg-f9e18d091a18c4238bc86186c3f2d6fb.ctex"
+uid="uid://dk2lropqp0oh0"
+path="res://.godot/imported/touch_joystick_base.png-35b1a8d4a5343a953270cb95b3b2797c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/arena/placeholder/torch.svg"
-dest_files=["res://.godot/imported/torch.svg-f9e18d091a18c4238bc86186c3f2d6fb.ctex"]
+source_file="res://assets/ui/painted/touch_joystick_base.png"
+dest_files=["res://.godot/imported/touch_joystick_base.png-35b1a8d4a5343a953270cb95b3b2797c.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

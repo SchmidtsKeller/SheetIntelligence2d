@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cp7sojfhc64ic"
-path="res://.godot/imported/tree.svg-86dea49669d9f0ed51fc336abc38f862.ctex"
+uid="uid://d1lub6uckbvhb"
+path="res://.godot/imported/river_bank_straight.png-54ea3043605896edbffafd2416857796.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/arena/placeholder/tree.svg"
-dest_files=["res://.godot/imported/tree.svg-86dea49669d9f0ed51fc336abc38f862.ctex"]
+source_file="res://assets/arena/painted/river_bank_straight.png"
+dest_files=["res://.godot/imported/river_bank_straight.png-54ea3043605896edbffafd2416857796.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
