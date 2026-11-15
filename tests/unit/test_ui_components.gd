@@ -6,7 +6,6 @@ const TREE_SCENE: PackedScene = preload("res://entities/obstacles/tree.tscn")
 const PLACEHOLDER_TEXTURE: Texture2D = preload("res://assets/arena/placeholder/bush.svg")
 const BUTTON_STATES: Array[StringName] = [&"normal", &"hover", &"pressed", &"disabled"]
 
-
 # --- Theme -----------------------------------------------------------------------
 
 
