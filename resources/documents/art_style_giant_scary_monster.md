@@ -12,6 +12,8 @@ This document outlines the precise prompt elements and stylistic constraints req
 
 * **Central Body:** A realistic, anatomically correct sheep body viewed directly from above. The wool is visible, illuminated against the dark ground, but visibly ruptured and torn where the monstrous limbs emerge.
 
+* **Consumption Anatomy (The Maw):** When EATING an NPC Sheep or the Sheepherder, the ENTIRE BODY of the GSM *SPLITS OPEN*, revealing AN UNENDING SEA OF TEETH, that COMPLETELY ENVELOP the victim, SWALLOWING the victim WHOLE, before closing again. This is true for both the "hidden form" of the GSM (when it looks like an NPC Sheep), as well as the "true form" of the GSM (when it has spider legs).
+
 * **Appendages (Giant Spider Legs):**
 
   * **Count & Prompt Enforcement (CRITICAL):** Exactly 20 massive SPIDER LEGS (10 per side). This count strictly refers to the monstrous spider appendages and does not include the sheep's original four little legs (which may be hidden beneath it from this angle). Because image generators strongly default to 8 or 10 total legs for arachnids, prompts **must** use visual density and comparative multipliers rather than relying on numbers alone: explicitly describe a *dense, tightly packed fan or centipede-like array of 20 distinct limbs*, emphasizing *twice as many legs as a 10-legged spider* and *a crowded, overlapping multitude of 10 limbs per flank*.
