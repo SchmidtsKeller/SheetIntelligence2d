@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/sheepherder/sheepherder.gd" id="1_herder"]
-[ext_resource type="Texture2D" path="res://assets/sheepherder/placeholder/sheepherder.svg" id="2_art"]
+[ext_resource type="SpriteFrames" path="res://assets/sheepherder/sheepherder_frames.tres" id="2_art"]
 [ext_resource type="Script" path="res://systems/session/net_transform_2d.gd" id="3_net"]
 [ext_resource type="Script" path="res://entities/sheepherder/flashlight_light.gd" id="4_light"]
 [ext_resource type="Script" path="res://systems/vision/vision_target.gd" id="5_vision"]
@@ -34,9 +34,12 @@ color = Color(1, 0.9, 0.7, 1)
 energy = 1.05
 script = ExtResource("4_light")
 
-[node name="Art" type="Sprite2D" parent="."]
+[node name="Art" type="AnimatedSprite2D" parent="."]
 light_mask = 3
-texture = ExtResource("2_art")
+scale = Vector2(0.58, 0.58)
+sprite_frames = ExtResource("2_art")
+animation = &"idle"
+autoplay = "idle"
 
 [node name="SelfLight" type="PointLight2D" parent="."]
 energy = 0.9

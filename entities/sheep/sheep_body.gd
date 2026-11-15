@@ -44,6 +44,23 @@ const ANIMATION_CORPSE: StringName = &"corpse"
 const ANIMATION_EATEN: StringName = &"eaten"
 const ANIMATION_BLEAT: StringName = &"bleat"
 
+## Animations of the painted frames of animated layers
+## ([member SheepAppearancePart.frames]). A sheep body that eats shows the
+## grazing frames; a dead one keeps the frame it died with.
+const FRAMES_IDLE: StringName = &"idle"
+const FRAMES_WALK: StringName = &"walk"
+const FRAMES_SPRINT: StringName = &"sprint"
+const FRAMES_GRAZE: StringName = &"graze"
+## From this many times the sheep speed on, the sprint frames are shown. Only
+## the sprinting Monster is that fast, and its sprint is meant to be seen
+## (GDD §3.2).
+const SPRINT_FRAMES_FROM: float = 1.25
+## The sprint frames are drawn for this many times the sheep speed.
+const SPRINT_FRAMES_SPEED: float = 1.5
+## The first frame of a loop is the visual seed modulo this, modulo the
+## number of frames (a prime, so frame counts do not line up with it).
+const FRAMES_PHASE_PERIOD: int = 1009
+
 ## Below this speed a sheep counts as standing.
 const WALK_SPEED_THRESHOLD: float = 5.0
 ## The walk animation never plays slower than this, even at a crawl.
@@ -85,7 +102,10 @@ var _visual_override: Node2D
 var _shown_speed: float = 0.0
 var _shown_grazing: bool = false
 var _state: State = State.IDLE
-var _layers: Array[Sprite2D] = []
+## One per catalog slot: a [Sprite2D], or an [AnimatedSprite2D] for a slot
+## with painted frames.
+var _layers: Array[Node2D] = []
+var _animated_layers: Array[AnimatedSprite2D] = []
 var _move_emitter: int = -1
 var _graze_emitter: int = -1
 
@@ -279,6 +299,13 @@ func get_speed() -> float:
 	return _motion.speed
 
 
+## The speed of what is shown, in pixels per second, which the animations
+## follow. Equals [method get_speed] unless the sheep is
+## [member presented_externally].
+func get_shown_speed() -> float:
+	return _shown_speed
+
+
 # --- Internals -------------------------------------------------------------------
 
 
@@ -287,7 +314,7 @@ func _build_layers() -> void:
 		push_error("SheepBody: no appearance catalog is set.")
 		return
 	for slot: SheepAppearanceSlot in catalog.slots:
-		var layer: Sprite2D = Sprite2D.new()
+		var layer: Node2D = _new_layer(slot)
 		layer.name = String(slot.id).to_pascal_case()
 		var anchor: Node2D = (
 			_head_anchor if slot.anchor == SheepAppearanceSlot.Anchor.HEAD else _body_anchor
@@ -296,25 +323,44 @@ func _build_layers() -> void:
 		_layers.append(layer)
 
 
+## A sprite for [param slot], animated when one of its parts has frames.
+func _new_layer(slot: SheepAppearanceSlot) -> Node2D:
+	for part: SheepAppearancePart in slot.parts:
+		if part.frames != null:
+			var animated: AnimatedSprite2D = AnimatedSprite2D.new()
+			_animated_layers.append(animated)
+			return animated
+	return Sprite2D.new()
+
+
 func _apply_appearance() -> void:
 	if catalog == null:
 		return
 	_appearance = SheepAppearanceGenerator.generate(_visual_seed, catalog)
 	for slot_index: int in _layers.size():
-		var layer: Sprite2D = _layers[slot_index]
+		var layer: Node2D = _layers[slot_index]
 		var part_index: int = _appearance.part_indices[slot_index]
-		layer.visible = part_index != SheepAppearance.NONE
-		if not layer.visible:
-			layer.texture = null
+		var part: SheepAppearancePart = (
+			catalog.slots[slot_index].parts[part_index]
+			if part_index != SheepAppearance.NONE
+			else null
+		)
+		layer.visible = part != null
+		if layer is AnimatedSprite2D:
+			(layer as AnimatedSprite2D).sprite_frames = part.frames if part != null else null
+		else:
+			(layer as Sprite2D).texture = part.texture if part != null else null
+		if part == null:
 			continue
-		var part: SheepAppearancePart = catalog.slots[slot_index].parts[part_index]
 		var tint_index: int = _appearance.tint_indices[slot_index]
-		layer.texture = part.texture
 		layer.position = part.offset
+		layer.scale = part.scale
 		layer.self_modulate = (
 			part.tints[tint_index] if tint_index != SheepAppearance.NONE else Color.WHITE
 		)
 	_visual.scale = Vector2(_appearance.length_permille, _appearance.width_permille) / 1000.0
+	if is_node_ready():
+		_play_frames()
 
 
 func _apply_presentation_mode() -> void:
@@ -351,6 +397,7 @@ func _update_state() -> void:
 		_animation.speed_scale = (
 			maxf(_shown_speed / max_speed, MIN_WALK_ANIMATION_SPEED) if max_speed > 0.0 else 1.0
 		)
+		_play_frames()
 
 
 func _enter_state(state: State) -> void:
@@ -396,6 +443,50 @@ func _play_state_animation() -> void:
 			_animation.play(
 				ANIMATION_EATEN, -1.0, eaten_length / duration if duration > 0.0 else 1.0
 			)
+	_play_frames()
+
+
+## Shows the painted frames of what the sheep is doing. Only the state and the
+## shown speed decide which, as for the animations above, so every sheep body
+## shows the same frames when it does the same.
+func _play_frames() -> void:
+	var animation: StringName = FRAMES_IDLE
+	var speed_scale: float = 1.0
+	match _state:
+		State.WALK:
+			var max_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+			var relative: float = _shown_speed / max_speed if max_speed > 0.0 else 1.0
+			if relative >= SPRINT_FRAMES_FROM:
+				animation = FRAMES_SPRINT
+				speed_scale = relative / SPRINT_FRAMES_SPEED
+			else:
+				animation = FRAMES_WALK
+				speed_scale = maxf(relative, MIN_WALK_ANIMATION_SPEED)
+		State.GRAZE, State.DEVOUR:
+			animation = FRAMES_GRAZE
+	for layer: AnimatedSprite2D in _animated_layers:
+		_show_frames(layer, animation, speed_scale)
+
+
+func _show_frames(layer: AnimatedSprite2D, animation: StringName, speed_scale: float) -> void:
+	var frames: SpriteFrames = layer.sprite_frames
+	if frames == null:
+		return
+	if not is_alive():
+		layer.pause()
+		return
+	if not frames.has_animation(animation):
+		animation = FRAMES_IDLE if frames.has_animation(FRAMES_IDLE) else &"default"
+	layer.speed_scale = speed_scale
+	if layer.animation == animation and layer.is_playing():
+		return
+	layer.play(animation)
+	# Each sheep starts its loops at another frame, so the flock does not move
+	# in step. The frame comes from the visual seed: a Monster starts where an
+	# NPC sheep with its look would.
+	var count: int = frames.get_frame_count(animation)
+	if count > 0:
+		layer.set_frame_and_progress(posmod(_visual_seed, FRAMES_PHASE_PERIOD) % count, 0.0)
 
 
 func _on_animation_finished(animation_name: StringName) -> void:

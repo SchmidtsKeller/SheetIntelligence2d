@@ -22,5 +22,7 @@ extends Resource
 
 @export_group("Distinctness")
 ## In how many layers any two sheep of one round must differ (another part, or
-## the same part in another tint), so that no two of them look alike.
-@export_range(1, 10, 1) var min_difference: int = 2
+## the same part in another tint), so that no two of them look alike. 0 lets
+## sheep look alike: the shipped flock is one painted sheep in a few shades of
+## wool (#74).
+@export_range(0, 10, 1) var min_difference: int = 2

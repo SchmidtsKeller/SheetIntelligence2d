@@ -73,7 +73,7 @@ func test_the_monster_seed_is_drawn_like_any_other() -> void:
 # --- Distinctness ------------------------------------------------------------------
 
 
-func test_no_two_sheep_of_a_round_look_alike() -> void:
+func test_sheep_of_a_round_differ_as_much_as_the_catalog_asks() -> void:
 	var count: int = Services.config.flock_size + 1
 
 	for round_seed: int in 300:
@@ -132,7 +132,22 @@ func test_shipped_catalog_is_complete() -> void:
 	for slot: SheepAppearanceSlot in _catalog.slots:
 		assert_gt(slot.parts.size(), 0, "slot '%s' has parts" % slot.id)
 		for part: SheepAppearancePart in slot.parts:
-			assert_not_null(part.texture, "part '%s' has a texture" % part.id)
+			assert_true(
+				part.texture != null or part.frames != null,
+				"part '%s' has a texture or frames" % part.id
+			)
+			if part.frames == null:
+				continue
+			for animation: StringName in [
+				SheepBody.FRAMES_IDLE,
+				SheepBody.FRAMES_WALK,
+				SheepBody.FRAMES_SPRINT,
+				SheepBody.FRAMES_GRAZE,
+			]:
+				assert_true(
+					part.frames.has_animation(animation),
+					"part '%s' has the frames '%s'" % [part.id, animation]
+				)
 	assert_lte(_catalog.min_length_permille, _catalog.max_length_permille)
 	assert_lte(_catalog.min_width_permille, _catalog.max_width_permille)
 

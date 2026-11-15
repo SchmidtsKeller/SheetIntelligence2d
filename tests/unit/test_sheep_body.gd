@@ -60,13 +60,18 @@ func test_the_layers_show_the_look_of_the_seed() -> void:
 	assert_eq(sheep.get_appearance().fingerprint(), expected.fingerprint())
 	for slot_index: int in sheep.catalog.slots.size():
 		var slot: SheepAppearanceSlot = sheep.catalog.slots[slot_index]
-		var layer: Sprite2D = _layer(sheep, slot)
+		var layer: Node2D = _layer(sheep, slot)
 		var part_index: int = expected.part_indices[slot_index]
 		assert_eq(layer.visible, part_index != SheepAppearance.NONE, "layer '%s' visible" % slot.id)
 		if part_index == SheepAppearance.NONE:
 			continue
 		var part: SheepAppearancePart = slot.parts[part_index]
-		assert_eq(layer.texture, part.texture)
+		if part.frames != null:
+			assert_eq((layer as AnimatedSprite2D).sprite_frames, part.frames)
+			assert_true((layer as AnimatedSprite2D).is_playing(), "the painted frames play")
+		else:
+			assert_eq((layer as Sprite2D).texture, part.texture)
+		assert_eq(layer.scale, part.scale)
 		var tint_index: int = expected.tint_indices[slot_index]
 		assert_eq(
 			layer.self_modulate,
@@ -349,7 +354,7 @@ func _physics_frames(count: int) -> void:
 		await get_tree().physics_frame
 
 
-func _layer(sheep: SheepBody, slot: SheepAppearanceSlot) -> Sprite2D:
+func _layer(sheep: SheepBody, slot: SheepAppearanceSlot) -> Node2D:
 	var anchor: String = (
 		"Facing/Pose/Visual/Head/HeadPose"
 		if slot.anchor == SheepAppearanceSlot.Anchor.HEAD
@@ -405,5 +410,7 @@ func _describe_tree(root: Node) -> PackedStringArray:
 			line += " at=%s rot=%s scale=%s" % [node_2d.position, node_2d.rotation, node_2d.scale]
 		if node is Sprite2D:
 			line += " texture=%s" % (node as Sprite2D).texture
+		if node is AnimatedSprite2D:
+			line += " frames=%s" % (node as AnimatedSprite2D).sprite_frames
 		lines.append(line)
 	return lines
