@@ -1,0 +1,10 @@
+```task
+Generate a single game sprite.
+Subject: {SUBJECT}
+Strictly follow the specification in "{SPEC}.md"
+```
+
+```constraints
+The subject faces the top edge of the image, is centered and fully visible with a small margin.
+Solid flat pure magenta background (#FF00FF): one uniform colour with no gradient, no texture and no shadow.
+```
