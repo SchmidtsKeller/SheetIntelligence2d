@@ -202,6 +202,32 @@ func clear_scheme_override() -> void:
 
 
 ## The on-screen controls this service shows in the touch scheme.
+func get_action_hint(action: StringName) -> String:
+	if not InputMap.has_action(action):
+		return ""
+	for event: InputEvent in InputMap.action_get_events(action):
+		var key: InputEventKey = event as InputEventKey
+		if key != null:
+			var code: Key = key.physical_keycode
+			if code == KEY_NONE:
+				code = key.keycode
+			return OS.get_keycode_string(code)
+		var mouse: InputEventMouseButton = event as InputEventMouseButton
+		if mouse != null:
+			match mouse.button_index:
+				MOUSE_BUTTON_LEFT:
+					return "LMB"
+				MOUSE_BUTTON_RIGHT:
+					return "RMB"
+	return ""
+
+
+func show_action_state(action: StringName, cooldown: float, meter: float, active: bool) -> void:
+	var button: TouchActionButton = _touch_controls.get_button(action)
+	if button != null:
+		button.show_state(cooldown, meter, active)
+
+
 func get_touch_controls() -> TouchControls:
 	return _touch_controls
 

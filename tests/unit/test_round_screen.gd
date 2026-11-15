@@ -101,7 +101,7 @@ func test_nobody_can_act_before_the_countdown_is_over() -> void:
 	assert_false(Services.input.is_gameplay_enabled())
 	assert_eq(_screen.call(&"get_banner_text"), "3")
 	assert_true((_screen.call(&"get_status_text") as String).begins_with("Round 1 of 5"))
-	assert_true((_screen.call(&"get_status_text") as String).ends_with("3:00"))
+	assert_eq(_timer_text(), "3:00")
 
 	_pass(Services.config.round_countdown_duration)
 
@@ -111,7 +111,8 @@ func test_nobody_can_act_before_the_countdown_is_over() -> void:
 
 	_pass(59.5)
 
-	assert_true((_screen.call(&"get_status_text") as String).ends_with("2:01"))
+	await wait_frames(1)
+	assert_eq(_timer_text(), "2:01")
 
 
 func test_shooting_the_monster_ends_the_round_for_the_sheepherder() -> void:
@@ -357,6 +358,12 @@ func _clear_spot_next_to(arena: Arena, from: Vector2) -> Vector2:
 
 func _stage() -> RoundStage:
 	return _screen.call(&"get_stage")
+
+
+## The round timer as the HUD shows it.
+func _timer_text() -> String:
+	var hud: Hud = _screen.call(&"get_hud")
+	return (hud.get_element("Timer") as Label).text
 
 
 func _pass(seconds: float) -> void:

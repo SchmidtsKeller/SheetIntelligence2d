@@ -34,6 +34,27 @@ func after_each() -> void:
 	Input.emulate_touch_from_mouse = false
 
 
+# --- HUD -------------------------------------------------------------------------
+
+
+func test_the_hud_gets_the_key_of_an_action() -> void:
+	assert_eq(_input.get_action_hint(InputActions.EAT), "E")
+	assert_eq(_input.get_action_hint(InputActions.BLEAT), "F")
+	assert_eq(_input.get_action_hint(InputActions.SHOOT), "LMB")
+	assert_eq(_input.get_action_hint(&"no_such_action"), "")
+
+
+func test_the_hud_shows_cooldowns_and_meters_on_the_touch_buttons() -> void:
+	_input.show_action_state(InputActions.EAT, 0.4, 0.0, true)
+	_input.show_action_state(InputActions.SPRINT, 0.0, 0.75, false)
+
+	var eat: TouchActionButton = _input.get_touch_controls().get_button(InputActions.EAT)
+	var sprint: TouchActionButton = _input.get_touch_controls().get_button(InputActions.SPRINT)
+	assert_almost_eq(eat.get_cooldown(), 0.4, 0.0001)
+	assert_almost_eq(sprint.get_meter(), 0.75, 0.0001)
+	assert_eq(sprint.get_cooldown(), 0.0)
+
+
 # --- Movement --------------------------------------------------------------------
 
 

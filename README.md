@@ -329,7 +329,21 @@ flow.request_rematch()                             # host, after the last round
 flow.request_lobby()                               # host: end the match
 ```
 
-The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round, the role and the timer in a plain line, and the [results screen](ui/screens/results_screen.gd) the record of the round, the standing and the host's buttons; the HUD (#21) and the styled scoreboard (#20) replace them. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round and the role in a plain line and carries the [HUD](#in-game-hud); the [results screen](ui/screens/results_screen.gd) shows the record of the round, the standing and the host's buttons until the styled scoreboard (#20) replaces it. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+
+### In-game HUD
+
+The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role needs (GDD §8.2, #21), and nothing of the other role's:
+
+| Role | Elements |
+|:--|:--|
+| Both | Round timer, short messages ("Out of bullets", "You can kill the Sheepherder now", "… is ready") |
+| Sheepherder | Bullets (3, or 4 with *Spare Bullet*), reload progress, Fire and Bell with their cooldowns |
+| Monster | Evolution bar with the kill and the spider milestones (and when the spider is out of reach), living sheep, stamina, Graze / Bleat / Eat / Sprint and the active perk with its charge and cooldown |
+
+- **Display only.** The HUD reads what the match flow, the combat service, the perk service and the round's characters expose; the arithmetic is in [HudReadout](ui/hud/hud_readout.gd), tested on its own. It switches with the roles by itself.
+- **Keyboard and mouse:** the actions sit in a row at the bottom, each with its key, which the input layer names (`InputService.get_action_hint`).
+- **Touchscreen:** no icons next to the buttons; the HUD hands each action's cooldown and meter to its touch button (`InputService.show_action_state`), which draws them. The HUD's own elements stay at the top, away from the controls in the bottom corners.
 
 ### Offline match against the computer
 

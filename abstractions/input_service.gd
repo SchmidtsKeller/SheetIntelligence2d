@@ -94,3 +94,18 @@ enum Scheme {
 
 ## Returns to automatic scheme detection.
 @abstract func clear_scheme_override() -> void
+
+
+## The key or button that triggers [param action] in the keyboard and mouse
+## scheme, for hints on the HUD; empty where there is none. Only the input
+## layer knows the bindings.
+func get_action_hint(_action: StringName) -> String:
+	return ""
+
+
+## Shows on the on-screen control of [param action] how far its cooldown is
+## ([param cooldown], 1 to 0), a meter that belongs to it ([param meter], 0 to
+## 1, e.g. stamina) and whether it is happening ([param active]). The HUD
+## calls this every frame; schemes without such controls ignore it.
+func show_action_state(_action: StringName, _cooldown: float, _meter: float, _active: bool) -> void:
+	pass
