@@ -2,7 +2,8 @@ class_name SpiderVisual
 extends Node2D
 ## The look of the Monster's spider form (GDD §3.2): the painted spider of the
 ## animation pack (#74). It lurks while standing, stalks when slow, runs when
-## fast and lunges again and again while it eats.
+## fast, and while it eats its body splits open and swallows the prey once,
+## over the eat duration (#95).
 ##
 ## It is drawn facing +x, like the sheep it replaces (see
 ## [method SheepBody.set_visual_override]). Only the body's state and shown
@@ -12,7 +13,7 @@ const FRAMES: SpriteFrames = preload("res://assets/monster/spider_frames.tres")
 const ANIMATION_IDLE: StringName = &"idle"
 const ANIMATION_STALK: StringName = &"stalk"
 const ANIMATION_WALK: StringName = &"walk"
-const ANIMATION_EAT: StringName = &"eat_lunge"
+const ANIMATION_EAT: StringName = &"eat_feed"
 
 ## How far the spider reaches from its center, for the vision system.
 const RADIUS: float = 80.0
@@ -61,9 +62,12 @@ func _process(_delta: float) -> void:
 			speed_scale = maxf(relative / drawn_for, MIN_SPEED_SCALE)
 		SheepBody.State.DEVOUR:
 			animation = ANIMATION_EAT
+			speed_scale = body.devour_frames_speed(FRAMES, ANIMATION_EAT)
 	_sprite.speed_scale = speed_scale
-	if _sprite.animation != animation or not _sprite.is_playing():
-		_sprite.play(animation)
+	if _sprite.animation == animation and (_sprite.is_playing() or animation == ANIMATION_EAT):
+		# The eating plays once and then keeps its last frame.
+		return
+	_sprite.play(animation)
 
 
 ## The animation shown, for tests and the self-check.

@@ -45,7 +45,7 @@ All positions are sent to both devices; what is hidden is hidden when it is draw
 These are things the Monster's player does, and the Sheepherder is meant to catch them (GDD §3.2):
 
 - **Sprinting:** 270 px/s instead of 180, with the walk animation running faster to match, the painted sprint frames instead of the walk frames, and a louder rustle (`grass_run`, #73). The sprint frames show for any sheep body that is shown faster than 1.25 times the sheep speed: the sprinting Monster, and any sheep, the Monster's included, while the Sheepherder pushes it along. The rustle goes by the speed of the simulated body, faster than a sheep can be, and travels in the snapshots like grazing. The same would happen to an NPC sheep, but none moves that fast.
-- **Eating:** the 1.0 s eating animation, the loud eating sound, the blood on the ground and the missing sheep.
+- **Eating:** the 1.0 s eating animation (the painted `eat_feed` frames since #95: the body splits open into a maw of teeth and swallows the prey; only a devouring body plays them), the loud eating sound, the blood on the ground and the missing sheep.
 - **The spider:** it is not a disguise.
 - **Behaving unlike a sheep:** walking too straight, too far, never grazing, ignoring the bell.
 
