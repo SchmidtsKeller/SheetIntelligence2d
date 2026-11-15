@@ -3,128 +3,21 @@
 [ext_resource type="Script" path="res://entities/sheep/appearance/sheep_appearance_catalog.gd" id="1_5c406"]
 [ext_resource type="Script" path="res://entities/sheep/appearance/sheep_appearance_slot.gd" id="2_oa8nt"]
 [ext_resource type="Script" path="res://entities/sheep/appearance/sheep_appearance_part.gd" id="3_3xfwm"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/wool.svg" id="4_eiqd4"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/pattern_spots.svg" id="5_6gbb3"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/pattern_saddle.svg" id="6_2e1di"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/pattern_patches.svg" id="7_xthhy"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/pattern_rump.svg" id="8_3j5se"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/marking_dot.svg" id="9_qrok6"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/marking_cross.svg" id="10_h12vp"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/marking_stripe.svg" id="11_e5635"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/head.svg" id="12_7skxb"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/collar_bell.svg" id="13_xn067"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/ribbon.svg" id="14_31hvo"]
-[ext_resource type="Texture2D" path="res://assets/sheep/placeholder/ear_tag.svg" id="15_mmu75"]
+[ext_resource type="SpriteFrames" path="res://assets/sheep/sheep_frames.tres" id="4_frames"]
 
 [sub_resource type="Resource" id="Resource_n7a3o"]
 script = ExtResource("3_3xfwm")
 id = &"wool"
-texture = ExtResource("4_eiqd4")
-tints = Array[Color]([Color(0.9490196, 0.9372549, 0.9098039, 1), Color(0.8117647, 0.79607844, 0.76862746, 1), Color(0.84705883, 0.7607843, 0.6117647, 1), Color(0.627451, 0.5176471, 0.4, 1), Color(0.43137255, 0.4117647, 0.39215687, 1), Color(0.2901961, 0.24705882, 0.21568628, 1)])
+frames = ExtResource("4_frames")
+scale = Vector2(0.52, 0.52)
+tints = Array[Color]([Color(1, 1, 1, 1), Color(0.94, 0.94, 0.96, 1), Color(1, 0.95, 0.86, 1), Color(0.93, 0.88, 0.8, 1), Color(0.86, 0.84, 0.82, 1)])
 
 [sub_resource type="Resource" id="Resource_e4306"]
 script = ExtResource("2_oa8nt")
 id = &"wool"
 parts = Array[ExtResource("3_3xfwm")]([SubResource("Resource_n7a3o")])
 
-[sub_resource type="Resource" id="Resource_cmltq"]
-script = ExtResource("3_3xfwm")
-id = &"spots"
-texture = ExtResource("5_6gbb3")
-tints = Array[Color]([Color(0.18039216, 0.14117648, 0.11372549, 0.9019608), Color(0.9529412, 0.93333334, 0.89411765, 0.9019608)])
-
-[sub_resource type="Resource" id="Resource_7yhq5"]
-script = ExtResource("3_3xfwm")
-id = &"saddle"
-texture = ExtResource("6_2e1di")
-tints = Array[Color]([Color(0.18039216, 0.14117648, 0.11372549, 0.9019608), Color(0.9529412, 0.93333334, 0.89411765, 0.9019608)])
-
-[sub_resource type="Resource" id="Resource_ji5vv"]
-script = ExtResource("3_3xfwm")
-id = &"patches"
-texture = ExtResource("7_xthhy")
-tints = Array[Color]([Color(0.18039216, 0.14117648, 0.11372549, 0.9019608), Color(0.9529412, 0.93333334, 0.89411765, 0.9019608)])
-
-[sub_resource type="Resource" id="Resource_rmvs1"]
-script = ExtResource("3_3xfwm")
-id = &"rump"
-texture = ExtResource("8_3j5se")
-tints = Array[Color]([Color(0.18039216, 0.14117648, 0.11372549, 0.9019608), Color(0.9529412, 0.93333334, 0.89411765, 0.9019608)])
-
-[sub_resource type="Resource" id="Resource_3v66y"]
-script = ExtResource("2_oa8nt")
-id = &"pattern"
-empty_chance_percent = 40
-parts = Array[ExtResource("3_3xfwm")]([SubResource("Resource_cmltq"), SubResource("Resource_7yhq5"), SubResource("Resource_ji5vv"), SubResource("Resource_rmvs1")])
-
-[sub_resource type="Resource" id="Resource_ogtu8"]
-script = ExtResource("3_3xfwm")
-id = &"paint_dot"
-texture = ExtResource("9_qrok6")
-offset = Vector2(-4, 0)
-tints = Array[Color]([Color(0.78431374, 0.20784314, 0.18039216, 1), Color(0.18039216, 0.36862746, 0.7882353, 1), Color(0.18431373, 0.60784316, 0.29803923, 1), Color(0.8862745, 0.7254902, 0.18431373, 1)])
-
-[sub_resource type="Resource" id="Resource_0f870"]
-script = ExtResource("3_3xfwm")
-id = &"paint_cross"
-texture = ExtResource("10_h12vp")
-offset = Vector2(-6, 0)
-tints = Array[Color]([Color(0.78431374, 0.20784314, 0.18039216, 1), Color(0.18039216, 0.36862746, 0.7882353, 1), Color(0.18431373, 0.60784316, 0.29803923, 1), Color(0.8862745, 0.7254902, 0.18431373, 1)])
-
-[sub_resource type="Resource" id="Resource_a6crr"]
-script = ExtResource("3_3xfwm")
-id = &"paint_stripe"
-texture = ExtResource("11_e5635")
-offset = Vector2(-12, 0)
-tints = Array[Color]([Color(0.78431374, 0.20784314, 0.18039216, 1), Color(0.18039216, 0.36862746, 0.7882353, 1), Color(0.18431373, 0.60784316, 0.29803923, 1), Color(0.8862745, 0.7254902, 0.18431373, 1)])
-
-[sub_resource type="Resource" id="Resource_1qixx"]
-script = ExtResource("2_oa8nt")
-id = &"marking"
-empty_chance_percent = 45
-parts = Array[ExtResource("3_3xfwm")]([SubResource("Resource_ogtu8"), SubResource("Resource_0f870"), SubResource("Resource_a6crr")])
-
-[sub_resource type="Resource" id="Resource_h2vcg"]
-script = ExtResource("3_3xfwm")
-id = &"head"
-texture = ExtResource("12_7skxb")
-offset = Vector2(2, 0)
-tints = Array[Color]([Color(0.16470589, 0.14117648, 0.13333334, 1), Color(0.93333334, 0.9137255, 0.8784314, 1), Color(0.48235294, 0.35686275, 0.2627451, 1), Color(0.6627451, 0.6392157, 0.6039216, 1)])
-
-[sub_resource type="Resource" id="Resource_icqfo"]
-script = ExtResource("2_oa8nt")
-id = &"head"
-anchor = 1
-parts = Array[ExtResource("3_3xfwm")]([SubResource("Resource_h2vcg")])
-
-[sub_resource type="Resource" id="Resource_iwkkp"]
-script = ExtResource("3_3xfwm")
-id = &"collar_bell"
-texture = ExtResource("13_xn067")
-offset = Vector2(-4, 0)
-tints = Array[Color]([Color(0.41960785, 0.27058825, 0.15686275, 1), Color(0.70980394, 0.1882353, 0.16470589, 1), Color(0.16862746, 0.16862746, 0.16862746, 1)])
-
-[sub_resource type="Resource" id="Resource_kej0w"]
-script = ExtResource("3_3xfwm")
-id = &"ribbon"
-texture = ExtResource("14_31hvo")
-offset = Vector2(1, 0)
-tints = Array[Color]([Color(0.78431374, 0.20784314, 0.18039216, 1), Color(0.18039216, 0.36862746, 0.7882353, 1), Color(0.8862745, 0.7254902, 0.18431373, 1)])
-
-[sub_resource type="Resource" id="Resource_ewulm"]
-script = ExtResource("3_3xfwm")
-id = &"ear_tag"
-texture = ExtResource("15_mmu75")
-offset = Vector2(-4, -9)
-tints = Array[Color]([Color(0.8862745, 0.7254902, 0.18431373, 1), Color(0.8784314, 0.48235294, 0.14117648, 1), Color(0.18039216, 0.36862746, 0.7882353, 1)])
-
-[sub_resource type="Resource" id="Resource_1ysnp"]
-script = ExtResource("2_oa8nt")
-id = &"accessory"
-anchor = 1
-empty_chance_percent = 50
-parts = Array[ExtResource("3_3xfwm")]([SubResource("Resource_iwkkp"), SubResource("Resource_kej0w"), SubResource("Resource_ewulm")])
-
 [resource]
 script = ExtResource("1_5c406")
-slots = Array[ExtResource("2_oa8nt")]([SubResource("Resource_e4306"), SubResource("Resource_3v66y"), SubResource("Resource_1qixx"), SubResource("Resource_icqfo"), SubResource("Resource_1ysnp")])
+slots = Array[ExtResource("2_oa8nt")]([SubResource("Resource_e4306")])
+min_difference = 0

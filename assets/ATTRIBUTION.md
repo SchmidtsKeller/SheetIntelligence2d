@@ -23,6 +23,17 @@ All are **CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>), as s
 | `dog_bark.ogg` | [Single Dog Bark](https://freesound.org/people/kwahmah_02/sounds/277058/) | kwahmah_02 | the bark |
 | `bat_01.ogg` … `bat_03.ogg` | [Bat Screeches](https://opengameart.org/content/bat-screeches) (from [fruit_bats3](https://freesound.org/s/104205/) by polymorpheva) | AntumDeluge | `bat_01` to `bat_03.flac` of the pack |
 
+## Character animations (#74)
+
+Made for this project by the team, not third-party assets. The painted top-down characters were animated and baked into Godot `SpriteFrames` packs (384x384 cells, facing +x) with the team's AI Studio app "MonsterWalk" (Google AI Studio, Gemini), which rigs the source paintings and bakes keyframed walk cycles. The packs were imported with `tools/import_sprite_pack.gd`: cropped to what the frames cover, scaled down (0.4, the spider 0.5) and repacked; the animations, frame rates and loops are unchanged.
+
+| Files | Pack | Animations (frames @ fps) |
+|:--|:--|:--|
+| `sheep/sheep_sheet.png`, `sheep/sheep_frames.tres` | NPC Sheep | idle 14 @ 10, graze 20 @ 12, walk 18 @ 20, sprint 14 @ 24 |
+| `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24 |
+| `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
+| `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
+
 ## Painted ground (#76)
 
 Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.

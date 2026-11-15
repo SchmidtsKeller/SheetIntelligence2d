@@ -240,6 +240,7 @@ func _assert_behaves_alike() -> void:
 		assert_lte(phase["distance"], ROUNDING, "shown in the same place: %s" % phase)
 		assert_lte(phase["heading"], 0.0001, "facing the same way: %s" % phase)
 		assert_eq(phase["state_frames"], 0, "doing the same in every frame: %s" % phase)
+		assert_eq(phase["painted_frames"], 0, "the same painted frame in every frame: %s" % phase)
 		assert_gt(phase["frames"], 10, "enough frames were compared: %s" % phase)
 	assert_signal_emit_count(monster, &"bleated", 1)
 	assert_signal_emit_count(twin, &"bleated", 1)
@@ -394,7 +395,7 @@ func _shown_offset(body: SheepBody, start_offset: Vector2) -> Vector2:
 
 
 ## How far apart the Monster and the twin are shown right now:
-## [code][distance, heading, state differs][/code].
+## [code][distance, heading, state differs, painted frame differs][/code].
 func _compare(monster: SheepBody, twin: SheepBody) -> Array:
 	var monster_facing: Node2D = monster.get_node(^"Facing")
 	var twin_facing: Node2D = twin.get_node(^"Facing")
@@ -402,6 +403,7 @@ func _compare(monster: SheepBody, twin: SheepBody) -> Array:
 		_shown_offset(monster, MONSTER_OFFSET).distance_to(_shown_offset(twin, TWIN_OFFSET)),
 		absf(angle_difference(monster_facing.global_rotation, twin_facing.global_rotation)),
 		monster.get_state() != twin.get_state(),
+		_painted_frame(monster) != _painted_frame(twin),
 	]
 
 
@@ -409,7 +411,9 @@ func _compare(monster: SheepBody, twin: SheepBody) -> Array:
 ## frame that is drawn meanwhile. Returns the largest distance and heading
 ## difference, and in how many frames the two were doing something different.
 func _watch(ticks: int, compare: Callable) -> Dictionary:
-	var worst: Dictionary = {"distance": 0.0, "heading": 0.0, "state_frames": 0, "frames": 0}
+	var worst: Dictionary = {
+		"distance": 0.0, "heading": 0.0, "state_frames": 0, "painted_frames": 0, "frames": 0
+	}
 	var until: int = Engine.get_physics_frames() + ticks
 	var skip: int = 0
 	while Engine.get_physics_frames() < until:
@@ -424,7 +428,23 @@ func _watch(ticks: int, compare: Callable) -> Dictionary:
 		worst["distance"] = maxf(worst["distance"], now[0])
 		worst["heading"] = maxf(worst["heading"], now[1])
 		worst["state_frames"] += int(now[2])
+		worst["painted_frames"] += int(now[3])
 	return worst
+
+
+## The painted frames a sheep shows right now: animation, frame and speed of
+## every animated layer.
+func _painted_frame(body: SheepBody) -> String:
+	var shown: PackedStringArray = []
+	for node: Node in body.get_node(^"Facing").find_children("*", "AnimatedSprite2D", true, false):
+		var sprite: AnimatedSprite2D = node
+		shown.append(
+			(
+				"%s %s %d %.3f"
+				% [sprite.sprite_frames, sprite.animation, sprite.frame, sprite.speed_scale]
+			)
+		)
+	return ", ".join(shown)
 
 
 func _physics_frames(count: int) -> void:
@@ -476,6 +496,8 @@ func _describe_tree(root: Node2D) -> PackedStringArray:
 			line += " at=%s rot=%s scale=%s" % [at, node_2d.rotation, node_2d.scale]
 		if node is Sprite2D:
 			line += " texture=%s" % (node as Sprite2D).texture
+		if node is AnimatedSprite2D:
+			line += " frames=%s" % (node as AnimatedSprite2D).sprite_frames
 		if node is CollisionObject2D:
 			var solid: CollisionObject2D = node
 			line += " layer=%d mask=%d" % [solid.collision_layer, solid.collision_mask]

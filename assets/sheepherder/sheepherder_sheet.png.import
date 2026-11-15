@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dn6v0k2a73cq4"
-path="res://.godot/imported/marking_dot.svg-3f1d1adfdbffc066ede99629e687b699.ctex"
+uid="uid://dq7psqfmix0fq"
+path="res://.godot/imported/sheepherder_sheet.png-296b0e15de758bebe6ef3805b85b2aea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sheep/placeholder/marking_dot.svg"
-dest_files=["res://.godot/imported/marking_dot.svg-3f1d1adfdbffc066ede99629e687b699.ctex"]
+source_file="res://assets/sheepherder/sheepherder_sheet.png"
+dest_files=["res://.godot/imported/sheepherder_sheet.png-296b0e15de758bebe6ef3805b85b2aea.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

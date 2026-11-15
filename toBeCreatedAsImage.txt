@@ -202,57 +202,30 @@ sprite uses a texture outside such a folder. Sizes, prompts and the exact
 look are in #30; only what #30 does not cover is described here.
 
 Sheep (entities/sheep/appearance/sheep_appearance_catalog.tres; layers built
-by entities/sheep/sheep_body.gd under Facing/Pose/Visual/Body and .../Head;
-one tag per sheep, on Facing). The Monster in sheep form uses exactly the
-same images: no art of its own (no tell).
-  assets/sheep/placeholder/wool.svg            slot wool
-      covered: #30 sheep_body_idle.png (+ the walk, graze, bleat and death
-               sheets)
-  assets/sheep/placeholder/head.svg            slot head
-      covered: #30 sheep_body_idle.png (the head is part of the body there;
-               the code keeps a head anchor for grazing and bleating)
-  assets/sheep/placeholder/pattern_spots.svg   slot pattern
-      covered: #30 sheep_marking_02_back_spots.png
-  assets/sheep/placeholder/pattern_saddle.svg  slot pattern
-      covered: #30 sheep_marking_03_saddle_patch.png
-  assets/sheep/placeholder/pattern_rump.svg    slot pattern
-      covered: #30 sheep_marking_04_dark_rump.png
-  assets/sheep/placeholder/pattern_patches.svg slot pattern
-      NOT in #30.  sheep_marking_06_patches.png, 512x512, transparent:
-               three or four irregular dark grey-brown patches on the flanks;
-               must line up with sheep_body_idle.png like the other layers.
-  assets/sheep/placeholder/marking_stripe.svg  slot marking (paint stripe)
-      covered: #30 sheep_marking_05_white_blaze.png is a coat marking, not
-               paint; if the farmer's paint marks stay, add:
-      NOT in #30.  sheep_paint_stripe.png, 512x512, transparent: a smeared
-               stripe of faded red-brown marking paint along the spine.
-  assets/sheep/placeholder/marking_dot.svg     slot marking (paint dot)
-      NOT in #30.  sheep_paint_dot.png, 512x512, transparent: one round dab
-               of faded marking paint on the back.
-  assets/sheep/placeholder/marking_cross.svg   slot marking (paint cross)
-      NOT in #30.  sheep_paint_cross.png, 512x512, transparent: a painted
-               cross of faded marking paint on the rump.
-  assets/sheep/placeholder/collar_bell.svg     slot accessory
-      covered: #30 sheep_accessory_01_bell_collar.png
-  assets/sheep/placeholder/ribbon.svg          slot accessory
-      covered: #30 sheep_accessory_03_ribbon.png
-  assets/sheep/placeholder/ear_tag.svg         slot accessory
-      covered: #30 sheep_accessory_02_ear_tag.png
+by entities/sheep/sheep_body.gd under Facing/Pose/Visual/Body). The Monster in
+sheep form uses exactly the same images: no art of its own (no tell).
+  The painted, animated sheep is in the game (#74): assets/sheep/
+  sheep_sheet.png with idle, walk, graze and sprint. All sheep are this one
+  sheep in a few shades of wool; the pattern, marking and accessory layers
+  were dropped on purpose, so #30's sheep_marking_* and sheep_accessory_*
+  images are not needed. Still missing, played as code-driven motion for now:
+      covered: #30 sheep_body_bleat_sheet.png, sheep_body_death_shot_sheet.png,
+               sheep_body_death_eaten_sheet.png
 
-The Monster's spider form (drawn in code: entities/monster/spider_visual.gd,
-shown in the sheep's Facing node, so the sheep's tag covers it)
-      covered: #30 spider_idle.png, spider_walk_sheet.png,
-               spider_attack_sheet.png, spider_transform_sheet.png
+The Monster's spider form (entities/monster/spider_visual.gd)
+  The painted spider is in the game (#74): assets/monster/spider_sheet.png
+  with idle, stalk, walk and eat_lunge. Still missing:
+      covered: #30 spider_transform_sheet.png
 
 Sheepherder (entities/sheepherder/sheepherder.tscn -> Art)
-  assets/sheepherder/placeholder/sheepherder.svg
-      covered: #30 sheepherder_idle.png (+ walk, shoot, reload, bell ring,
-               death sheets)
+  The painted Sheepherder is in the game (#74): assets/sheepherder/
+  sheepherder_sheet.png with idle, walk, run and fire. Still missing:
+      covered: #30 sheepherder_reload_sheet.png, sheepherder_bell_ring_sheet.png,
+               sheepherder_death_sheet.png
 
 Companions
-  assets/companions/placeholder/shepherd_dog.svg
-      (entities/companions/shepherd_dog.tscn -> Art)
-      covered: #30 dog_idle.png, dog_walk_sheet.png, dog_alert_sheet.png
+  The painted Shepherd Dog is in the game (#74): assets/companions/
+  shepherd_dog_sheet.png with idle, walk, run and bark.
   assets/companions/placeholder/allied_bat.svg
       (entities/companions/allied_bat.tscn -> Art)
       covered: #30 bat_fly_sheet.png, bat_harass_sheet.png
@@ -269,24 +242,15 @@ Obstacles (entities/obstacles/<name>.tscn -> Art)
   assets/arena/placeholder/hay_bale.svg   covered: #30 hay_bale_01.png
 
 Ground and borders (systems/arena/arena.tscn, built by systems/arena/arena.gd)
-  assets/arena/placeholder/grass.svg      Ground/Grass (tiled)
-      covered: #30 ground_grass_tile.png
-  assets/arena/placeholder/grass_patch.svg  GroundDetails/* (scattered)
-      covered: #30 ground_grass_patch_01.png
+  The painted ground is in the game (#76): assets/arena/ground/, five
+  terrains blended by systems/arena/ground.gdshader, with hills and paths
+  baked into its layout, so #30's ground_grass_tile.png and
+  ground_grass_patch_01.png and the hill and flower details are not needed.
   assets/arena/placeholder/fence.svg      Borders/Fence*/Art (tiled)
       covered: #30 fence_straight.png, fence_corner.png
   assets/arena/placeholder/water.svg      Borders/River/Art (tiled)
       covered: #30 river_water_tile.png, river_bank_straight.png,
                river_bank_corner.png
-  assets/arena/placeholder/hill.svg       GroundDetails/* (scattered)
-      NOT in #30.  ground_hill_01.png, 1024x640 (about 3:2), transparent
-               edges: a gentle rise in the pasture, darker grass on the
-               shaded side, no hard outline; it lies flat on the ground and
-               must not look like an obstacle.
-  assets/arena/placeholder/flowers.svg    GroundDetails/* (scattered)
-      NOT in #30.  ground_flowers_01.png, 256x256, transparent: a small
-               clump of pale, wilted meadow flowers seen from above; muted,
-               only the petals catch the light.
 
 Torches (entities/torch/torch.tscn -> Art; the flame and embers stay in code)
   assets/arena/placeholder/torch.svg
@@ -307,11 +271,3 @@ E. DRAWN IN CODE ON PURPOSE (no image planned; listed so nothing is missed)
       ui/hud/hud_gauge.gd, ui/touch/touch_action_button.gd
   The QR code of the pairing panel (generated)  ui/pairing/pairing_panel.gd
   Debug overlays and sandboxes                (development only)
-
-
-F. ALREADY THERE, NOT WIRED IN YET
---------------------------------------------------------------------------
-resources/animations/{dog,monster,npc,shepherd}/*/assets/*_sheet.png hold
-generated sprite sheets (shepherd dog, spider, NPC sheep, sheepherder) with
-SpriteFrames resources. No scene uses them yet. Check them against #30
-before painting the same animations again.

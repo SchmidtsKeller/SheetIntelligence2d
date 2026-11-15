@@ -26,6 +26,20 @@ const EVENT_PUSH: StringName = &"sheepherder.push"
 ## single frame without movement is not a stop.
 const STEPS_STOP_DELAY: float = 0.15
 
+## Animations of the painted frames (#74).
+const ANIMATION_IDLE: StringName = &"idle"
+const ANIMATION_WALK: StringName = &"walk"
+const ANIMATION_RUN: StringName = &"run"
+const ANIMATION_FIRE: StringName = &"fire"
+## The walk frames are drawn for the Sheepherder's speed; from this many times
+## that speed on, the run frames are shown.
+const RUN_FRAMES_FROM: float = 1.25
+## The walk frames never play slower than this.
+const MIN_WALK_SPEED_SCALE: float = 0.4
+## How quickly the shown speed follows the movement, per second. On the other
+## device the Sheepherder moves in steps, one per snapshot.
+const SPEED_SMOOTHING: float = 8.0
+
 ## The entity id in the session, or -1 outside the registry (sandboxes, tests).
 var entity_id: int = -1
 ## Whether this device moves the Sheepherder.
@@ -54,7 +68,9 @@ var _perks: PerkService
 var _steps_emitter: int = 0
 var _steps_position: Vector2 = Vector2.ZERO
 var _still_time: float = STEPS_STOP_DELAY
+var _shown_speed: float = 0.0
 
+@onready var _art: AnimatedSprite2D = $Art
 @onready var _camera: Camera2D = $Camera
 @onready var _vision_target: VisionTarget = $VisionTarget
 
@@ -136,14 +152,20 @@ func _physics_process(delta: float) -> void:
 	rotation = input.get_aim_direction(global_position).angle()
 
 
-## Footsteps on both devices, from what is shown of the Sheepherder.
+## Footsteps and animation on both devices, from what is shown of the
+## Sheepherder.
 func _process(delta: float) -> void:
+	var moved: float = global_position.distance_to(_steps_position)
 	if global_position != _steps_position:
 		_steps_position = global_position
 		_still_time = 0.0
 	else:
 		_still_time += delta
-	Services.audio.set_emitter_playing(_steps_emitter, _alive and _still_time < STEPS_STOP_DELAY)
+	if delta > 0.0:
+		_shown_speed = lerpf(_shown_speed, moved / delta, 1.0 - exp(-SPEED_SMOOTHING * delta))
+	var walking: bool = _alive and _still_time < STEPS_STOP_DELAY
+	Services.audio.set_emitter_playing(_steps_emitter, walking)
+	_animate(walking)
 
 
 ## Whether the Sheepherder is alive. The Monster's attack kills them at once
@@ -281,6 +303,34 @@ func _entity_id_of(node: Node) -> int:
 
 func _on_shot_fired(origin: Vector2, end_position: Vector2, _result: int) -> void:
 	_add_effect(ShotEffect.new(origin, end_position))
+	if _alive:
+		_art.speed_scale = 1.0
+		_art.play(ANIMATION_FIRE)
+
+
+## Idle, walk or run, from what is shown. A shot plays to its end first; a dead
+## Sheepherder keeps the frame they died with.
+func _animate(walking: bool) -> void:
+	if not _alive:
+		_art.pause()
+		return
+	if _art.animation == ANIMATION_FIRE and _art.is_playing():
+		return
+	var animation: StringName = ANIMATION_IDLE
+	var speed_scale: float = 1.0
+	if walking:
+		var top: float = Services.perks.get_stat(StatIds.HERDER_MOVE_SPEED)
+		var relative: float = _shown_speed / top if top > 0.0 else 1.0
+		animation = ANIMATION_RUN if relative >= RUN_FRAMES_FROM else ANIMATION_WALK
+		speed_scale = maxf(relative, MIN_WALK_SPEED_SCALE) if animation == ANIMATION_WALK else 1.0
+	_art.speed_scale = speed_scale
+	if _art.animation != animation or not _art.is_playing():
+		_art.play(animation)
+
+
+## The animation shown, for tests.
+func get_animation() -> StringName:
+	return _art.animation
 
 
 ## Only the Sheepherder's own player hears the reload: after the third shot it

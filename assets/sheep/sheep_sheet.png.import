@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhvou01juhwx"
-path="res://.godot/imported/pattern_rump.svg-1d281d57a6f9a1deb27dc2d9ae8de1dc.ctex"
+uid="uid://c72t1l4cfx4v3"
+path="res://.godot/imported/sheep_sheet.png-db33f952087b80068f3ac705f8d7dd64.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sheep/placeholder/pattern_rump.svg"
-dest_files=["res://.godot/imported/pattern_rump.svg-1d281d57a6f9a1deb27dc2d9ae8de1dc.ctex"]
+source_file="res://assets/sheep/sheep_sheet.png"
+dest_files=["res://.godot/imported/sheep_sheet.png-db33f952087b80068f3ac705f8d7dd64.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

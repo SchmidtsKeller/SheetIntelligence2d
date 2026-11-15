@@ -153,13 +153,35 @@ func test_an_obstacle_is_tagged_on_its_art() -> void:
 
 
 func test_a_sheep_is_tagged_once_on_what_the_vision_system_fades() -> void:
-	var sheep: SheepBody = add_child_autofree(SHEEP_SCENE.instantiate())
+	# The shipped sheep is painted (#74); two placeholder layers stand in for
+	# art still to come.
+	var placeholder: Texture2D = load("res://assets/evidence/placeholder/blood.svg")
+	var catalog: SheepAppearanceCatalog = SheepAppearanceCatalog.new()
+	for slot_id: StringName in [&"first", &"second"]:
+		var part: SheepAppearancePart = SheepAppearancePart.new()
+		part.texture = placeholder
+		var slot: SheepAppearanceSlot = SheepAppearanceSlot.new()
+		slot.id = slot_id
+		slot.parts = [part]
+		catalog.slots.append(slot)
+	var sheep: SheepBody = SHEEP_SCENE.instantiate()
+	sheep.catalog = catalog
+	add_child_autofree(sheep)
 	await wait_frames(1)
 
 	var tags: Array[Node] = _descendants(sheep, PlaceholderTag)
 	assert_eq(tags.size(), 1, "one word for all the layers")
+	if tags.is_empty():
+		return
 	var faded: CanvasItem = VisionTarget.of(sheep).visual
 	assert_eq(tags[0].get_parent(), faded, "hidden and faded with the sheep")
+
+
+func test_the_painted_sheep_is_not_tagged() -> void:
+	var sheep: SheepBody = add_child_autofree(SHEEP_SCENE.instantiate())
+	await wait_frames(1)
+
+	assert_eq(_descendants(sheep, PlaceholderTag).size(), 0)
 
 
 func _children(node: Node, type: Script) -> Array[Node]:

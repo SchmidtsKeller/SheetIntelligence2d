@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3i5r72haxiv0"
-path="res://.godot/imported/marking_stripe.svg-76bffb828e940bd363f3f9f1a9c129c5.ctex"
+uid="uid://cil24khyxhn37"
+path="res://.godot/imported/shepherd_dog_sheet.png-e33d8a30cb02781da9db079fd18cb535.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sheep/placeholder/marking_stripe.svg"
-dest_files=["res://.godot/imported/marking_stripe.svg-76bffb828e940bd363f3f9f1a9c129c5.ctex"]
+source_file="res://assets/companions/shepherd_dog_sheet.png"
+dest_files=["res://.godot/imported/shepherd_dog_sheet.png-e33d8a30cb02781da9db079fd18cb535.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

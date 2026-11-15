@@ -34,6 +34,23 @@ const CLEARANCE: float = 16.0
 const STUCK_TIME: float = 2.0
 const STUCK_PROGRESS: float = 40.0
 
+## Animations of the painted frames (#74).
+const ANIMATION_IDLE: StringName = &"idle"
+const ANIMATION_WALK: StringName = &"walk"
+const ANIMATION_RUN: StringName = &"run"
+const ANIMATION_BARK: StringName = &"bark"
+## Below this speed the dog is shown standing.
+const WALK_FROM: float = 8.0
+## From this share of the dog speed on, the dog is shown running.
+const RUN_FROM: float = 0.75
+## The speed the walk frames are drawn for, as a share of the dog speed.
+const WALK_FRAMES_SPEED: float = 0.5
+## The walk frames never play slower than this.
+const MIN_WALK_SPEED_SCALE: float = 0.5
+## How quickly the shown speed follows the movement, per second. On the other
+## device the dog moves in steps, one per snapshot.
+const SPEED_SMOOTHING: float = 8.0
+
 ## The entity id in the session, or -1 outside the registry (tests).
 var entity_id: int = -1
 ## Whether this device moves the dog (the host).
@@ -53,6 +70,10 @@ var _alert_at: Vector2 = Vector2.ZERO
 var _stuck_for: float = 0.0
 var _stuck_check_at: Vector2 = Vector2.ZERO
 var _random: RandomNumberGenerator = RandomNumberGenerator.new()
+var _shown_position: Vector2 = Vector2.ZERO
+var _shown_speed: float = 0.0
+
+@onready var _art: AnimatedSprite2D = $Art
 
 
 ## Registers the dog's kind with [param for_session], on both devices and
@@ -78,6 +99,7 @@ static func build(
 
 func _ready() -> void:
 	_random.randomize()
+	_shown_position = global_position
 	_stuck_check_at = global_position
 	var messenger: NetMessenger = session.messenger
 	messenger.register_event(EVENT_BARK, NetMessenger.SenderRule.HOST_ONLY)
@@ -94,6 +116,33 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
 	advance(delta)
+
+
+## Shows the dog standing, walking or running, from how it is seen to move, on
+## both devices. A bark plays to its end first.
+func _process(delta: float) -> void:
+	if delta > 0.0:
+		var speed: float = global_position.distance_to(_shown_position) / delta
+		_shown_speed = lerpf(_shown_speed, speed, 1.0 - exp(-SPEED_SMOOTHING * delta))
+	_shown_position = global_position
+	if _art.animation == ANIMATION_BARK and _art.is_playing():
+		return
+	var animation: StringName = ANIMATION_IDLE
+	var speed_scale: float = 1.0
+	var top: float = Services.perks.get_stat(StatIds.DOG_MOVE_SPEED)
+	if _shown_speed >= WALK_FROM and top > 0.0:
+		var relative: float = _shown_speed / top
+		animation = ANIMATION_RUN if relative >= RUN_FROM else ANIMATION_WALK
+		if animation == ANIMATION_WALK:
+			speed_scale = maxf(relative / WALK_FRAMES_SPEED, MIN_WALK_SPEED_SCALE)
+	_art.speed_scale = speed_scale
+	if _art.animation != animation or not _art.is_playing():
+		_art.play(animation)
+
+
+## The animation shown, for tests.
+func get_animation() -> StringName:
+	return _art.animation
 
 
 ## Moves the dog on by [param delta] seconds: follows the Sheepherder, or faces
@@ -192,4 +241,6 @@ func _on_bark(payload: Array, _sender_id: int) -> void:
 	if payload[0] != entity_id:
 		return
 	Services.audio.play_event(AudioEvents.DOG_BARK, global_position)
+	_art.speed_scale = 1.0
+	_art.play(ANIMATION_BARK)
 	barked.emit()

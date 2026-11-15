@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://pq5n33p0gbo1"
-path="res://.godot/imported/wool.svg-a1b588081b01a5d4a74abc927045a329.ctex"
+uid="uid://mqh4qeuae680"
+path="res://.godot/imported/spider_sheet.png-de6f7cc20892cd359b49b147f073a1c4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sheep/placeholder/wool.svg"
-dest_files=["res://.godot/imported/wool.svg-a1b588081b01a5d4a74abc927045a329.ctex"]
+source_file="res://assets/monster/spider_sheet.png"
+dest_files=["res://.godot/imported/spider_sheet.png-de6f7cc20892cd359b49b147f073a1c4.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
