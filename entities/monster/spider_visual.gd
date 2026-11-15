@@ -69,4 +69,3 @@ func _process(_delta: float) -> void:
 ## The animation shown, for tests and the self-check.
 func get_animation() -> StringName:
 	return _sprite.animation if _sprite != null else &""
-

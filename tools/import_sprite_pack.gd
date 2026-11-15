@@ -122,8 +122,10 @@ func _import(pack: String, output: String, sheet_name: String, scale: float) -> 
 ## Reads the cells and animations of a SpriteFrames text resource.
 func _parse(text: String) -> bool:
 	var region_pattern: RegEx = RegEx.create_from_string(
-		'\\[sub_resource type="AtlasTexture" id="([^"]+)"\\][^\\[]*?region = Rect2\\('
-		+ "([0-9.]+), ([0-9.]+), ([0-9.]+), ([0-9.]+)\\)"
+		(
+			'\\[sub_resource type="AtlasTexture" id="([^"]+)"\\][^\\[]*?region = Rect2\\('
+			+ "([0-9.]+), ([0-9.]+), ([0-9.]+), ([0-9.]+)\\)"
+		)
 	)
 	for found: RegExMatch in region_pattern.search_all(text):
 		_regions[found.get_string(1)] = Rect2i(
@@ -133,8 +135,10 @@ func _parse(text: String) -> bool:
 			found.get_string(5).to_int()
 		)
 	var animation_pattern: RegEx = RegEx.create_from_string(
-		'"frames": \\[([^\\]]*)\\],\\s*"loop": (true|false),\\s*"name": &"([^"]+)",'
-		+ '\\s*"speed": ([0-9.]+)'
+		(
+			'"frames": \\[([^\\]]*)\\],\\s*"loop": (true|false),\\s*"name": &"([^"]+)",'
+			+ '\\s*"speed": ([0-9.]+)'
+		)
 	)
 	var frame_pattern: RegEx = RegEx.create_from_string(
 		'"duration": ([0-9.]+), "texture": SubResource\\("([^"]+)"\\)'
@@ -143,14 +147,13 @@ func _parse(text: String) -> bool:
 		var frames: Array[Dictionary] = []
 		for frame: RegExMatch in frame_pattern.search_all(found.get_string(1)):
 			frames.append({"id": frame.get_string(2), "duration": frame.get_string(1).to_float()})
-		_animations.append(
-			{
-				"name": found.get_string(3),
-				"loop": found.get_string(2) == "true",
-				"speed": found.get_string(4).to_float(),
-				"frames": frames,
-			}
-		)
+		var animation: Dictionary = {
+			"name": found.get_string(3),
+			"loop": found.get_string(2) == "true",
+			"speed": found.get_string(4).to_float(),
+			"frames": frames,
+		}
+		_animations.append(animation)
 	return not _regions.is_empty() and not _animations.is_empty()
 
 
@@ -213,17 +216,14 @@ func _sprite_frames_text(
 					% [_number(frame.duration), frame.id]
 				)
 			)
-		animations.append(
-			(
-				'{\n"frames": [%s],\n"loop": %s,\n"name": &"%s",\n"speed": %s\n}'
-				% [
-					", ".join(frames),
-					"true" if animation.loop else "false",
-					animation.name,
-					_number(animation.speed),
-				]
-			)
-		)
+		var values: Array = [
+			", ".join(frames),
+			"true" if animation.loop else "false",
+			animation.name,
+			_number(animation.speed),
+		]
+		var entry: String = '{\n"frames": [%s],\n"loop": %s,\n"name": &"%s",\n"speed": %s\n}'
+		animations.append(entry % values)
 	lines.append("animations = [%s]" % ", ".join(animations))
 	lines.append("")
 	return "\n".join(lines)
