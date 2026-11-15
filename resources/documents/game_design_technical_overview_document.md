@@ -55,7 +55,9 @@
 - **Vision & Fog of War Mechanics:**
   * Equipped with a flashlight attached to the end of a single-shot rifle, casting a light cone restricted by specific width and length parameters. The Sheepherder holds the rifle in both hands, aiming the flashlight and the weapon wherever they point. 
   * *Aiming/Rotation:* Rotates 360 degrees around the Sheepherder to match viewing direction (controlled via Mouse cursor on PC; secondary virtual joystick on Mobile).
-  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible inside the light cone. Players must rely on spatial audio cues to track unseen movement.
+  * *Strict Fog of War Rules:* Outside the light, the map lies in night darkness: darker and colder, not black. **Static map elements** (trees, bushes, barns, ground details, torches) stay readable in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless light falls on them, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible in the light. Players must rely on spatial audio cues to track unseen movement.
+  * *Light falloff:* The cone is fully lit. Beyond its end the light fades out softly over a further `60 %` of the cone's length, and beside it over `12°` on each side. An entity in the fade is shown as dim as the light there and counts as seen while at least half lit.
+  * *Torches:* Torches stand at fixed spots in the arena. The Sheepherder lights one by walking up to it; it burns for the rest of the round and lights a circle around it (blocked by obstacles), which counts for the Sheepherder's sight like the flashlight. Light depends only on position, never on which sheep stands there.
 - **Combat & Firearm Mechanics:**
   * Equipped with the aforementioned single-shot rifle with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
@@ -139,6 +141,9 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Flashlight Cone Length | `350 px` | Blocked by solid obstacles (trees, barns, hay bales); `429 px` with *Long Flashlight* perk |
 | | Bell Cooldown | `12.0s` | Draws nearby sheep toward the Sheepherder |
 | | Bell Radius | `400 px` | Sheep within this distance walk toward the Sheepherder |
+| | Flashlight Fade | `+60 %` length, `12°` each side | The light fades out beyond the cone; perks and the bat scale it with the cone |
+| | Torch Light Radius | `200 px` | Fully lit; the light fades out over a further `120 px` |
+| | Torch Ignite Range | `60 px` | A living Sheepherder this close lights a torch |
 | **Monster** | Base Movement Speed | `180 px/s` | Same as the NPC sheep movement speed for seamless mimicry |
 | | Sprint Speed | `270 px/s` | `1.5×` base speed while the sprint button is held; sheep form only |
 | | Sprint Stamina | `3.0s` | Drains while sprinting; refills at `0.5×` speed while not sprinting (`6.0s` from empty to full) |

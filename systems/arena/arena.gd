@@ -7,14 +7,20 @@ extends Node2D
 ## fences on three sides and a river along the bottom, are built from it, so
 ## they always match. Obstacles are placed by hand in the scene.
 ##
+## Torches stand at fixed spots placed in the scene. A living Sheepherder who
+## walks up to an unlit torch lights it: the host decides and announces it with
+## [constant EVENT_TORCH_LIT], and both devices light it (#63).
+##
 ## Layers, bottom to top: ground, ground details, decals, borders, entities,
-## obstacles, overlays.
+## obstacles, torches, overlays.
 
 ## Candidates [method sample_free_position] tries before it gives up.
 const MAX_SAMPLE_ATTEMPTS: int = 10000
 ## Mixed into the round seed, so spawn positions do not repeat the numbers the
 ## same seed gives elsewhere (e.g. the sheep's looks).
 const SPAWN_SEED_SALT: int = 0x5A17_0B5E
+## The host lit a torch: [code][torch index][/code].
+const EVENT_TORCH_LIT: StringName = &"arena.torch_lit"
 
 @export_group("Borders")
 ## Width of the fences along the top, left and right edge.
@@ -45,6 +51,14 @@ var debug_overlay_visible: bool:
 	set(value):
 		_debug_overlay.visible = value
 
+## The session that carries the torch events. Defaults to
+## [code]Services.session[/code].
+var session: GameSession:
+	get:
+		if session == null:
+			session = Services.session
+		return session
+
 var _footprints: Array[PackedVector2Array] = []
 # A circle around each footprint, to skip far obstacles quickly.
 var _footprint_centers: PackedVector2Array = []
@@ -56,6 +70,7 @@ var _footprint_radii: PackedFloat32Array = []
 @onready var _borders: Node2D = $Borders
 @onready var _entities: Node2D = $Entities
 @onready var _obstacles: Node2D = $Obstacles
+@onready var _torches: Node2D = $Torches
 @onready var _overlays: Node2D = $Overlays
 @onready var _sheepherder_spawn: SpawnArea = $SpawnAreas/Sheepherder
 @onready var _flock_spawn: SpawnArea = $SpawnAreas/Flock
@@ -78,6 +93,18 @@ func _ready() -> void:
 		_footprint_radii.append(radius)
 	_debug_overlay.arena = self
 	_debug_overlay.visible = false
+	var messenger: NetMessenger = session.messenger
+	messenger.register_event(EVENT_TORCH_LIT, NetMessenger.SenderRule.HOST_ONLY)
+	messenger.subscribe(EVENT_TORCH_LIT, _on_torch_lit)
+
+
+func _exit_tree() -> void:
+	session.messenger.unsubscribe(EVENT_TORCH_LIT, _on_torch_lit)
+
+
+func _physics_process(_delta: float) -> void:
+	if session.messenger.is_host():
+		_light_torches_near_sheepherders()
 
 
 # --- Geometry --------------------------------------------------------------------
@@ -213,6 +240,42 @@ func get_sheepherder_spawn_area() -> Rect2:
 ## The spawn area of the flock and the Monster.
 func get_flock_spawn_area() -> Rect2:
 	return _flock_spawn.get_area()
+
+
+# --- Torches --------------------------------------------------------------------
+
+
+## The arena's torches, in a fixed order that both devices share.
+func get_torches() -> Array[Torch]:
+	var torches: Array[Torch] = []
+	for child: Node in _torches.get_children():
+		if child is Torch:
+			torches.append(child)
+	return torches
+
+
+## Host: announces every unlit torch that a living Sheepherder stands next to.
+func _light_torches_near_sheepherders() -> void:
+	var ignite_range: float = Services.perks.get_stat(StatIds.TORCH_IGNITE_RANGE)
+	var torches: Array[Torch] = get_torches()
+	for node: Node in get_tree().get_nodes_in_group(Groups.SHEEPHERDER):
+		var herder: Sheepherder = node as Sheepherder
+		if herder == null or not herder.is_alive() or not herder.is_inside_tree():
+			continue
+		for index: int in torches.size():
+			var torch: Torch = torches[index]
+			if torch.is_lit():
+				continue
+			if torch.global_position.distance_to(herder.global_position) <= ignite_range:
+				session.messenger.broadcast(EVENT_TORCH_LIT, [index])
+
+
+## Both devices: the host lit a torch.
+func _on_torch_lit(payload: Array, _sender_id: int) -> void:
+	var torches: Array[Torch] = get_torches()
+	var index: int = payload[0]
+	if index >= 0 and index < torches.size():
+		torches[index].light()
 
 
 # --- Building --------------------------------------------------------------------

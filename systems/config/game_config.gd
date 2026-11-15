@@ -127,6 +127,20 @@ extends Resource
 ## How fast a sheep turns toward the direction it wants to walk.
 @export_range(0.0, 3600.0, 10.0, "suffix:°/s") var sheep_turn_rate_deg: float = 540.0
 
+@export_group("Lighting")
+## Beyond the end of the flashlight cone its light fades out over this share
+## of the cone's length (0.6: a 350 px cone fades out by 560 px). Perks and the
+## bat change it along with the length.
+@export_range(0.0, 3.0, 0.05, "suffix:×") var flashlight_fade_length_share: float = 0.6
+## Beside the cone its light fades out over this angle on each side.
+@export_range(0.0, 90.0, 0.5, "suffix:°") var flashlight_fade_angle_deg: float = 12.0
+## A lit torch fully lights everything this close to it ...
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var torch_light_radius: float = 200.0
+## ... and its light fades out over this distance beyond.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var torch_fade_length: float = 120.0
+## A living Sheepherder this close to an unlit torch lights it.
+@export_range(0.0, 500.0, 1.0, "suffix:px") var torch_ignite_range: float = 60.0
+
 @export_group("Arena")
 ## Width of the arena, borders included.
 @export_range(800.0, 20000.0, 1.0, "suffix:px") var arena_width: float = 3200.0

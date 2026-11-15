@@ -18,6 +18,8 @@ const DYNAMIC_ENTITIES: StringName = &"dynamic_entities"
 const OBSTACLES: StringName = &"obstacles"
 ## Static map elements that stay faintly visible in darkness (GDD §3.1).
 const STATIC_SCENERY: StringName = &"static_scenery"
+## The arena's torches, lit or not.
+const TORCHES: StringName = &"torches"
 
 ## The arena of the running round. There is at most one.
 const ARENA: StringName = &"arena"
@@ -30,6 +32,7 @@ const ALL: Array[StringName] = [
 	DYNAMIC_ENTITIES,
 	OBSTACLES,
 	STATIC_SCENERY,
+	TORCHES,
 ]
 
 

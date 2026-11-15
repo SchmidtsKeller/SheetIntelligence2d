@@ -87,11 +87,14 @@ func test_the_sheepherder_starts_in_their_corner_far_from_the_flock() -> void:
 	assert_true(arena.get_sheepherder_spawn_area().has_point(herder.global_position))
 	assert_true(arena.get_flock_spawn_area().has_point(monster.global_position))
 	# Nobody can act in the countdown; the flock must be out of the flashlight
-	# so a Monster that stands still is not seen doing so.
+	# so a Monster that stands still is not seen doing so, not even in the fade.
+	var config: GameConfig = Services.config
 	assert_gt(
 		herder.global_position.distance_to(monster.global_position),
-		Services.config.flashlight_cone_length
+		config.flashlight_cone_length * (1.0 + config.flashlight_fade_length_share)
 	)
+	for torch: Torch in arena.get_torches():
+		assert_false(torch.is_lit(), "no torch burns before anybody lit one")
 
 
 func test_nobody_can_act_before_the_countdown_is_over() -> void:
