@@ -143,6 +143,7 @@ func test_shipped_catalog_is_complete() -> void:
 				SheepBody.FRAMES_WALK,
 				SheepBody.FRAMES_SPRINT,
 				SheepBody.FRAMES_GRAZE,
+				SheepBody.FRAMES_EAT,
 			]:
 				assert_true(
 					part.frames.has_animation(animation),

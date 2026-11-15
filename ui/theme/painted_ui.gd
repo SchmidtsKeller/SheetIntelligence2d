@@ -20,6 +20,19 @@ const FRAMES: Dictionary[String, Vector2] = {
 	"ui_button": Vector2(16.0, 12.0),
 	"ui_choice_button": Vector2(22.0, 18.0),
 	"ui_board": Vector2(26.0, 26.0),
+	"ui_board_large": Vector2(34.0, 34.0),
+	"hud_bar": Vector2(18.0, 10.0),
+}
+
+## The round icon of each action (#96), its base painted in. The Perk action
+## has none: it shows its name.
+const ACTION_ICONS: Dictionary[StringName, String] = {
+	InputActions.SHOOT: "icon_shoot",
+	InputActions.BELL: "icon_bell",
+	InputActions.GRAZE: "icon_graze",
+	InputActions.BLEAT: "icon_bleat",
+	InputActions.EAT: "icon_eat",
+	InputActions.SPRINT: "icon_print",
 }
 
 ## Ink on the parchment of the board and the choice buttons: dark enough to
@@ -46,6 +59,11 @@ static func box(piece_name: String, kind: String) -> StyleBoxTexture:
 	style.texture_margin_top = frame.y
 	style.texture_margin_bottom = frame.y
 	return style
+
+
+## The painted icon of [param action], or [code]null[/code] for one without.
+static func action_icon(action: StringName) -> Texture2D:
+	return texture(ACTION_ICONS[action]) if ACTION_ICONS.has(action) else null
 
 
 ## A round touch control piece drawn at the size of its control.

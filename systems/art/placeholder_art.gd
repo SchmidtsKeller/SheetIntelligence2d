@@ -19,6 +19,12 @@ const OUTLINE_SIZE: int = 3
 const MIN_FONT_SIZE: int = 7
 const MAX_FONT_SIZE: int = 14
 
+## Whether placeholders are marked at all. Off: nothing in the game says
+## "Placeholder" and no empty stand-in slots are shown (#96); what is missing
+## is listed in toBeCreatedAsImage.txt. Switch it on to find the stand-ins
+## while developing.
+static var marks_shown: bool = false
+
 
 ## Whether [param texture] is placeholder art.
 static func is_placeholder(texture: Texture2D) -> bool:
@@ -39,6 +45,8 @@ static func font_size_for(width: float, largest: int = MAX_FONT_SIZE) -> int:
 ## Draws the word centered on [param center] into [param canvas_item]. Call it
 ## from a [method CanvasItem._draw] or a [method StyleBox._draw].
 static func draw_word(canvas_item: RID, center: Vector2, font_size: int) -> void:
+	if not marks_shown:
+		return
 	var font: Font = ThemeDB.fallback_font
 	var text_size: Vector2 = font.get_string_size(WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var baseline: Vector2 = Vector2(
@@ -62,6 +70,8 @@ static func draw_word(canvas_item: RID, center: Vector2, font_size: int) -> void
 static func draw_word_in_corner(
 	canvas_item: RID, rect: Rect2, font_size: int = 11, corner: Corner = CORNER_TOP_RIGHT
 ) -> void:
+	if not marks_shown:
+		return
 	var font: Font = ThemeDB.fallback_font
 	var text_size: Vector2 = font.get_string_size(WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var half: Vector2 = text_size / 2.0 + Vector2(4.0, 4.0)

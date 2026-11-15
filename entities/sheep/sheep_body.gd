@@ -45,12 +45,14 @@ const ANIMATION_EATEN: StringName = &"eaten"
 const ANIMATION_BLEAT: StringName = &"bleat"
 
 ## Animations of the painted frames of animated layers
-## ([member SheepAppearancePart.frames]). A sheep body that eats shows the
-## grazing frames; a dead one keeps the frame it died with.
+## ([member SheepAppearancePart.frames]). A sheep body that devours splits
+## open and swallows its prey once, over the eat duration (GDD §3.2); a dead
+## one keeps the frame it died with.
 const FRAMES_IDLE: StringName = &"idle"
 const FRAMES_WALK: StringName = &"walk"
 const FRAMES_SPRINT: StringName = &"sprint"
 const FRAMES_GRAZE: StringName = &"graze"
+const FRAMES_EAT: StringName = &"eat_feed"
 ## From this many times the sheep speed on, the sprint frames are shown. Only
 ## the sprinting Monster is that fast, and its sprint is meant to be seen
 ## (GDD §3.2).
@@ -313,6 +315,20 @@ func is_devouring() -> bool:
 	return _devour_left > 0.0 and is_alive()
 
 
+## How long the current or last devouring takes in all, in seconds.
+func get_devour_duration() -> float:
+	return _devour_duration
+
+
+## The speed scale that plays the non-looping [param animation] of
+## [param frames] once over the devour duration.
+func devour_frames_speed(frames: SpriteFrames, animation: StringName) -> float:
+	var fps: float = frames.get_animation_speed(animation)
+	if _devour_duration <= 0.0 or fps <= 0.0:
+		return 1.0
+	return frames.get_frame_count(animation) / fps / _devour_duration
+
+
 func get_state() -> State:
 	return _state
 
@@ -517,8 +533,10 @@ func _play_frames() -> void:
 			else:
 				animation = FRAMES_WALK
 				speed_scale = maxf(relative, MIN_WALK_ANIMATION_SPEED)
-		State.GRAZE, State.DEVOUR:
+		State.GRAZE:
 			animation = FRAMES_GRAZE
+		State.DEVOUR:
+			animation = FRAMES_EAT
 	for layer: AnimatedSprite2D in _animated_layers:
 		_show_frames(layer, animation, speed_scale)
 
@@ -530,8 +548,17 @@ func _show_frames(layer: AnimatedSprite2D, animation: StringName, speed_scale: f
 	if not is_alive():
 		layer.pause()
 		return
+	if animation == FRAMES_EAT and not frames.has_animation(FRAMES_EAT):
+		animation = FRAMES_GRAZE
 	if not frames.has_animation(animation):
 		animation = FRAMES_IDLE if frames.has_animation(FRAMES_IDLE) else &"default"
+	if not frames.get_animation_loop(animation):
+		# Played once, from its first frame, over the devouring; once it is
+		# done it keeps its last frame until the state changes.
+		layer.speed_scale = devour_frames_speed(frames, animation)
+		if layer.animation != animation:
+			layer.play(animation)
+		return
 	layer.speed_scale = speed_scale
 	if layer.animation == animation and layer.is_playing():
 		return

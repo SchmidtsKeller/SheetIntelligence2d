@@ -86,40 +86,7 @@ The backdrop is too large for a sheet; make it on its own.
 
 ## 4. HUD
 
-### `hud_action_<action>` — the glyph of an action
-
-128x128 each, transparent; it sits on the round base (`hud_icon_base` on PC, the painted touch button on touchscreens). Pale parchment glyphs, readable at 64 px.
-
-| Id | Prompt |
-|:--|:--|
-| `hud_action_shoot` | `A glyph: an old single-shot rifle seen from above, diagonal, painted in pale parchment colour with dark edges. Single object, centred, clear silhouette, on a flat charcoal background (#31312F).` |
-| `hud_action_bell` | `A glyph: a small brass hand bell, swinging, painted in pale parchment colour with dark edges. Single object, centred, clear silhouette, on a flat charcoal background (#31312F).` |
-| `hud_action_graze` | `A glyph: a tuft of grass with a few blades bent down as if bitten, painted in pale parchment colour with dark edges. Single object, centred, clear silhouette, on a flat charcoal background (#31312F).` |
-| `hud_action_bleat` | `A glyph: an open sheep's mouth with three short curved sound strokes, painted in pale parchment colour with dark edges. Centred, clear silhouette, on a flat charcoal background (#31312F).` |
-| `hud_action_eat` | `A glyph: bared fangs in an open jaw, painted in pale parchment colour with dark edges, a hint of dark crimson. Centred, clear silhouette, on a flat charcoal background (#31312F).` |
-| `hud_action_sprint` | `A glyph: a sheep's hind legs in mid-gallop with motion streaks behind them, painted in pale parchment colour with dark edges. Centred, clear silhouette, on a flat charcoal background (#31312F).` |
-
-The Perk action uses the perk's own icon (section 3).
-
-### `hud_icon_base`, `hud_icon_base_active` — the round base of an action icon on PC
-
-128x128 each, transparent outside the circle; the cooldown slice and the meter ring are drawn on top in code.
-
-```text
-A round iron disc seen from directly above, dark and worn, with a raised scratched rim and a few rivets, its centre calm and almost flat so a glyph can sit on it. Isolated on a flat charcoal background (#31312F).
-```
-
-Active variant: the same prompt, ending with `The rim glows a dull oxidized crimson, as if heated.`
-
-### `hud_bar_frame`, `hud_bar_fill`, `hud_bar_fill_active` — the bars (reload, evolution, stamina)
-
-Frame 320x24 nine-patch with 8 px edges; fills 320x24, stretched horizontally.
-
-```text
-hud_bar_frame: a long thin horizontal frame of dark worn leather stitched to an iron strip, empty inside, seen from directly above. Even along its length so it can be stretched; the two ends finished with small rivets. Isolated on a flat charcoal background (#31312F).
-hud_bar_fill: a long thin horizontal strip of pale parchment, slightly stained and frayed at the edges, even along its length so it can be stretched. Isolated on a flat charcoal background (#31312F).
-hud_bar_fill_active: the same strip of parchment soaked a dull oxidized crimson, even along its length. Isolated on a flat charcoal background (#31312F).
-```
+The action icons, their round base and the bars are painted and in the game (#96); no prompts needed. The Perk action shows its perk's icon (section 3).
 
 ### `hud_milestone_kill`, `hud_milestone_spider` — the two marks on the evolution bar
 
@@ -150,7 +117,7 @@ A small dented tin plate, wider than high, nailed at its two ends, its middle ca
 ### Sheet: Asset Pack 6, HUD
 
 ```text
-ASSET PACK 6: HUD ICONS & BARS (EASY CUT). A collage sheet for a horror game's HUD on a flat, solid, high-contrast charcoal background (#31312F). Each piece stands apart with a clean, distinct outline and no shadow or glow blending into the background; under each piece its file name in small plain white letters. Pieces: six pale-parchment glyphs in one row: a rifle (hud_action_shoot.png), a hand bell (hud_action_bell.png), a bitten grass tuft (hud_action_graze.png), a bleating mouth with sound strokes (hud_action_bleat.png), bared fangs (hud_action_eat.png), galloping hind legs (hud_action_sprint.png); two round dark iron discs, one plain (hud_icon_base.png) and one with a dull crimson glowing rim (hud_icon_base_active.png); three long thin bars: an empty leather and iron frame (hud_bar_frame.png), a parchment strip (hud_bar_fill.png), a crimson-soaked strip (hud_bar_fill_active.png); a tiny sheep skull (hud_milestone_kill.png) and a bristly spider leg (hud_milestone_spider.png); a brass cartridge (hud_bullet.png) and its dull outline (hud_bullet_empty.png); a small dented tin plate (hud_timer_plate.png).
+ASSET PACK 6: HUD DETAILS (EASY CUT). A collage sheet for a horror game's HUD on a flat, solid, high-contrast charcoal background (#31312F). Each piece stands apart with a clean, distinct outline and no shadow or glow blending into the background; under each piece its file name in small plain white letters. Pieces: a tiny sheep skull (hud_milestone_kill.png) and a bristly spider leg (hud_milestone_spider.png); a brass cartridge (hud_bullet.png) and its dull outline (hud_bullet_empty.png); a small dented tin plate (hud_timer_plate.png).
 ```
 
 ---
@@ -212,7 +179,7 @@ For a sound generator. Mono, 44.1 kHz, Ogg Vorbis, peak about −3 dBFS, no musi
 
 | File | Length | Prompt |
 |:--|:--|:--|
-| `bleat_01.ogg` … `bleat_04.ogg` | 0.8–1.5 s each | `A single adult sheep bleating once, close and dry, outdoors at night. Four takes that differ in pitch and shape: a short flat "baa", a long wavering one, a low hoarse one, a nervous higher one.` |
+| `bleat_01.ogg` … `bleat_04.ogg` (done: replaced by the team's recordings `assets/audio/sheep/bleat_01.wav` … `bleat_08.wav`, #95) | 0.8–1.5 s each | `A single adult sheep bleating once, close and dry, outdoors at night. Four takes that differ in pitch and shape: a short flat "baa", a long wavering one, a low hoarse one, a nervous higher one.` |
 | `grass_move_loop.ogg` | 4–8 s, loop | `Steady rustling of tall dry grass as a sheep walks through it slowly, close and dry, no footsteps on hard ground, seamless loop.` |
 | `graze_loop.ogg` | 6–12 s, loop | `A sheep grazing up close: soft tearing of grass blades and slow chewing, calm, dry, seamless loop.` |
 | `herder_step_loop.ogg` | 4 s, loop | `Heavy leather boots walking at an even pace on damp grass and soft earth, one step every half second, close and dry, seamless loop.` |

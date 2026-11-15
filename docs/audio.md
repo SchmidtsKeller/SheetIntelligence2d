@@ -111,14 +111,14 @@ Use headphones, and hold a phone sideways: upright, it shows only about 400 px o
 
 The [AudioCatalog](../systems/audio/audio_catalog.tres) gives every event, cue and ambience layer an [AudioCue](../systems/audio/audio_cue.gd): its variations, bus, volume, pitch variation and fade, whether it ducks the ambience, and for a layer of one-shots (the owl) how often it plays. Each one-shot picks a variation and a pitch at random; a loop uses its first sound, imported with looping on. To change a sound, replace its file or its cue in the catalog; nothing else has to change.
 
-The sounds are in `assets/audio/`, by who makes them: `sheep/`, `sheepherder/`, `monster/`, `companions/`, `world/` (the torches), `cues/` (one player's cues), `ui/` (menus and the round's flow) and `ambience/`. They are mono 44.1 kHz Ogg Vorbis, 1.9 MB together.
+The sounds are in `assets/audio/`, by who makes them: `sheep/`, `sheepherder/`, `monster/`, `companions/`, `world/` (the torches), `cues/` (one player's cues), `ui/` (menus and the round's flow) and `ambience/`. They are mono 44.1 kHz Ogg Vorbis, except the bleats: the team's WAV takes (48 kHz), which Godot compresses with QOA on import (#95). In the build they take about 1.7 MB (1.6 MB of Ogg, 0.14 MB of bleats).
 
 - **Recorded for the game** by FrankAntonGabriel: the eight bleats, the rustle and the Sheepherder's footsteps.
 - **CC0**, from Freesound and OpenGameArt: everything else.
 
 [assets/ATTRIBUTION.md](../assets/ATTRIBUTION.md) lists every source and what was taken from it.
 
-**Levels.** Sounds in the world are levelled to a peak of −1 dBFS, their loops to an RMS of −27 dBFS; the catalog sets how loud each one plays. Cues are levelled by their loudest 300 ms (−20 to −26 dBFS, so that a short click and a long chord sound alike), the ambience to an RMS of −30 dBFS (wind) and −33 dBFS (crickets), and the catalog plays it 10 dB lower. These are starting points for listening on devices (step 6 above), not measured loudness.
+**Levels.** Sounds in the world are levelled to a peak of −1 dBFS (the bleats as recorded: −1.5 to −6.9 dBFS), their loops to an RMS of −27 dBFS; the catalog sets how loud each one plays. Cues are levelled by their loudest 300 ms (−20 to −26 dBFS, so that a short click and a long chord sound alike), the ambience to an RMS of −30 dBFS (wind) and −33 dBFS (crickets), and the catalog plays it 10 dB lower. These are starting points for listening on devices (step 6 above), not measured loudness.
 
 ## Known limits
 

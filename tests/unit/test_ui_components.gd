@@ -6,6 +6,12 @@ const TREE_SCENE: PackedScene = preload("res://entities/obstacles/tree.tscn")
 const PLACEHOLDER_TEXTURE: Texture2D = preload("res://assets/arena/placeholder/bush.svg")
 const BUTTON_STATES: Array[StringName] = [&"normal", &"hover", &"pressed", &"disabled"]
 
+
+func after_each() -> void:
+	# Tests of the marking switch it on for themselves.
+	PlaceholderArt.marks_shown = false
+
+
 # --- Theme -----------------------------------------------------------------------
 
 
@@ -22,9 +28,8 @@ func test_the_text_is_set_in_the_games_font() -> void:
 	assert_eq(theme.default_font, GameTheme.FONT)
 	assert_eq(GameTheme.FONT.resource_path, "res://assets/fonts/IMFellEnglish-Regular.ttf")
 	assert_eq(theme.get_font(&"font", GameTheme.HEADING), GameTheme.FONT)
-	# Small HUD numbers keep the plain font: the old-style digits blur there.
-	assert_eq(theme.get_font(&"font", GameTheme.HUD_TEXT), GameTheme.readable_font())
-	assert_ne(GameTheme.readable_font(), GameTheme.FONT)
+	assert_eq(theme.get_font(&"font", GameTheme.HUD_TEXT), GameTheme.FONT, "the HUD too")
+	assert_eq(ThemeDB.fallback_font, GameTheme.FONT, "and everything outside the theme")
 
 
 func test_every_label_style_has_its_font_size() -> void:
@@ -48,7 +53,7 @@ func test_buttons_and_boards_are_painted() -> void:
 		var held: StyleBoxTexture = theme.get_stylebox(&"hover_pressed", type)
 		assert_eq(held.texture, (theme.get_stylebox(&"pressed", type) as StyleBoxTexture).texture)
 	var board: StyleBoxTexture = theme.get_stylebox(&"panel", GameTheme.BOARD_PANEL)
-	assert_eq(board.texture.resource_path, PaintedUi.FOLDER + "ui_board.png")
+	assert_eq(board.texture.resource_path, PaintedUi.FOLDER + "ui_board_large.png")
 	assert_gt(board.texture_margin_left, 0.0, "the frame does not stretch")
 
 
@@ -95,7 +100,26 @@ func test_a_menu_button_is_large_enough_for_a_thumb() -> void:
 	assert_true(pressed[0], "the action runs")
 
 
-func test_a_choice_button_shows_a_placeholder_icon_until_there_is_one() -> void:
+func test_a_choice_button_without_an_icon_shows_no_slot_and_keeps_no_room() -> void:
+	var button: GameButton = add_child_autofree(
+		GameButton.create("Perk", Callable(), GameButton.Kind.CHOICE)
+	)
+	var plain_margin: float = button.get_theme_stylebox(&"normal").content_margin_left
+
+	button.set_choice_icon(null, "perk_icon_test")
+
+	assert_eq(_children(button, PlaceholderBadge).size(), 0, "no placeholder slot")
+	assert_eq(button.get_theme_stylebox(&"normal").content_margin_left, plain_margin)
+
+	button.set_choice_icon(PLACEHOLDER_TEXTURE, "perk_icon_test")
+
+	assert_eq(button.find_children("*", "TextureRect", false, false).size(), 1)
+	var with_icon: float = button.get_theme_stylebox(&"normal").content_margin_left
+	assert_eq(with_icon, GameTheme.CHOICE_ICON_SPACE, "room for the icon")
+
+
+func test_with_marks_a_choice_button_shows_a_placeholder_icon_until_there_is_one() -> void:
+	PlaceholderArt.marks_shown = true
 	var button: GameButton = add_child_autofree(
 		GameButton.create("Perk", Callable(), GameButton.Kind.CHOICE)
 	)
@@ -157,7 +181,18 @@ func test_placeholder_textures_are_told_by_their_folder() -> void:
 	assert_false(PlaceholderArt.is_placeholder(null))
 
 
+func test_by_default_nothing_says_placeholder() -> void:
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = PLACEHOLDER_TEXTURE
+	add_child_autofree(sprite)
+	await wait_frames(2)
+
+	assert_false(PlaceholderArt.marks_shown)
+	assert_null(PlaceholderTag.of(sprite), "no tag on placeholder art")
+
+
 func test_a_sprite_with_placeholder_art_is_tagged() -> void:
+	PlaceholderArt.marks_shown = true
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.texture = PLACEHOLDER_TEXTURE
 	add_child_autofree(sprite)
@@ -169,6 +204,7 @@ func test_a_sprite_with_placeholder_art_is_tagged() -> void:
 
 
 func test_a_sprite_with_final_art_is_not_tagged_until_it_gets_placeholder_art() -> void:
+	PlaceholderArt.marks_shown = true
 	var sprite: Sprite2D = Sprite2D.new()
 	var image: Image = Image.create_empty(8, 8, false, Image.FORMAT_L8)
 	sprite.texture = ImageTexture.create_from_image(image)
@@ -196,6 +232,7 @@ func test_a_painted_obstacle_is_not_tagged() -> void:
 
 
 func test_an_obstacle_with_placeholder_art_is_tagged_on_its_art() -> void:
+	PlaceholderArt.marks_shown = true
 	var tree: Node2D = TREE_SCENE.instantiate()
 	(tree.get_node(^"Art") as Sprite2D).texture = PLACEHOLDER_TEXTURE
 	add_child_autofree(tree)

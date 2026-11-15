@@ -35,7 +35,7 @@ The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/mo
 
 ### Two instances on one computer
 
-The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
+The game is always played by two devices. Two desktop instances pair in the lobby: one presses **Host a game**, the other **Join a game** (the address field says where the host is; `127.0.0.1` is this computer). The host lets other computers join with **Hosts for the whole network**. They can also connect by themselves:
 
 ```bash
 godot --path . -- --host
@@ -118,7 +118,7 @@ On Windows: `tools\export_web.ps1 --serve`. Add `--debug` for a debug build.
 
 **Pairing.** In the Web build two browsers connect without a server, by exchanging a QR code or text code in each direction (WebRTC). How it works, what was measured and how to test it on devices is in [docs/pairing.md](docs/pairing.md).
 
-**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` is fine for layout and touch controls, but not for pairing: browsers allow camera and clipboard access only over HTTPS or on `localhost` (a Chrome flag helps on Android, see [docs/pairing.md](docs/pairing.md#testing-on-devices)).
+**Test on your phone.** Open the deployed build on the phone, with both devices in the same Wi-Fi. A build served from your computer as `http://<lan-ip>:8060` doesn't start on another device at all, unless its browser treats that address as secure. Godot needs a secure context, even without threads. [docs/pairing.md](docs/pairing.md#testing-on-devices) has the Chrome and Firefox settings.
 
 **Thread Support** is off and the Progressive Web App option is not used, because GitHub Pages cannot send the cross-origin isolation headers that threads need. This affects audio latency in *Stream* mode; see the decision in [docs/web-build.md](docs/web-build.md#decision-no-thread-support-no-progressive-web-app).
 
@@ -223,9 +223,9 @@ Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena
 godot --headless --path . --script res://tools/cut_art_sheets.gd
 ```
 
-What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
+The HUD's action icons, bars and bullet icon and the large board are painted too (#96). Nothing on screen says "Placeholder" any more: what has no image yet is drawn plainly or left out (`PlaceholderArt.marks_shown` brings the marks back while developing). What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
 
-**Font (#86).** Text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink, through the shared theme. Its digits are old-style figures that blur at small sizes, so the small HUD texts with numbers use Godot's plain built-in font (`GameTheme.readable_font()`).
+**Font (#86).** All text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink: through the shared theme, and as the fallback font of everything else, set at start-up by `GameTheme.use_font_everywhere()` from the `SceneFlow` autoload (not through the `gui/theme/custom_font` project setting, which fails the first import of a fresh clone). Its digits are old-style figures, so the small HUD texts are set a little larger.
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 
@@ -386,7 +386,7 @@ The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role n
 
 From page load to the first round (GDD §8.1, #20): pair once, see your role, choose a perk, get ready.
 
-- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
+- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows Host a game and Join a game by address over ENet (#99) and the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
 - **Perk choice.** One perk from the pool of the role you play next, or none; each shows its name, its type (passive, active, companion) and what it does. The other role's perks and choice never appear on your screen (GDD §8.1). Ready locks the choice; it can be taken back until the other player is ready too.
 - **Ready.** `MatchFlow.set_ready` tells the host; when both are ready, the host starts the match, the next round or the rematch. Offline, the computer is always ready.
 - **[Scoreboard](ui/screens/results_screen.gd).** Left: the round's outcome and reason, both players' points with where they come from (GDD §8.2), the round wins and, after the last round, the winner and every round from your view. Right: the role you play next, the perk choice and Ready. The host can end the match and take both back to the lobby. Perks are not revealed.

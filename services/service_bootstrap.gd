@@ -61,11 +61,39 @@ static func create_network_service(config: GameConfig) -> NetworkService:
 	if WebRtcNetworkService.is_available():
 		return WebRtcNetworkService.new()
 	var options: LaunchOptions = LaunchOptions.from_command_line()
-	if options.wants_session() and not OS.has_feature("web") and EnetNetworkService.is_available():
-		var enet: EnetNetworkService = EnetNetworkService.new()
-		enet.connect_timeout = config.net_connect_timeout
-		return enet
+	if options.wants_session() and can_connect_by_address():
+		return _create_enet(config)
 	return StubNetworkService.new()
+
+
+## Whether this build connects two instances by address (the desktop's ENet),
+## as the desktop lobby's Host and Join do.
+static func can_connect_by_address() -> bool:
+	return not OS.has_feature("web") and EnetNetworkService.is_available()
+
+
+## Registers the desktop transport in [param registry] in place of the offline
+## one, so that the lobby can host or join (#99), and returns it. Until then,
+## the offline transport stays: a sandbox scene or a test that starts a session
+## of its own does not open a port. Returns the registered transport if it
+## already connects by address, and [code]null[/code] where none can.
+static func use_address_transport(registry: ServiceRegistry, config: GameConfig) -> NetworkService:
+	var current: NetworkService = registry.try_resolve(NetworkService) as NetworkService
+	if current is EnetNetworkService:
+		return current
+	if not can_connect_by_address():
+		return null
+	var enet: EnetNetworkService = _create_enet(config)
+	var previous: Node = registry.replace(NetworkService, enet)
+	if previous != null:
+		previous.queue_free()
+	return enet
+
+
+static func _create_enet(config: GameConfig) -> EnetNetworkService:
+	var enet: EnetNetworkService = EnetNetworkService.new()
+	enet.connect_timeout = config.net_connect_timeout
+	return enet
 
 
 ## The core contracts that have no implementation in [param registry].

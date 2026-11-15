@@ -443,6 +443,21 @@ func test_the_spider_still_attacks() -> void:
 	assert_eq(_combat.eat_requests, 1)
 
 
+func test_the_spider_splits_open_once_while_it_eats() -> void:
+	var monster: Monster = _spawn(HOST_ID)[0]
+	_combat.monster_form_changed.emit(SPIDER)
+	var spider: SpiderVisual = monster.get_body().get_node(^"Facing/Spider")
+	await _physics_frames(2)
+
+	_combat.eat_started.emit(CombatService.EatTarget.SHEEP, 3, 0.5)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(spider.get_animation(), SpiderVisual.ANIMATION_EAT)
+	await _physics_frames(60)
+	assert_eq(spider.get_animation(), SpiderVisual.ANIMATION_IDLE, "after the meal")
+
+
 func test_a_new_round_brings_the_sheep_back() -> void:
 	var monster: Monster = _spawn(HOST_ID)[0]
 	var body: SheepBody = monster.get_body()

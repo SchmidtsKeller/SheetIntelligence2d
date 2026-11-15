@@ -6,11 +6,11 @@ Every asset in `assets/` that was not made for this project, with its source and
 
 ### Recorded for this project
 
-Recorded by FrankAntonGabriel of the team, not third-party assets. The sources are in `resources/sounds/` (not in the build); they were trimmed or looped, levelled and encoded like the rest.
+Recorded by FrankAntonGabriel of the team, not third-party assets. The sources are in `resources/sounds/` (not in the build). The bleats are the cleaned takes, unchanged (mono, 48 kHz; Godot compresses them with QOA on import, #95); the raw takes and the editing project are in `resources/sounds/NPC/Raw/`. The rustle and the footsteps were looped, levelled and encoded like the rest.
 
 | File in `assets/audio/` | Source in `resources/sounds/` | What was taken |
 |:--|:--|:--|
-| `sheep/bleat_01.ogg` … `bleat_08.ogg` | `NPC/Pass1/Sheep1.wav` … `Sheep8.wav` | each bleat |
+| `sheep/bleat_01.wav` … `bleat_08.wav` | `NPC/Pass1/Sheep1.wav` … `Sheep8.wav` | the whole take |
 | `sheep/grass_move_loop.ogg` | `Walk2.wav` | 1.2–8.2 s as a loop |
 | `sheepherder/herder_step_loop.ogg` | `Walk1.wav` | 1.0–10.8 s as a loop |
 
@@ -59,8 +59,8 @@ Made for this project by the team, not third-party assets. The painted top-down 
 
 | Files | Pack | Animations (frames @ fps) |
 |:--|:--|:--|
-| `sheep/sheep_sheet.png`, `sheep/sheep_frames.tres` | NPC Sheep | idle 14 @ 10, graze 20 @ 12, walk 18 @ 20, sprint 14 @ 24 |
-| `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24 |
+| `sheep/sheep_sheet.png`, `sheep/sheep_frames.tres` | NPC Sheep (`resources/animations/npc/all/x/`, #95) | idle 14 @ 10, graze 20 @ 12, walk 18 @ 20, sprint 14 @ 24, eat_feed 20 @ 20 |
+| `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) (`resources/animations/monster/all/x/`, #95) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24, eat_feed 20 @ 20 |
 | `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
 | `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
 
@@ -78,6 +78,10 @@ Made for this project by the team, not third-party assets. Two painted collage s
 |:--|:--|
 | `ui/painted/` | `ui_board`; `ui_button_*` and `ui_choice_button_*` (normal, hover, pressed, disabled, focus); `touch_joystick_base`, `touch_joystick_tip`; `touch_button_base_normal`, `_pressed`, `_active` |
 | `arena/painted/` | `tree_01`, `tree_02`, `bush_01`, `barn_01`, `shed_01`, `hay_bale_01`, `fence_straight`, `fence_corner`, `torch_01`, `river_water_tile`, `river_bank_straight`, `river_bank_corner`, `ground_grass_tile`, `ground_grass_patch_01`, `ground_hill_01`, `ground_flowers_01` |
+
+## Painted board, HUD bars and icons (#96)
+
+Made for this project by the team, not third-party assets, from the team's React art page (`assetsInsideReactPageTemp/`). The sources are kept in `resources/art_sources/` (`board_large.png`, `hud_bars.png`, `hud_icons.png`); `tools/cut_art_sheets.gd` cut them into `ui/painted/`: `ui_board_large`, `hud_bar_empty`, `hud_bar_fill_gold`, `hud_bar_fill_olive`, `icon_bullets`, `icon_shoot`, `icon_bell`, `icon_graze`, `icon_bleat`, `icon_eat`, `icon_print`.
 
 ## Painted ground (#76)
 

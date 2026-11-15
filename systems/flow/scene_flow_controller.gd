@@ -59,6 +59,10 @@ var _current_screen: Screen = Screen.NONE
 var _start_screen_detected: bool = false
 
 
+func _init() -> void:
+	GameTheme.use_font_everywhere()
+
+
 ## Whether the flow allows going from the current screen to [param screen].
 func can_go_to(screen: Screen) -> bool:
 	return can_transition(current_screen, screen)

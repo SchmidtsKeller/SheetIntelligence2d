@@ -6,11 +6,11 @@ extends RefCounted
 ## (the constants below); none of them styles a control of its own.
 ##
 ## Buttons, choice buttons, boards and the touch joysticks are painted
-## ([PaintedUi], #83). The menu backdrop is still a [PlaceholderStyleBox] that
-## says so. Text is set in IM Fell English (#86), old print with worn ink.
-## Its digits are old-style figures, which blur at small sizes, so the small
-## HUD texts and numbers read during a round use the plain
-## [method readable_font] instead.
+## ([PaintedUi], #83, #96). The menu backdrop has no painting yet: a plain
+## dark [PlaceholderStyleBox]. All text is set in IM Fell English (#86), old print with worn
+## ink; it is also the project's default font, so nothing falls back to
+## another face. Its digits are old-style figures, so the small HUD texts are
+## a little larger than they would be in a modern face.
 
 ## The game's name in large letters, until the logo exists.
 const TITLE: StringName = &"TitleLabel"
@@ -49,7 +49,7 @@ const LABEL_SIZES: Dictionary[StringName, int] = {
 	HUD_TITLE: 40,
 	HUD_TIMER: 34,
 	HUD_MESSAGE: 24,
-	HUD_TEXT: 18,
+	HUD_TEXT: 20,
 }
 const HUD_OUTLINES: Dictionary[StringName, int] = {
 	HUD_TITLE: 6,
@@ -57,7 +57,8 @@ const HUD_OUTLINES: Dictionary[StringName, int] = {
 	HUD_MESSAGE: 6,
 	HUD_TEXT: 4,
 }
-## Room on the left of a choice button for its icon.
+## Room on the left of a choice button that has an icon (see
+## [method GameButton.set_choice_icon]).
 const CHOICE_ICON_SPACE: float = 68.0
 
 static var _theme: Theme
@@ -71,14 +72,18 @@ static func get_theme() -> Theme:
 	return _theme
 
 
-## For small HUD texts with numbers: Godot's plain built-in font.
-static func readable_font() -> Font:
-	return ThemeDB.fallback_font
-
-
 ## Gives [param control] and everything below it the shared theme.
 static func apply(control: Control) -> void:
 	control.theme = get_theme()
+
+
+## Makes [constant FONT] the font of everything that has no theme font: text
+## outside [GameTheme], and code that draws with [member ThemeDB.fallback_font].
+## Done at start-up by the [code]SceneFlow[/code] autoload, not through the
+## project setting [code]gui/theme/custom_font[/code]: that one is loaded before
+## a fresh checkout has imported the font, which fails the import (#96).
+static func use_font_everywhere() -> void:
+	ThemeDB.fallback_font = FONT
 
 
 ## The theme for what stands on a painted board: the same styles, with text in
@@ -108,8 +113,6 @@ static func _add_labels(theme: Theme) -> void:
 		theme.set_type_variation(variation, &"Label")
 		theme.set_font_size(&"font_size", variation, LABEL_SIZES[variation])
 	theme.set_color(&"font_color", TITLE, UiPalette.HIGHLIGHT)
-	for variation: StringName in [HUD_TEXT, HUD_MESSAGE]:
-		theme.set_font(&"font", variation, readable_font())
 	theme.set_color(&"font_color", WARNING, UiPalette.WARNING)
 	for variation: StringName in HUD_OUTLINES:
 		theme.set_constant(&"outline_size", variation, HUD_OUTLINES[variation])
@@ -129,11 +132,12 @@ static func _add_buttons(theme: Theme) -> void:
 	theme.set_color(&"font_outline_color", &"Button", UiPalette.HUD_BACKGROUND)
 	# Choices (a perk) are parchment on wood, with ink.
 	theme.set_type_variation(CHOICE_BUTTON, &"Button")
-	_set_button_styles(theme, CHOICE_BUTTON, "ui_choice_button", 12.0)
+	_set_button_styles(theme, CHOICE_BUTTON, "ui_choice_button", 24.0)
+	theme.set_font_size(&"font_size", CHOICE_BUTTON, 17)
 	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
 		var box: StyleBox = theme.get_stylebox(state, CHOICE_BUTTON)
-		box.content_margin_left = CHOICE_ICON_SPACE
-	theme.set_font_size(&"font_size", CHOICE_BUTTON, 17)
+		box.content_margin_top = 13.0
+		box.content_margin_bottom = 13.0
 	theme.set_color(&"font_color", CHOICE_BUTTON, PaintedUi.INK)
 	theme.set_color(&"font_hover_color", CHOICE_BUTTON, PaintedUi.INK)
 	theme.set_color(&"font_focus_color", CHOICE_BUTTON, PaintedUi.INK)
@@ -167,11 +171,11 @@ static func _set_button_styles(
 
 static func _add_panels(theme: Theme) -> void:
 	theme.set_type_variation(BOARD_PANEL, &"PanelContainer")
-	var board: StyleBoxTexture = PaintedUi.box("ui_board", "ui_board")
-	board.content_margin_left = 22.0
-	board.content_margin_right = 22.0
-	board.content_margin_top = 16.0
-	board.content_margin_bottom = 16.0
+	var board: StyleBoxTexture = PaintedUi.box("ui_board_large", "ui_board_large")
+	board.content_margin_left = 24.0
+	board.content_margin_right = 24.0
+	board.content_margin_top = 26.0
+	board.content_margin_bottom = 26.0
 	theme.set_stylebox(&"panel", BOARD_PANEL, board)
 	theme.set_type_variation(BACKDROP_PANEL, &"Panel")
 	var backdrop: PlaceholderStyleBox = _box(UiPalette.BACKDROP, Color.TRANSPARENT, "ui_backdrop")
