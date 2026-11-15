@@ -109,18 +109,16 @@ func _build_overlay() -> void:
 	layer.name = "Overlay"
 	add_child(layer)
 	# Top right: the top left is the HUD's.
-	_status = Label.new()
-	_status.name = "Status"
+	_status = GameLabel.create(GameTheme.HUD_TEXT, "", "Status")
+	GameTheme.apply(_status)
 	_status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_status.position += Vector2(-12.0, 12.0)
 	layer.add_child(_status)
-	_banner = Label.new()
-	_banner.name = "Banner"
+	_banner = GameLabel.create(GameTheme.HUD_TITLE, "", "Banner")
+	GameTheme.apply(_banner)
 	_banner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_banner.add_theme_font_size_override(&"font_size", 40)
 	layer.add_child(_banner)

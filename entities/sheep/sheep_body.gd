@@ -293,6 +293,18 @@ func _build_layers() -> void:
 		)
 		anchor.add_child(layer)
 		_layers.append(layer)
+	# One "Placeholder" for the whole sheep rather than one per layer; it fades
+	# with the sheep, and the Monster's sheep has it like every other (#69).
+	if _uses_placeholder_art():
+		PlaceholderTag.attach(_facing)
+
+
+func _uses_placeholder_art() -> bool:
+	for slot: SheepAppearanceSlot in catalog.slots:
+		for part: SheepAppearancePart in slot.parts:
+			if PlaceholderArt.is_placeholder(part.texture):
+				return true
+	return false
 
 
 func _apply_appearance() -> void:

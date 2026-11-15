@@ -16,6 +16,7 @@ const OFFLINE_MONSTER: String = "Monster vs. computer"
 const READY: String = "Ready"
 const NOT_READY: String = "Not ready yet"
 const LEAVE: String = "Leave"
+const LABEL_WIDTH: float = 460.0
 
 var _session: GameSession
 var _flow: MatchFlow
@@ -25,6 +26,7 @@ var _match_box: VBoxContainer
 var _players: Label
 var _role: Label
 var _picker: PerkPicker
+var _picker_board: GamePanel
 var _ready_button: Button
 var _other_ready: Label
 
@@ -71,6 +73,7 @@ func _refresh() -> void:
 	_offline_box.visible = not in_session and not _session.requires_pairing_codes()
 	_match_box.visible = in_session
 	_picker.visible = in_session
+	_picker_board.visible = in_session
 	_status.text = _describe_status()
 	if not in_session:
 		return
@@ -124,11 +127,12 @@ func _on_ready_toggled(on: bool) -> void:
 func _build() -> void:
 	var columns: Array[VBoxContainer] = TwoColumns.build(self)
 	var layout: VBoxContainer = columns[0]
+	_picker_board = TwoColumns.board_of(columns[1])
 
-	var title: Label = _add_label(layout, "Title", 40)
-	title.text = "Hide in Sheep Clothing"
-	title.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_status = _add_label(layout, "Status", 18)
+	var title: GameLabel = GameLabel.create(GameTheme.TITLE, "Hide in Sheep Clothing", "Title")
+	GameLabel.mark_as_logo(title)
+	layout.add_child(title)
+	_status = _add_label(layout, "Status", GameTheme.BODY)
 
 	_offline_box = VBoxContainer.new()
 	_offline_box.name = "Offline"
@@ -141,36 +145,26 @@ func _build() -> void:
 	_match_box.name = "Match"
 	_match_box.add_theme_constant_override(&"separation", 12)
 	layout.add_child(_match_box)
-	_players = _add_label(_match_box, "Players", 20)
-	_role = _add_label(_match_box, "Role", 26)
+	_players = _add_label(_match_box, "Players", GameTheme.BODY)
+	_role = _add_label(_match_box, "Role", GameTheme.HEADING)
 	_picker = PerkPicker.new()
 	columns[1].add_child(_picker)
 	_ready_button = _add_button(_match_box, READY, Callable())
 	_ready_button.name = "Ready"
 	_ready_button.toggle_mode = true
 	_ready_button.toggled.connect(_on_ready_toggled)
-	_other_ready = _add_label(_match_box, "OtherReady", 16)
+	_other_ready = _add_label(_match_box, "OtherReady", GameTheme.SMALL)
 	var leave: Button = _add_button(_match_box, LEAVE, _session.leave)
 	leave.name = "Leave"
 
 
-func _add_label(parent: Control, label_name: String, font_size: int) -> Label:
-	var label: Label = Label.new()
-	label.name = label_name
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size.x = 460.0
-	label.add_theme_font_size_override(&"font_size", font_size)
+func _add_label(parent: Control, label_name: String, style: StringName) -> Label:
+	var label: GameLabel = GameLabel.create(style, "", label_name).wrapped(LABEL_WIDTH)
 	parent.add_child(label)
 	return label
 
 
 func _add_button(parent: Control, text: String, action: Callable) -> Button:
-	var button: Button = Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(320.0, 56.0)
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if action.is_valid():
-		button.pressed.connect(action)
+	var button: GameButton = GameButton.create(text, action)
 	parent.add_child(button)
 	return button

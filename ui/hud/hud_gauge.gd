@@ -1,8 +1,9 @@
 class_name HudGauge
 extends Control
 ## One element of the in-game HUD: a bar, a row of pips or a round icon, with
-## a caption. Placeholder looks, like the touch controls; the art pass (#22)
-## styles them.
+## a caption. Placeholder looks, like the touch controls: each says
+## "Placeholder" until the art pass (#70) paints them; the colours come from
+## [UiPalette].
 
 enum Style {
 	## A horizontal bar filled to [member value], with [member marks].
@@ -14,12 +15,12 @@ enum Style {
 	ICON,
 }
 
-const BACKGROUND: Color = Color(0.0, 0.0, 0.0, 0.45)
-const FILL: Color = Color(0.92, 0.88, 0.78, 0.9)
-const EMPTY: Color = Color(1.0, 1.0, 1.0, 0.18)
-const COOLDOWN: Color = Color(0.0, 0.0, 0.0, 0.6)
-const ACTIVE: Color = Color(0.85, 0.25, 0.2, 0.95)
-const MARK: Color = Color(1.0, 1.0, 1.0, 0.95)
+const BACKGROUND: Color = UiPalette.HUD_BACKGROUND
+const FILL: Color = UiPalette.HUD_FILL
+const EMPTY: Color = UiPalette.HUD_EMPTY
+const COOLDOWN: Color = UiPalette.HUD_COOLDOWN
+const ACTIVE: Color = UiPalette.HUD_ACTIVE
+const MARK: Color = UiPalette.HUD_MARK
 const FONT_SIZE: int = 18
 const SMALL_FONT_SIZE: int = 14
 
@@ -91,6 +92,7 @@ func _draw() -> void:
 			_draw_pips()
 		Style.ICON:
 			_draw_icon()
+	_draw_placeholder()
 
 
 func _draw_bar() -> void:
@@ -147,3 +149,15 @@ func _draw_text(text: String, baseline: Vector2, font_size: int) -> void:
 		font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, BACKGROUND
 	)
 	draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+
+
+## Until the art pass, every gauge says that it is a stand-in.
+func _draw_placeholder() -> void:
+	match style:
+		Style.BAR, Style.PIPS:
+			PlaceholderArt.draw_word_in_corner(get_canvas_item(), Rect2(Vector2.ZERO, size), 10)
+		Style.ICON:
+			var font_size: int = PlaceholderArt.font_size_for(size.x * 0.75, 10)
+			PlaceholderArt.draw_word(
+				get_canvas_item(), Vector2(size.x / 2.0, size.y * 0.78), font_size
+			)
