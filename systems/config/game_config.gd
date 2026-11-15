@@ -192,6 +192,42 @@ extends Resource
 ## How often the guest compares its clock with the host's, for the round timer.
 @export_range(0.1, 10.0, 0.1, "suffix:s") var net_clock_sync_interval: float = 0.5
 
+@export_group("Bots")
+## The computer opponent of an offline match. Not from the GDD; see #57.
+## Shortest and longest rest of the bot Monster after an attack before it
+## hunts again (the cooldown runs meanwhile).
+@export_range(0.0, 120.0, 0.5, "suffix:s") var bot_monster_rest_min: float = 3.0
+@export_range(0.0, 120.0, 0.5, "suffix:s") var bot_monster_rest_max: float = 8.0
+## How far the bot Monster walks to a sheep it hunts.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var bot_monster_hunt_range: float = 450.0
+## It hunts only where the Sheepherder is at least this far from it and the prey.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var bot_monster_safe_distance: float = 250.0
+## A hunt that takes longer is given up.
+@export_range(0.0, 60.0, 0.5, "suffix:s") var bot_monster_hunt_time: float = 10.0
+## Once it may kill the Sheepherder, it goes for them from this close.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var bot_monster_attack_range: float = 220.0
+## The bot Sheepherder shoots this long after it decided to.
+@export_range(0.0, 5.0, 0.05, "suffix:s") var bot_herder_reaction_time: float = 0.6
+## Largest error of the bot Sheepherder's aim.
+@export_range(0.0, 45.0, 0.5, "suffix:°") var bot_herder_aim_error_deg: float = 2.5
+## Suspicion at which the bot Sheepherder shoots. Seeing a sheep eat is 2.
+@export_range(0.1, 10.0, 0.05) var bot_herder_shoot_suspicion: float = 1.0
+## Suspicion gained per second of watching a sheep run faster than the flock.
+@export_range(0.0, 10.0, 0.05) var bot_herder_sprint_suspicion: float = 0.5
+## Suspicion of the sheep the bot Sheepherder finds next to where it heard
+## eating.
+@export_range(0.0, 10.0, 0.05) var bot_herder_blood_suspicion: float = 0.6
+## How close to the eating sound a sheep has to be to fall under suspicion.
+@export_range(0.0, 1000.0, 1.0, "suffix:px") var bot_herder_blood_radius: float = 140.0
+## Suspicion lost per second.
+@export_range(0.0, 1.0, 0.005, "suffix:/s") var bot_herder_suspicion_decay: float = 0.02
+## The distance the bot Sheepherder keeps from the middle of the flock.
+@export_range(0.0, 2000.0, 1.0, "suffix:px") var bot_herder_flock_distance: float = 240.0
+## Time between two sweeps of its light to another sheep.
+@export_range(0.1, 30.0, 0.1, "suffix:s") var bot_herder_sweep_interval: float = 1.4
+## Time between two rings of its bell, when it may ring.
+@export_range(1.0, 300.0, 1.0, "suffix:s") var bot_herder_bell_interval: float = 25.0
+
 @export_group("View")
 ## The widest stretch of world a player may ever see. Not from the GDD: this
 ## is the view-fairness rule, see [ViewRules] and the README.

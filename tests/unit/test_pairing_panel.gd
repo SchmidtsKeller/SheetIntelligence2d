@@ -68,7 +68,15 @@ func after_each() -> void:
 func test_it_offers_to_host_or_join() -> void:
 	assert_true(_panel.visible)
 	assert_eq(_panel.get_step(), PairingPanel.Step.CHOOSE)
-	assert_eq(_button_texts(), ["Host a game", "Join a game"])
+	assert_eq(
+		_button_texts(),
+		[
+			"Host a game",
+			"Join a game",
+			PairingPanel.OFFLINE_HERDER,
+			PairingPanel.OFFLINE_MONSTER,
+		]
+	)
 
 
 func test_the_host_shows_its_code_and_connects_with_the_answer() -> void:
@@ -182,6 +190,36 @@ func test_cancel_closes_the_attempt() -> void:
 	assert_has(_browser.calls, "close")
 
 
+func test_alone_the_player_takes_on_the_computer_in_the_role_they_chose() -> void:
+	for choice: Array in [
+		[PairingPanel.OFFLINE_HERDER, GameEnums.Role.SHEEPHERDER],
+		[PairingPanel.OFFLINE_MONSTER, GameEnums.Role.MONSTER],
+	]:
+		var flow: SceneFlowController = _note_taking_flow()
+
+		_press(choice[0])
+
+		assert_true(Services.session.is_offline(), "no second device")
+		assert_eq(Services.session.get_local_role(), choice[1])
+		assert_eq(flow.current_screen, SceneFlowController.Screen.ROUND)
+		assert_eq(_panel.get_step(), PairingPanel.Step.CHOOSE, "nothing to pair")
+		Services.session.leave()
+		Services.session.scene_flow = null
+
+
+func test_after_playing_offline_the_player_can_pair_again() -> void:
+	_note_taking_flow()
+	_press(PairingPanel.OFFLINE_MONSTER)
+
+	_press("Host a game")
+
+	assert_false(Services.session.is_offline())
+	assert_eq(_network.get_connection_state(), NetworkService.ConnectionState.CONNECTING)
+	assert_eq(_panel.get_step(), PairingPanel.Step.HOST_CODE)
+	Services.session.leave()
+	Services.session.scene_flow = null
+
+
 func test_it_stays_hidden_where_devices_connect_by_address() -> void:
 	_network.pairing = false
 	var panel: PairingPanel = PairingPanel.new()
@@ -228,6 +266,15 @@ func _press(text: String) -> void:
 			button.pressed.emit()
 			return
 	fail_test("no button '%s' in %s" % [text, _button_texts()])
+
+
+## Lets the session change screens through a flow that only takes notes.
+func _note_taking_flow() -> SceneFlowController:
+	var flow: SceneFlowController = add_child_autofree(SceneFlowController.new())
+	flow.scene_changer = func(_path: String) -> Error: return OK
+	flow.go_to(SceneFlowController.Screen.LOBBY)
+	Services.session.scene_flow = flow
+	return flow
 
 
 func _labels() -> Array[String]:

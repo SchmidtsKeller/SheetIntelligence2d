@@ -4,8 +4,9 @@ extends Node2D
 ## the timer, the countdown and who won.
 ##
 ## The [MatchFlow] starts the round once both devices are here. Started
-## without a session (F6, or the lobby's button offline) the screen plays the
-## match on one device: this player gets a role, nobody plays the other one.
+## without a session (F6, or the lobby's buttons to play offline) the screen
+## plays the match on one device: this player gets a role, a bot plays the
+## other one (see [RoundStage]).
 ## With [code]--host[/code] or [code]--join[/code] on the command line it
 ## starts the session itself (docs/networking.md).
 
@@ -34,7 +35,7 @@ func _ready() -> void:
 		if error != OK:
 			_banner.text = "Could not start the session: %s" % error_string(error)
 	else:
-		_session.host()
+		_session.play_offline()
 
 
 func _exit_tree() -> void:

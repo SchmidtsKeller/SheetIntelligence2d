@@ -5,7 +5,7 @@
 - **Game Title:** Hide in Sheep Clothing
 - **Genre:** Asymmetric Social Deduction / Stealth Action / Survival Horror
 - **Perspective:** Strictly 2D Top-Down
-- **Game Modes:** 1v1 Player vs. Player over Local Network (no AI opponent)
+- **Game Modes:** 1v1 Player vs. Player over Local Network. Offline, one player can also play a match against a computer opponent in either role (#57); the bots play by the same rules and see and hear only what a player could.
 - **Target Platforms:** Web Browser Build (HTML5/WebAssembly) supporting both PC (Keyboard/Mouse) and Mobile (Touch/Virtual Joysticks)
 - **High Concept:** An asymmetric 1v1 game set in a dark, painterly world where one player acts as the **Sheepherder** tasked with protecting a flock and hunting down an impostor, while the other player acts as the **Monster** disguised as a sheep, blending into the swarm to covertly devour the flock before hunting the Sheepherder.
 

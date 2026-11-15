@@ -35,8 +35,10 @@ func before_each() -> void:
 	_session.scene_flow = _scene_flow
 	_time = 50.0
 	_flow.clock = func() -> float: return _time
-	# This device plays the Monster first; nobody plays the Sheepherder.
+	# This device plays the Monster first; nobody plays the Sheepherder, not
+	# even a bot (test_offline_match.gd plays against them).
 	_flow.first_host_role = GameEnums.Role.MONSTER
+	RoundStage.bots_enabled = false
 	_screen = _open_round_screen()
 	await wait_frames(2)
 
@@ -48,6 +50,7 @@ func after_each() -> void:
 	_session.scene_flow = null
 	_flow.clock = MatchFlow.system_clock
 	_flow.first_host_role = GameEnums.Role.NONE
+	RoundStage.bots_enabled = true
 	await wait_frames(2)
 
 
