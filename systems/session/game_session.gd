@@ -139,8 +139,9 @@ func join(options: Dictionary = {}) -> Error:
 ## Starts a session of this device alone, on every build: where the transport
 ## needs a second device (the Web build pairs with codes), an offline one
 ## stands in until the session ends, and then the real one is back. The
-## character nobody plays is a bot's (see [RoundStage]).
-func play_offline() -> Error:
+## character nobody plays is a bot's (see [RoundStage]). This player plays
+## [param role] first; without one, the role is drawn as for any session.
+func play_offline(role: GameEnums.Role = GameEnums.Role.NONE) -> Error:
 	if _active:
 		return ERR_ALREADY_IN_USE
 	if _network != null and not _network.is_offline():
@@ -153,7 +154,10 @@ func play_offline() -> Error:
 		bind_network(offline)
 		_offline_network = offline
 		_replaced_network = replaced
-	return _network.host_session()
+	var error: Error = _network.host_session()
+	if error == OK and role != GameEnums.Role.NONE:
+		assign_roles(role)
+	return error
 
 
 ## Whether this device plays alone: an offline session is running.

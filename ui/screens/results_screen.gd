@@ -1,10 +1,16 @@
 extends Control
-## The results screen: how the last round ended, what both players scored in
-## it and how the match stands; after the last round, who won the match.
+## The scoreboard (GDD §8.2, #20): how the last round ended, what both
+## players scored in it and how the match stands; after the last round, who
+## won the match and the record of every round.
 ##
-## Plain text and three buttons, so the whole match can be played before the
-## scoreboard exists. The host moves both devices on: to the next round, into
-## a new match once this one is over, or back to the lobby.
+## Between rounds each player sees the role they play next, chooses its perk
+## and gets ready; when both are, the [MatchFlow] starts the next round, or a
+## rematch once the match is over. The host can also end the match and take
+## both back to the lobby. Perks are not shown: the Sheepherder's would tell
+## the Monster too much about the rounds to come.
+
+const READY: String = "Ready"
+const NOT_READY: String = "Not ready yet"
 
 var _session: GameSession
 var _flow: MatchFlow
@@ -13,8 +19,10 @@ var _headline_label: Label
 var _details_label: Label
 var _match_label: Label
 var _hint_label: Label
-var _next_button: Button
-var _rematch_button: Button
+var _next_role_label: Label
+var _history_label: Label
+var _picker: PerkPicker
+var _ready_button: Button
 var _lobby_button: Button
 
 
@@ -23,30 +31,48 @@ func _ready() -> void:
 	_flow = Services.match_flow
 	_build_layout()
 	_flow.phase_changed.connect(_on_phase_changed)
+	_flow.ready_changed.connect(_refresh)
 	_session.session_ended.connect(_on_session_ended)
+	_session.roles_changed.connect(_refresh)
 	_refresh()
 
 
 func _exit_tree() -> void:
 	_flow.phase_changed.disconnect(_on_phase_changed)
+	_flow.ready_changed.disconnect(_refresh)
 	_session.session_ended.disconnect(_on_session_ended)
+	_session.roles_changed.disconnect(_refresh)
 
 
 ## Everything the screen says, line by line.
 func get_text() -> String:
 	return "\n".join(
-		[_round_label.text, _headline_label.text, _details_label.text, _match_label.text]
+		[
+			_round_label.text,
+			_headline_label.text,
+			_details_label.text,
+			_match_label.text,
+			_history_label.text,
+			_next_role_label.text,
+		]
 	)
+
+
+func get_picker() -> PerkPicker:
+	return _picker
+
+
+## Says that this player is ready for the next round, or not anymore.
+func set_ready(ready: bool) -> bool:
+	return _flow.set_ready(ready)
 
 
 func _refresh() -> void:
 	var score: MatchScore = _flow.get_score()
 	var result: RoundResult = _flow.get_last_result()
 	var is_host: bool = not _session.is_active() or _session.is_host()
-	_next_button.visible = is_host and result != null and not score.is_over()
-	_rematch_button.visible = is_host and result != null and score.is_over()
 	_lobby_button.visible = is_host
-	_hint_label.visible = not is_host
+	_refresh_next(result != null and _session.is_active())
 	if result == null:
 		_round_label.text = ""
 		_headline_label.text = "No round was played"
@@ -64,6 +90,36 @@ func _refresh() -> void:
 	]
 	_details_label.text = "\n".join(details)
 	_match_label.text = describe_match(score, you)
+	_history_label.text = describe_history(score, you) if score.is_over() else ""
+
+
+## The next round: the role, the perk for it and who is ready.
+func _refresh_next(going_on: bool) -> void:
+	_next_role_label.visible = going_on
+	_picker.visible = going_on
+	_ready_button.visible = going_on
+	_hint_label.visible = going_on
+	if not going_on:
+		return
+	var score: MatchScore = _flow.get_score()
+	var role: String = GameEnums.role_name(_session.get_local_role())
+	_next_role_label.text = (
+		"In the rematch you play the %s" % role
+		if score.is_over()
+		else "In the next round you play the %s" % role
+	)
+	var you: MatchScore.Player = _flow.get_local_player()
+	var ready: bool = _flow.is_ready(you)
+	_ready_button.set_pressed_no_signal(ready)
+	_ready_button.text = NOT_READY if ready else READY
+	_ready_button.disabled = not _flow.may_get_ready()
+	if _session.is_offline():
+		_hint_label.text = ""
+	elif _flow.is_ready(MatchScore.other_player(you)):
+		_hint_label.text = "The other player is ready."
+	else:
+		_hint_label.text = "The other player is choosing a perk …"
+	_picker.refresh()
 
 
 ## The Sheepherder's points in [param result] and where they come from.
@@ -110,6 +166,34 @@ static func describe_standing(score: MatchScore, you: MatchScore.Player) -> Stri
 	)
 
 
+## Every round of the match, seen by [param you]: who played what, who won
+## and the points.
+static func describe_history(score: MatchScore, you: MatchScore.Player) -> String:
+	var lines: PackedStringArray = []
+	for index: int in score.get_rounds_played():
+		var result: RoundResult = score.get_round(index)
+		var your_role: GameEnums.Role = score.get_role_in_round(index, you)
+		var winner: int = score.get_round_winner(index)
+		var outcome: String = "draw"
+		if winner == you:
+			outcome = "you won"
+		elif winner == MatchScore.other_player(you):
+			outcome = "you lost"
+		lines.append(
+			(
+				"Round %d: you were the %s, %s (%d : %d)"
+				% [
+					index + 1,
+					GameEnums.role_name(your_role),
+					outcome,
+					result.get_points(your_role),
+					result.get_points(GameEnums.opposite_role(your_role)),
+				]
+			)
+		)
+	return "\n".join(lines)
+
+
 ## Who won the match, seen by [param you]; empty while rounds are left.
 static func describe_match(score: MatchScore, you: MatchScore.Player) -> String:
 	var other: MatchScore.Player = MatchScore.other_player(you)
@@ -137,12 +221,8 @@ func _on_session_ended(_reason: NetworkService.DisconnectReason, _message: Strin
 	_refresh()
 
 
-func _next_round() -> void:
-	_flow.request_next_round()
-
-
-func _rematch() -> void:
-	_flow.request_rematch()
+func _on_ready_toggled(on: bool) -> void:
+	set_ready(on)
 
 
 func _back_to_lobby() -> void:
@@ -153,22 +233,24 @@ func _back_to_lobby() -> void:
 
 
 func _build_layout() -> void:
-	var layout: VBoxContainer = VBoxContainer.new()
-	layout.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	layout.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	layout.grow_vertical = Control.GROW_DIRECTION_BOTH
-	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override(&"separation", 16)
-	add_child(layout)
-	_round_label = _add_label(layout, 20)
-	_headline_label = _add_label(layout, 36)
-	_details_label = _add_label(layout, 16)
-	_match_label = _add_label(layout, 28)
-	_next_button = _add_button(layout, "Next round", _next_round)
-	_rematch_button = _add_button(layout, "Rematch", _rematch)
-	_lobby_button = _add_button(layout, "Back to lobby", _back_to_lobby)
-	_hint_label = _add_label(layout, 16)
-	_hint_label.text = "The host continues."
+	# What happened on the left, the next round on the right.
+	var columns: Array[VBoxContainer] = TwoColumns.build(self)
+	var past: VBoxContainer = columns[0]
+	var next: VBoxContainer = columns[1]
+	_round_label = _add_label(past, 20)
+	_headline_label = _add_label(past, 32)
+	_details_label = _add_label(past, 16)
+	_match_label = _add_label(past, 26)
+	_history_label = _add_label(past, 16)
+	_lobby_button = _add_button(past, "Back to lobby", _back_to_lobby)
+	_next_role_label = _add_label(next, 22)
+	_ready_button = _add_button(next, READY, Callable())
+	_ready_button.name = "Ready"
+	_ready_button.toggle_mode = true
+	_ready_button.toggled.connect(_on_ready_toggled)
+	_hint_label = _add_label(next, 16)
+	_picker = PerkPicker.new()
+	next.add_child(_picker)
 
 
 func _add_label(layout: VBoxContainer, font_size: int) -> Label:
@@ -184,6 +266,7 @@ func _add_button(layout: VBoxContainer, text: String, action: Callable) -> Butto
 	button.text = text
 	button.custom_minimum_size = Vector2(240.0, 56.0)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.pressed.connect(action)
+	if action.is_valid():
+		button.pressed.connect(action)
 	layout.add_child(button)
 	return button

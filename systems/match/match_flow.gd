@@ -33,6 +33,9 @@ signal match_finished(outcome: MatchScore.Outcome)
 ## The match ended before its last round: the session ended.
 signal match_aborted
 
+## A player said they are ready, or not anymore. Emitted on both devices.
+signal ready_changed
+
 enum Phase {
 	## No match is running.
 	IDLE,
@@ -56,8 +59,13 @@ const KEY_PHASE: StringName = &"match.phase"
 ## The tally with every finished round, see [method MatchScore.to_data].
 const KEY_SCORE: StringName = &"match.score"
 
+## Who is ready to go on: [code][host ready, guest ready][/code].
+const KEY_READY: StringName = &"match.ready"
+
 const EVENT_CLOCK_PING: StringName = &"match.clock_ping"
 const EVENT_CLOCK_PONG: StringName = &"match.clock_pong"
+## A player tells the host whether they are ready: [code][ready][/code].
+const EVENT_READY: StringName = &"match.ready_request"
 
 ## The duration of a phase that lasts until the host moves on.
 const OPEN_END: float = -1.0
@@ -135,6 +143,8 @@ func setup(session: GameSession) -> void:
 	messenger.register_event(EVENT_CLOCK_PONG, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.subscribe(EVENT_CLOCK_PING, _on_clock_ping)
 	messenger.subscribe(EVENT_CLOCK_PONG, _on_clock_pong)
+	messenger.register_event(EVENT_READY, NetMessenger.SenderRule.ANYONE)
+	messenger.subscribe(EVENT_READY, _on_ready_request)
 	session.state.value_changed.connect(_on_state_changed)
 	session.session_started.connect(_on_session_started)
 	session.session_ended.connect(_on_session_ended)
@@ -146,20 +156,20 @@ func setup(session: GameSession) -> void:
 
 ## Starts a match with its first round. The host plays [param host_role] in
 ## it, or [member first_host_role]. Without either, the players keep the roles
-## the session drew when it started (GDD §2.3: random in round 1), which are
-## the ones the lobby showed them and they chose their perks for; a rematch
-## draws them anew. Host only, and not while a round is running.
+## they were shown and chose their perks for: the ones the session drew when it
+## started (GDD §2.3: random in round 1), or for a rematch the ones drawn anew
+## when the results of the last match came up. Host only, and not while a
+## round is running.
 func start_match(host_role: GameEnums.Role = GameEnums.Role.NONE) -> bool:
 	if not _may_start_round():
 		return false
-	var is_rematch: bool = _score.get_rounds_played() > 0
 	_publish_score(MatchScore.new(perks.get_stat_int(StatIds.MATCH_ROUNDS)))
 	var role: GameEnums.Role = host_role
 	if role == GameEnums.Role.NONE:
 		role = first_host_role
 	if role != GameEnums.Role.NONE:
 		_session.assign_roles(role)
-	elif is_rematch or _session.get_local_role() == GameEnums.Role.NONE:
+	elif _session.get_local_role() == GameEnums.Role.NONE:
 		_session.assign_random_roles()
 	_begin_round()
 	return true
@@ -201,6 +211,74 @@ func request_lobby() -> bool:
 		return false
 	_end_match()
 	return _session.request_screen(SceneFlowController.Screen.LOBBY)
+
+
+# --- Ready ----------------------------------------------------------------------
+
+
+## Says that this device's player is ready for the next round, or not anymore.
+## The players get ready in the lobby before a match and on the results screen
+## between rounds; when both are, the host goes on by itself: into the match,
+## to the next round, or into a rematch. Offline, the computer is always ready.
+func set_ready(ready: bool) -> bool:
+	if not may_get_ready():
+		return false
+	return _session.messenger.send_to_host(EVENT_READY, [ready])
+
+
+## Whether the players are asked to get ready now: before a match, or on the
+## results screen.
+func may_get_ready() -> bool:
+	if _session == null or not _session.is_active() or _session.is_changing_screen():
+		return false
+	return _phase == Phase.IDLE or _phase == Phase.RESULTS
+
+
+## Whether [param player] is ready. The computer of an offline match always is.
+func is_ready(player: MatchScore.Player) -> bool:
+	if _session == null or not _session.is_active():
+		return false
+	if player == MatchScore.Player.GUEST and not _session.has_remote_player():
+		return true
+	var flags: Array = _session.state.get_value(KEY_READY, [false, false])
+	return flags[player]
+
+
+## Whether this device's player is ready.
+func is_locally_ready() -> bool:
+	return is_ready(get_local_player())
+
+
+## Host: a player said whether they are ready.
+func _on_ready_request(payload: Array, sender_id: int) -> void:
+	if not _is_authority() or not may_get_ready():
+		return
+	var player: MatchScore.Player = (
+		MatchScore.Player.HOST
+		if sender_id == _session.messenger.get_local_id()
+		else MatchScore.Player.GUEST
+	)
+	var flags: Array = _session.state.get_value(KEY_READY, [false, false]).duplicate()
+	flags[player] = payload[0] == true
+	_session.state.set_value(KEY_READY, flags)
+	if is_ready(MatchScore.Player.HOST) and is_ready(MatchScore.Player.GUEST):
+		_go_on_when_ready()
+
+
+## Host: both are ready, so the match goes on.
+func _go_on_when_ready() -> void:
+	_clear_ready()
+	if _phase == Phase.IDLE:
+		_session.request_screen(SceneFlowController.Screen.ROUND)
+	elif _score.is_over():
+		request_rematch()
+	else:
+		request_next_round()
+
+
+func _clear_ready() -> void:
+	if _is_authority() and _session.state.get_value(KEY_READY, [false, false]) != [false, false]:
+		_session.state.set_value(KEY_READY, [false, false])
 
 
 # --- What both devices can ask ---------------------------------------------------
@@ -369,11 +447,15 @@ func _show_results() -> void:
 
 ## The round's world is gone. Its perks end, and the players get the roles of
 ## the next round (GDD §2.3: they swap after every round), so that each can
-## choose a perk for the role they are about to play.
+## choose a perk for the role they are about to play. After the last round
+## they are drawn anew for a rematch.
 func _prepare_next_round() -> void:
 	if _phase != Phase.RESULTS:
 		return
-	if not _score.is_over():
+	_clear_ready()
+	if _score.is_over():
+		_session.assign_random_roles()
+	else:
 		_session.assign_roles(_score.get_next_host_role())
 	perks.clear_selection()
 
@@ -429,6 +511,8 @@ func _on_state_changed(key: StringName, value: Variant) -> void:
 			_score = MatchScore.from_data(value)
 		KEY_PHASE:
 			_apply_phase(value)
+		KEY_READY:
+			ready_changed.emit()
 
 
 ## Both devices: the match moved on.
@@ -555,6 +639,7 @@ func _on_screen_entered(screen: SceneFlowController.Screen) -> void:
 		SceneFlowController.Screen.LOBBY:
 			# However the players got here, the match is over.
 			_end_match()
+			_clear_ready()
 
 
 # --- Clock -----------------------------------------------------------------------

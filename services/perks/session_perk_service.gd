@@ -158,7 +158,7 @@ func get_available_perks(role: GameEnums.Role) -> Array[StringName]:
 
 
 func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool:
-	if is_selection_locked() or not _catalog.is_valid_for(role, perk_id):
+	if is_selection_locked() or not _may_choose(role, perk_id):
 		return false
 	if not _plays(role):
 		return false
@@ -274,12 +274,19 @@ func _get_character(role: GameEnums.Role) -> Node2D:
 # --- Host: deciding requests -------------------------------------------------------
 
 
+## A perk of [param role]'s pool, or none at all.
+func _may_choose(role: GameEnums.Role, perk_id: StringName) -> bool:
+	if not KEY_SELECTION.has(role):
+		return false
+	return perk_id == PerkIds.NONE or _catalog.is_valid_for(role, perk_id)
+
+
 func _on_select_request(payload: Array, sender_id: int) -> void:
 	var role: GameEnums.Role = payload[0]
 	var perk_id: StringName = StringName(payload[1])
 	if not _session.messenger.is_host() or is_selection_locked():
 		return
-	if not _catalog.is_valid_for(role, perk_id) or not _may_act_for(role, sender_id):
+	if not _may_choose(role, perk_id) or not _may_act_for(role, sender_id):
 		return
 	_session.state.set_value(KEY_SELECTION[role], String(perk_id))
 
