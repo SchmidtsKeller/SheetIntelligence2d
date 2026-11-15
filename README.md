@@ -288,13 +288,17 @@ Services.audio.play_event(AudioEvents.BLEAT, global_position)                  #
 var steps: int = Services.audio.start_emitter(AudioEvents.HERDER_STEP, self)   # a loop that follows a node
 Services.audio.set_emitter_playing(steps, walking)
 Services.audio.set_listener(character)                                         # the round does this
+Services.audio.play_ui(AudioEvents.UI_CLICK)                                   # a cue, not in the world
+Services.audio.set_ambience(AudioEvents.AMBIENCE)                              # the round does this
 ```
 
 - **Hearing ranges.** [AudioEvents](abstractions/types/audio_events.gd) gives each event its range class: quiet (400 px), loud (800 px) or whole map. A sound fades from full at the listener to silence at the end of its range, and pans by where it is across the screen ([AudioMix](systems/audio/audio_mix.gd)). Whole-map sounds fade out only at `audio_whole_map_distance` (8000 px), so they are heard everywhere and still sound further away.
-- **Catalog.** The [AudioCatalog](systems/audio/audio_catalog.tres) gives every event an [AudioCue](systems/audio/audio_cue.gd): its variations, bus, volume, pitch variation and fade. The sounds are placeholders, listed with their sources in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md); the sound pass (#23) replaces them in the catalog.
+- **Catalog.** The [AudioCatalog](systems/audio/audio_catalog.tres) gives every event, cue and ambience layer an [AudioCue](systems/audio/audio_cue.gd): its variations, bus, volume, pitch variation and fade. The sounds (#23) are listed with their sources in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md).
 - **No audio tell.** NPC sheep and the Monster share every sound, and a sheep's sounds come from where it is shown, with the same delay as its picture.
 - **Own sounds.** On a player's own device, the looping sounds of their own character (footsteps, rustle, grazing) play `audio_own_sound_volume_db` (−10 dB) quieter, so they don't cover the sounds nearby.
-- **The reload click** is heard only by the Sheepherder's player, so the Spare Bullet stays hidden (GDD §4.1).
+- **The reload and empty clicks** are heard only by the Sheepherder's player, so the Spare Bullet stays hidden (GDD §4.1).
+- **Cues** ([AudioEvents.CUES](abstractions/types/audio_events.gd)) play on the UI bus on one device: the menu click of every `GameButton`, the session's and the round's flow ([GameSoundCues](systems/audio/game_sound_cues.gd)), and the HUD's alerts and perk cues for its own player only.
+- **Ambience.** In a round, wind, crickets and now and then an owl play on the Ambience bus. The bell and the gunshot duck it for a moment (`audio_ambience_duck_db`, `audio_ambience_duck_time`). There is no music.
 - **Buses:** Master, Effects, Ambience and UI ([default_bus_layout.tres](default_bus_layout.tres)). `set_bus_volume` keeps the volume in `user://settings.cfg` for the next start.
 - **Web build.** Audio starts with the first click, tap or key press (a browser rule), and is muted while the page is hidden. The playback type and what was measured are in [docs/audio.md](docs/audio.md).
 

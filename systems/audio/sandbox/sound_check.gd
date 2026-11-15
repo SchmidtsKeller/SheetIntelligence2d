@@ -6,7 +6,9 @@ extends Node2D
 ## Run it with F6, or open the Web build with [code]?sound-check[/code] in the
 ## address. The buttons choose the sound, how it moves, how far away it
 ## circles and (Web build) the playback type; a click or tap places the
-## source, P plays a one-shot sound at once. The read-out says how far away
+## source, P plays a one-shot sound at once. The cues that are not in the world
+## (#23) play as they do in the game, and [code]ambience[/code] plays the
+## night's layers (P: an owl). The read-out says how far away
 ## the source is and how loud it should be in each ear.
 ##
 ## The address can set it up as well, for scripted measurements
@@ -20,8 +22,15 @@ extends Node2D
 
 enum Motion { ORBIT, SWEEP, STILL }
 
+const AMBIENCE_KEY: String = "ambience"
 const LOOPING: Array[StringName] = [
-	AudioEvents.GRASS_MOVE, AudioEvents.GRASS_RUN, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
+	AudioEvents.GRASS_MOVE,
+	AudioEvents.GRASS_RUN,
+	AudioEvents.GRAZE,
+	AudioEvents.HERDER_STEP,
+	AudioEvents.SPIDER_MOVE,
+	AudioEvents.BAT_WINGS,
+	AudioEvents.TORCH_BURN,
 ]
 const TONES: Dictionary[String, StringName] = {
 	"tone-quiet": AudioEvents.GRASS_MOVE,
@@ -78,8 +87,9 @@ func _ready() -> void:
 	_catalog = AudioCatalog.load_default()
 	_sounds = _new_service(_catalog)
 	_tones = _new_service(_tone_catalog())
-	for event_id: StringName in AudioEvents.ALL:
+	for event_id: StringName in AudioEvents.ALL + AudioEvents.CUES:
 		_keys.append(String(event_id))
+	_keys.append(AMBIENCE_KEY)
 	_keys.append_array(TONES.keys())
 	add_child(_listener)
 	add_child(_source)
@@ -100,7 +110,7 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	_move_source(delta)
-	if not _is_looping() and _repeat:
+	if _repeats() and _repeat:
 		_repeat_left -= delta
 		if _repeat_left <= 0.0:
 			_repeat_left = REPEAT_INTERVAL
@@ -163,6 +173,20 @@ func _is_looping() -> bool:
 	return LOOPING.has(_event_id()) or (TONES.has(key) and key != "tone-burst")
 
 
+func _is_ambience() -> bool:
+	return _keys[_key_index] == AMBIENCE_KEY
+
+
+## Not in the world: a cue, or the ambience.
+func _is_unplaced() -> bool:
+	return _is_ambience() or AudioEvents.CUES.has(_event_id())
+
+
+## Whether the sound plays again every few seconds.
+func _repeats() -> bool:
+	return not _is_looping() and not _is_ambience()
+
+
 func _range_class() -> GameEnums.HearingRange:
 	return AudioEvents.range_class_of(_event_id())
 
@@ -184,12 +208,18 @@ func _restart_sound() -> void:
 		_emitter_service = service
 		_emitter = service.start_emitter(_event_id(), _source)
 		service.set_emitter_playing(_emitter, true)
+	if _is_ambience():
+		_sounds.set_ambience(AudioEvents.AMBIENCE)
 	_repeat_left = 0.0
 	_update_buttons()
 
 
 func _play_once() -> void:
-	if not _is_looping():
+	if _is_ambience():
+		_sounds.play_ui(AudioEvents.AMBIENCE_OWL)
+	elif _is_unplaced():
+		_sounds.play_ui(_event_id())
+	elif not _is_looping():
 		_service().play_event(_event_id(), _source.global_position)
 
 
@@ -418,4 +448,12 @@ func _describe() -> String:
 		),
 		"Master volume %d %% (kept for the next visit)" % roundi(_volume.value * 100.0),
 	]
+	if _is_unplaced():
+		var when: String = (
+			"wind and crickets, P plays an owl now"
+			if _is_ambience()
+			else "every %d s, P plays it now" % REPEAT_INTERVAL
+		)
+		var sound: String = "%s: not in the world, %s" % [_keys[_key_index], when]
+		lines = PackedStringArray([lines[0], sound, lines[4]])
 	return "\n".join(lines)

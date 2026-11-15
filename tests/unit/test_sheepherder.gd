@@ -12,10 +12,17 @@ class RecordingCombatService:
 	extends StubCombatService
 
 	var requests: Array[Array] = []
+	var bullets: int = 99
 
 	func request_shot(origin: Vector2, direction: Vector2) -> bool:
 		requests.append([origin, direction])
+		if bullets == 0:
+			return false
+		bullets -= 1
 		return true
+
+	func is_ammo_depleted() -> bool:
+		return bullets == 0
 
 
 ## Remembers which looping sounds are switched on.
@@ -234,6 +241,44 @@ func test_only_its_own_player_hears_the_reload() -> void:
 	assert_eq(clicks, [own.global_position] as Array[Vector2])
 
 
+func test_only_its_own_player_hears_an_empty_rifle() -> void:
+	var herder: Sheepherder = _spawn(Vector2(10.0, 0.0))
+	var bot_data: Dictionary = {"x": 30.0, "y": 0.0, BotInput.DATA_KEY: true}
+	var bot: Sheepherder = Sheepherder.build(-1, LOCAL_ID, bot_data)
+	add_child_autofree(bot)
+	_combat.bullets = 1
+
+	_input.simulate_press(InputActions.SHOOT)
+	_input.simulate_release(InputActions.SHOOT)
+	assert_eq(_heard(AudioEvents.EMPTY_CLICK), [] as Array[Vector2], "the last bullet fires")
+	_input.simulate_press(InputActions.SHOOT)
+	assert_true((bot.input as BotInput).tap(InputActions.SHOOT), "the bot tries too")
+
+	assert_eq(_heard(AudioEvents.EMPTY_CLICK), [herder.global_position] as Array[Vector2])
+
+
+func test_its_death_is_heard_where_it_falls() -> void:
+	var herder: Sheepherder = _spawn(Vector2(40.0, 20.0))
+
+	_combat.sheepherder_killed.emit(herder.position)
+
+	assert_eq(_heard(AudioEvents.HERDER_DEATH), [Vector2(40.0, 20.0)] as Array[Vector2])
+
+
+func test_a_bullet_is_heard_hitting_wood_but_never_a_creature() -> void:
+	_spawn()
+	var shot: Signal = _combat.shot_fired
+
+	shot.emit(Vector2.ZERO, Vector2(300.0, 0.0), CombatService.ShotResult.HIT_OBSTACLE)
+	shot.emit(Vector2.ZERO, Vector2(0.0, 900.0), CombatService.ShotResult.MISSED)
+	shot.emit(Vector2.ZERO, Vector2(50.0, 0.0), CombatService.ShotResult.HIT_SHEEP)
+	shot.emit(Vector2.ZERO, Vector2(60.0, 0.0), CombatService.ShotResult.HIT_MONSTER)
+	shot.emit(Vector2.ZERO, Vector2(70.0, 0.0), CombatService.ShotResult.HIT_SPIDER)
+
+	var expected: Array[Vector2] = [Vector2(300.0, 0.0), Vector2(0.0, 900.0)]
+	assert_eq(_heard(AudioEvents.BULLET_IMPACT), expected, "an obstacle, and the fence")
+
+
 func test_its_steps_are_heard_while_it_walks() -> void:
 	var herder: Sheepherder = _spawn()
 	await wait_frames(2)
@@ -304,6 +349,14 @@ func test_a_push_reaches_the_device_that_simulates_the_sheep() -> void:
 
 
 # --- Helpers ---------------------------------------------------------------------
+
+
+func _heard(event_id: StringName) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	for entry: Dictionary in _audio.played:
+		if entry["event"] == event_id:
+			positions.append(entry["position"])
+	return positions
 
 
 func _spawn(at: Vector2 = Vector2.ZERO) -> Sheepherder:

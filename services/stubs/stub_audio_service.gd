@@ -13,6 +13,8 @@ var _config: GameConfig
 var _listener: Node2D
 var _bus_volumes: Dictionary[StringName, float] = {}
 var _emitters: Dictionary[int, StringName] = {}
+var _playing: Dictionary[int, bool] = {}
+var _ambience: Array[StringName] = []
 var _next_handle: int = 1
 
 
@@ -36,21 +38,50 @@ func start_emitter(event_id: StringName, _target: Node2D) -> int:
 	return handle
 
 
-func set_emitter_playing(_handle: int, _playing: bool) -> void:
-	pass
+func set_emitter_playing(handle: int, playing: bool) -> void:
+	if _emitters.has(handle):
+		_playing[handle] = playing
 
 
 func stop_emitter(handle: int, _fade_seconds: float = 0.0) -> void:
 	_emitters.erase(handle)
+	_playing.erase(handle)
 
 
 func stop_all(_fade_seconds: float = 0.0) -> void:
 	_emitters.clear()
+	_playing.clear()
+	_ambience.clear()
+
+
+func set_ambience(layers: Array[StringName], _fade_seconds: float = 1.0) -> void:
+	_ambience = layers.duplicate()
+
+
+func get_ambience() -> Array[StringName]:
+	return _ambience
 
 
 ## The number of emitters that were started and not stopped, for tests.
 func get_emitter_count() -> int:
 	return _emitters.size()
+
+
+## Whether a looping sound of [param event_id] is switched on, for tests.
+func is_looping(event_id: StringName) -> bool:
+	for handle: int in _emitters:
+		if _emitters[handle] == event_id and _playing.get(handle, false):
+			return true
+	return false
+
+
+## The sounds played with [method play_ui], in order, for tests.
+func get_cues() -> Array[StringName]:
+	var cues: Array[StringName] = []
+	for entry: Dictionary in played:
+		if not entry["positional"]:
+			cues.append(entry["event"])
+	return cues
 
 
 func set_listener(listener: Node2D) -> void:

@@ -102,6 +102,8 @@ const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
 const AUDIO_WHOLE_MAP_DISTANCE: StringName = &"audio_whole_map_distance"
 const AUDIO_PANNING_STRENGTH: StringName = &"audio_panning_strength"
 const AUDIO_OWN_SOUND_VOLUME_DB: StringName = &"audio_own_sound_volume_db"
+const AUDIO_AMBIENCE_DUCK_DB: StringName = &"audio_ambience_duck_db"
+const AUDIO_AMBIENCE_DUCK_TIME: StringName = &"audio_ambience_duck_time"
 
 # --- Network -----------------------------------------------------------------
 const NET_TICK_RATE: StringName = &"net_tick_rate"

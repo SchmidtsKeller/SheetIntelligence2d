@@ -15,3 +15,9 @@ extends Resource
 ## Exponent of the fade with distance: 1 fades the volume evenly to zero at
 ## the end of the hearing range, more fades it sooner.
 @export_range(0.1, 4.0, 0.05) var attenuation: float = 1.0
+## Whether the ambience gets quieter for a moment when this plays, so that a
+## crucial cue (the bell, a shot) stays clear.
+@export var duck_ambience: bool = false
+## For an ambience layer of one-shots (an owl): it plays again after a random
+## time between these two numbers of seconds. Zero for a looping layer.
+@export var repeat_interval: Vector2 = Vector2.ZERO

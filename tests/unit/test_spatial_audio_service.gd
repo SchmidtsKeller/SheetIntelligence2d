@@ -4,7 +4,15 @@ extends TestCase
 
 const SETTINGS_PATH: String = "user://test_audio_settings.cfg"
 const LOOPING: Array[StringName] = [
-	AudioEvents.GRASS_MOVE, AudioEvents.GRASS_RUN, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
+	AudioEvents.GRASS_MOVE,
+	AudioEvents.GRASS_RUN,
+	AudioEvents.GRAZE,
+	AudioEvents.HERDER_STEP,
+	AudioEvents.SPIDER_MOVE,
+	AudioEvents.BAT_WINGS,
+	AudioEvents.TORCH_BURN,
+	AudioEvents.AMBIENCE_WIND,
+	AudioEvents.AMBIENCE_CRICKETS,
 ]
 const SCREEN_WIDTH: float = 1600.0
 
@@ -37,14 +45,34 @@ func after_each() -> void:
 func test_every_event_has_a_sound() -> void:
 	var catalog: AudioCatalog = AudioCatalog.load_default()
 
-	for event_id: StringName in AudioEvents.ALL:
+	for event_id: StringName in _every_event():
 		var cue: AudioCue = catalog.get_cue(event_id)
 		if assert_not_null(cue, "'%s' has a cue" % event_id):
 			assert_false(cue.streams.is_empty(), "'%s' has a sound" % event_id)
-			assert_has(SpatialAudioService.BUSES, cue.bus, "'%s' plays on a bus" % event_id)
 			for stream: AudioStream in cue.streams:
 				assert_not_null(stream, "'%s' has no empty variation" % event_id)
-	assert_eq(catalog.cues.size(), AudioEvents.ALL.size(), "and nothing else")
+	assert_eq(catalog.cues.size(), _every_event().size(), "and nothing else")
+
+
+func test_each_kind_of_sound_plays_on_its_bus() -> void:
+	var catalog: AudioCatalog = AudioCatalog.load_default()
+	var buses: Dictionary[StringName, Array] = {
+		AudioService.BUS_EFFECTS: AudioEvents.ALL,
+		AudioService.BUS_UI: AudioEvents.CUES,
+		AudioService.BUS_AMBIENCE: AudioEvents.AMBIENCE,
+	}
+
+	for bus: StringName in buses:
+		for event_id: StringName in buses[bus]:
+			assert_eq(catalog.get_cue(event_id).bus, bus, "'%s'" % event_id)
+
+
+func test_the_bell_and_the_gunshot_duck_the_ambience() -> void:
+	var catalog: AudioCatalog = AudioCatalog.load_default()
+
+	for event_id: StringName in _every_event():
+		var ducks: bool = event_id in [AudioEvents.BELL, AudioEvents.GUNSHOT]
+		assert_eq(catalog.get_cue(event_id).duck_ambience, ducks, "'%s'" % event_id)
 
 
 func test_looping_sounds_loop() -> void:
@@ -53,10 +81,13 @@ func test_looping_sounds_loop() -> void:
 	for event_id: StringName in LOOPING:
 		var stream: AudioStream = catalog.get_cue(event_id).streams[0]
 		assert_true(_loops(stream), "'%s' loops" % event_id)
-	for event_id: StringName in AudioEvents.ALL:
+	for event_id: StringName in _every_event():
 		if not LOOPING.has(event_id):
 			for stream: AudioStream in catalog.get_cue(event_id).streams:
 				assert_false(_loops(stream), "'%s' plays once" % event_id)
+	var owl: AudioCue = catalog.get_cue(AudioEvents.AMBIENCE_OWL)
+	assert_gt(owl.repeat_interval.x, 0.0, "the owl calls now and then")
+	assert_gte(owl.repeat_interval.y, owl.repeat_interval.x)
 
 
 func test_the_bus_layout_has_every_bus_of_the_contract() -> void:
@@ -346,6 +377,81 @@ func test_the_own_characters_sounds_are_quieter_on_this_device() -> void:
 	assert_eq(_audio.get_emitter_player(others).volume_db, quieter)
 
 
+# --- Ambience ----------------------------------------------------------------------
+
+
+func test_the_ambience_plays_its_layers_until_it_is_stopped() -> void:
+	var layers: Array[StringName] = [AudioEvents.AMBIENCE_WIND, AudioEvents.AMBIENCE_CRICKETS]
+	var node: Node = _audio.get_node(^"Ambience")
+
+	_audio.set_ambience(layers, 0.0)
+
+	assert_eq(_audio.get_ambience(), layers)
+	assert_eq(node.get_child_count(), 2)
+	for player: AudioStreamPlayer in node.get_children():
+		assert_true(player.playing)
+		assert_eq(player.bus, AudioService.BUS_AMBIENCE)
+	_audio.set_ambience([], 0.0)
+	await wait_frames(1)
+	assert_eq(_audio.get_ambience(), [] as Array[StringName])
+	assert_eq(node.get_child_count(), 0)
+
+
+func test_the_ambience_fades_in() -> void:
+	_audio.set_process(false)
+	var cue: AudioCue = _catalog.get_cue(AudioEvents.AMBIENCE_WIND)
+
+	_audio.set_ambience([AudioEvents.AMBIENCE_WIND], 1.0)
+	var wind: AudioStreamPlayer = _audio.get_node(^"Ambience").get_child(0)
+
+	assert_lt(wind.volume_db, cue.volume_db - 60.0, "silent at first")
+	_audio._process(0.5)
+	assert_almost_eq(wind.volume_db, cue.volume_db + linear_to_db(0.5), 0.1, "halfway")
+	_audio._process(0.6)
+	assert_almost_eq(wind.volume_db, cue.volume_db, 0.1, "all there")
+
+
+func test_a_layer_of_one_shots_plays_now_and_then() -> void:
+	_audio.set_process(false)
+
+	_audio.set_ambience([AudioEvents.AMBIENCE_OWL], 0.0)
+	var owl: AudioStreamPlayer = _audio.get_node(^"Ambience").get_child(0)
+
+	assert_false(owl.playing, "not at once")
+	_audio._process(0.31)
+	assert_true(owl.playing, "within its interval")
+
+
+func test_a_crucial_cue_ducks_the_ambience_for_a_moment() -> void:
+	_catalog.get_cue(AudioEvents.BELL).duck_ambience = true
+	_audio.set_process(false)
+	_audio.set_listener(_listener)
+	_audio.set_ambience([AudioEvents.AMBIENCE_WIND], 0.0)
+	var wind: AudioStreamPlayer = _audio.get_node(^"Ambience").get_child(0)
+	var normal: float = _catalog.get_cue(AudioEvents.AMBIENCE_WIND).volume_db
+	var duck: float = _config.audio_ambience_duck_db
+	var time: float = _config.audio_ambience_duck_time
+
+	_audio.play_event(AudioEvents.BLEAT, Vector2.ZERO)
+	_audio._process(0.0)
+	assert_almost_eq(wind.volume_db, normal, 0.1, "a bleat does not duck it")
+	_audio.play_event(AudioEvents.BELL, Vector2.ZERO)
+	_audio._process(0.0)
+	assert_almost_eq(wind.volume_db, normal + duck, 0.1, "the bell does")
+	_audio._process(time / 2.0)
+	assert_almost_eq(wind.volume_db, normal + duck / 2.0, 0.1, "coming back")
+	_audio._process(time)
+	assert_almost_eq(wind.volume_db, normal, 0.1, "back")
+
+
+func test_stop_all_ends_the_ambience_too() -> void:
+	_audio.set_ambience(AudioEvents.AMBIENCE, 0.0)
+
+	_audio.stop_all()
+
+	assert_eq(_audio.get_ambience(), [] as Array[StringName])
+
+
 # --- Volumes -----------------------------------------------------------------------
 
 
@@ -403,9 +509,16 @@ static func _loops(stream: AudioStream) -> bool:
 
 ## A cue for every event: two short tones for one-shots, a looping tone for the
 ## looping sounds.
+static func _every_event() -> Array[StringName]:
+	var events: Array[StringName] = AudioEvents.ALL.duplicate()
+	events.append_array(AudioEvents.CUES)
+	events.append_array(AudioEvents.AMBIENCE)
+	return events
+
+
 static func _catalog_of_tones() -> AudioCatalog:
 	var catalog: AudioCatalog = AudioCatalog.new()
-	for event_id: StringName in AudioEvents.ALL:
+	for event_id: StringName in _every_event():
 		var cue: AudioCue = AudioCue.new()
 		if LOOPING.has(event_id):
 			cue.streams = [_tone(440.0, 0.5, true)]
@@ -414,7 +527,12 @@ static func _catalog_of_tones() -> AudioCatalog:
 			cue.streams = [_tone(440.0, 0.05, false), _tone(660.0, 0.05, false)]
 			cue.pitch_variation = 0.1
 			cue.attenuation = 1.5
+		if AudioEvents.CUES.has(event_id):
+			cue.bus = AudioService.BUS_UI
+		elif AudioEvents.AMBIENCE.has(event_id):
+			cue.bus = AudioService.BUS_AMBIENCE
 		catalog.cues[event_id] = cue
+	catalog.cues[AudioEvents.AMBIENCE_OWL].repeat_interval = Vector2(0.2, 0.3)
 	return catalog
 
 

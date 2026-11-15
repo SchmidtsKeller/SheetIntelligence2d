@@ -39,7 +39,7 @@ func test_role_action_sets() -> void:
 
 
 func test_every_sound_event_has_a_hearing_range_class() -> void:
-	assert_eq(AudioEvents.ALL.size(), 12)
+	assert_eq(AudioEvents.ALL.size(), 20)
 	for event_id: StringName in AudioEvents.ALL:
 		assert_true(AudioEvents.RANGE_CLASS.has(event_id), "'%s' has a range class" % event_id)
 	assert_eq(AudioEvents.RANGE_CLASS.size(), AudioEvents.ALL.size())
@@ -48,7 +48,7 @@ func test_every_sound_event_has_a_hearing_range_class() -> void:
 func test_sound_event_ids_are_unique() -> void:
 	var seen: Array[StringName] = []
 
-	for event_id: StringName in AudioEvents.ALL:
+	for event_id: StringName in AudioEvents.ALL + AudioEvents.CUES + AudioEvents.AMBIENCE:
 		assert_does_not_have(seen, event_id)
 		seen.append(event_id)
 
@@ -71,6 +71,23 @@ func test_hearing_range_classes_decided_in_the_audio_task() -> void:
 		AudioEvents.range_class_of(AudioEvents.SPIDER_SCREECH), GameEnums.HearingRange.WHOLE_MAP
 	)
 	assert_eq(AudioEvents.range_class_of(AudioEvents.BAT), GameEnums.HearingRange.LOUD)
+
+
+func test_hearing_range_classes_decided_in_the_sound_pass() -> void:
+	var quiet: Array[StringName] = [
+		AudioEvents.EMPTY_CLICK,
+		AudioEvents.BULLET_IMPACT,
+		AudioEvents.SPIDER_MOVE,
+		AudioEvents.TORCH_IGNITE,
+		AudioEvents.TORCH_BURN,
+	]
+	for event_id: StringName in quiet:
+		assert_eq(AudioEvents.range_class_of(event_id), GameEnums.HearingRange.QUIET, event_id)
+	var loud: Array[StringName] = [
+		AudioEvents.HERDER_DEATH, AudioEvents.MONSTER_DEATH, AudioEvents.BAT_WINGS
+	]
+	for event_id: StringName in loud:
+		assert_eq(AudioEvents.range_class_of(event_id), GameEnums.HearingRange.LOUD, event_id)
 
 
 func test_unknown_sound_events_are_quiet() -> void:

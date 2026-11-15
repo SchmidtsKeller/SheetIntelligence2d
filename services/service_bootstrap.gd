@@ -48,6 +48,11 @@ static func register_defaults(registry: ServiceRegistry, config: GameConfig) -> 
 	registry.register(MatchFlow, match_flow)
 	match_flow.setup(session)
 
+	# The sounds of the game's flow follow the session and the match.
+	var cues: GameSoundCues = GameSoundCues.new()
+	registry.register(GameSoundCues, cues)
+	cues.setup(session, match_flow)
+
 
 ## The transport for this run: WebRTC with pairing codes in the Web build; on
 ## desktop the dev transport when the command line asks to host or join a

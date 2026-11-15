@@ -98,6 +98,9 @@ const PROJECT_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"audio_whole_map_distance": 8000.0,
 	&"audio_panning_strength": 3.0,
 	&"audio_own_sound_volume_db": -10.0,
+	# The sound pass (#23)
+	&"audio_ambience_duck_db": -9.0,
+	&"audio_ambience_duck_time": 1.5,
 	&"net_tick_rate": 20,
 	&"net_interpolation_delay": 0.1,
 	&"net_max_extrapolation": 0.1,

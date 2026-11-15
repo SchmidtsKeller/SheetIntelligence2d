@@ -101,6 +101,10 @@ func _ready() -> void:
 	var messenger: NetMessenger = session.messenger
 	messenger.register_event(EVENT_ARRIVED, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.subscribe(EVENT_ARRIVED, _on_arrived)
+	# Its wings beat as long as it flies, which is as long as it is there.
+	Services.audio.set_emitter_playing(
+		Services.audio.start_emitter(AudioEvents.BAT_WINGS, self), true
+	)
 
 
 func _exit_tree() -> void:

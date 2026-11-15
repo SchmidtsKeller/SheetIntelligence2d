@@ -45,6 +45,12 @@ func test_it_comes_in_from_the_edge_nearest_the_sheepherder() -> void:
 		assert_true(bottom.x >= 0.0 and bottom.x <= 3200.0)
 
 
+func test_its_wings_are_heard_while_it_flies() -> void:
+	_bat(Vector2(1000.0, 0.0))
+
+	assert_true(_audio.is_looping(AudioEvents.BAT_WINGS))
+
+
 func test_the_cone_shrinks_while_the_bat_circles_the_sheepherder() -> void:
 	var bat: AlliedBat = _bat(Vector2(1000.0, 0.0))
 	watch_signals(bat)

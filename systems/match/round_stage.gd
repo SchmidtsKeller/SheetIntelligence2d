@@ -49,6 +49,8 @@ func _ready() -> void:
 	_session.entities.entity_spawned.connect(_on_entity_spawned)
 	_session.roles_changed.connect(_apply_role)
 	_flow.phase_changed.connect(_on_phase_changed)
+	# The night around the round (GDD §7.2), the same for both players.
+	Services.audio.set_ambience(AudioEvents.AMBIENCE)
 
 
 func _exit_tree() -> void:
@@ -57,6 +59,7 @@ func _exit_tree() -> void:
 	_flow.phase_changed.disconnect(_on_phase_changed)
 	Services.input.set_role(GameEnums.Role.NONE)
 	Services.audio.set_listener(null)
+	Services.audio.set_ambience([])
 	Services.combat.end_round()
 	_despawn_round()
 

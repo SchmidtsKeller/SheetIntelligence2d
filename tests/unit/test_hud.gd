@@ -15,6 +15,8 @@ var _screen: Node2D
 var _time: float = 0.0
 var _player: StubInputService
 var _original_input: Node
+var _audio: StubAudioService
+var _original_audio: Node
 var _original_config: Dictionary[StringName, float] = {}
 var _original_launch_perks: Variant = null
 
@@ -33,6 +35,8 @@ func before_each() -> void:
 	RoundStage.bots_enabled = false
 	_player = StubInputService.new()
 	_original_input = Services.replace(InputService, _player)
+	_audio = StubAudioService.new(Services.config)
+	_original_audio = Services.replace(AudioService, _audio)
 
 
 func after_each() -> void:
@@ -45,6 +49,8 @@ func after_each() -> void:
 	RoundStage.bots_enabled = true
 	Services.replace(InputService, _original_input)
 	_player.free()
+	Services.replace(AudioService, _original_audio)
+	_audio.free()
 	for stat: StringName in _original_config:
 		Services.config.set(stat, _original_config[stat])
 	_original_config.clear()
@@ -214,6 +220,7 @@ func test_reaching_the_kill_milestone_says_so() -> void:
 
 	assert_eq(_hud().get_message(), "You can kill the Sheepherder now")
 	assert_true(_gauge("Evolution").active)
+	assert_has(_audio.get_cues(), AudioEvents.ALERT_KILL_UNLOCKED, "and sounds")
 
 
 func test_an_empty_firearm_says_so() -> void:
@@ -227,6 +234,36 @@ func test_an_empty_firearm_says_so() -> void:
 
 	assert_eq(_hud().get_message(), "Out of bullets")
 	assert_eq(_gauge("Reload").caption, "Out of bullets")
+	assert_has(_audio.get_cues(), AudioEvents.ALERT_OUT_OF_BULLETS, "and sounds")
+
+
+func test_the_monster_hears_its_perk_start_end_and_come_back() -> void:
+	_select_perk(PerkIds.INVISIBILITY)
+	_tune(StatIds.INVISIBILITY_COOLDOWN, 0.2)
+	await _play_as(Role.MONSTER)
+	_pass(Services.config.round_countdown_duration)
+
+	_player.simulate_press(InputActions.PERK)
+	_player.simulate_release(InputActions.PERK)
+	await wait_frames(2)
+	assert_eq(_audio.get_cues().back(), AudioEvents.INVISIBILITY_ON)
+	_player.simulate_press(InputActions.PERK)
+	await wait_frames(2)
+	assert_eq(_audio.get_cues().back(), AudioEvents.INVISIBILITY_OFF, "ended early")
+	await wait_seconds(0.4)
+	assert_eq(_audio.get_cues().back(), AudioEvents.ALERT_PERK_READY)
+
+
+func test_the_sheepherder_never_hears_the_monsters_perk() -> void:
+	_select_perk(PerkIds.INVISIBILITY)
+	await _play_as(Role.SHEEPHERDER)
+	_pass(Services.config.round_countdown_duration)
+
+	Services.perks.use_perk(Role.MONSTER)
+	await wait_frames(2)
+
+	assert_true(Services.perks.is_perk_active(Role.MONSTER), "the Monster is invisible")
+	assert_does_not_have(_audio.get_cues(), AudioEvents.INVISIBILITY_ON)
 
 
 # --- Helpers ---------------------------------------------------------------------

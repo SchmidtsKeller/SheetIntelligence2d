@@ -25,23 +25,18 @@ class RecordingAudioService:
 	extends StubAudioService
 
 	var _bodies: Dictionary[int, Node] = {}
-	var _loops: Dictionary[int, StringName] = {}
-	var _playing: Dictionary[int, bool] = {}
 
 	func start_emitter(event_id: StringName, target: Node2D) -> int:
 		var handle: int = super(event_id, target)
 		# The sheep's sounds follow its picture, a node inside its scene.
 		_bodies[handle] = target.owner if target.owner != null else target
-		_loops[handle] = event_id
 		return handle
 
-	func set_emitter_playing(handle: int, is_playing: bool) -> void:
-		_playing[handle] = is_playing
-
-	func is_looping(body: Node, event_id: StringName) -> bool:
-		for handle: int in _loops:
-			if _bodies[handle] == body and _loops[handle] == event_id:
-				return _playing.get(handle, false)
+	func is_looping_at(body: Node, event_id: StringName) -> bool:
+		for handle: int in _bodies:
+			var current: bool = _emitters.get(handle) == event_id
+			if _bodies[handle] == body and current and _playing.get(handle, false):
+				return true
 		return false
 
 
@@ -194,12 +189,12 @@ func test_the_other_device_hears_the_sprint() -> void:
 	for _frame: int in 60:
 		await _physics_frames(1)
 		for monster: Monster in monsters:
-			running_frames += int(_audio.is_looping(monster.get_body(), AudioEvents.GRASS_RUN))
+			running_frames += int(_audio.is_looping_at(monster.get_body(), AudioEvents.GRASS_RUN))
 	assert_eq(running_frames, 0, "walking never sounds like running, on neither device")
 	for monster: Monster in monsters:
 		var body: SheepBody = monster.get_body()
-		assert_true(_audio.is_looping(body, AudioEvents.GRASS_MOVE), "walking like a sheep")
-		assert_false(_audio.is_looping(body, AudioEvents.GRASS_RUN))
+		assert_true(_audio.is_looping_at(body, AudioEvents.GRASS_MOVE), "walking like a sheep")
+		assert_false(_audio.is_looping_at(body, AudioEvents.GRASS_RUN))
 
 	_input.simulate_press(InputActions.SPRINT)
 	await _physics_frames(45)
@@ -207,8 +202,8 @@ func test_the_other_device_hears_the_sprint() -> void:
 	# On the guest it sprints; on the host its copy is shown sprinting.
 	for monster: Monster in monsters:
 		var body: SheepBody = monster.get_body()
-		assert_true(_audio.is_looping(body, AudioEvents.GRASS_RUN), "louder on both devices")
-		assert_false(_audio.is_looping(body, AudioEvents.GRASS_MOVE))
+		assert_true(_audio.is_looping_at(body, AudioEvents.GRASS_RUN), "louder on both devices")
+		assert_false(_audio.is_looping_at(body, AudioEvents.GRASS_MOVE))
 	_input.simulate_release(InputActions.SPRINT)
 
 
@@ -382,6 +377,31 @@ func test_the_spider_replaces_the_sheep_on_both_devices() -> void:
 			SpiderVisual.RADIUS,
 			"seen as the large thing it is"
 		)
+
+
+func test_the_spider_skitters_instead_of_rustling() -> void:
+	var monster: Monster = _spawn(HOST_ID)[0]
+	var body: SheepBody = monster.get_body()
+	_combat.monster_form_changed.emit(SPIDER)
+	_input.move_vector = Vector2.RIGHT
+
+	await _physics_frames(30)
+
+	assert_true(_audio.is_looping_at(body, AudioEvents.SPIDER_MOVE))
+	assert_false(_audio.is_looping_at(body, AudioEvents.GRASS_MOVE))
+	assert_false(_audio.is_looping_at(body, AudioEvents.GRASS_RUN))
+	_input.move_vector = Vector2.ZERO
+	await _physics_frames(30)
+	assert_false(_audio.is_looping_at(body, AudioEvents.SPIDER_MOVE), "standing still")
+
+
+func test_the_monsters_death_is_heard_where_it_was_shot() -> void:
+	_spawn(HOST_ID)
+
+	_combat.monster_shot.emit(Vector2(120.0, 40.0))
+
+	var where: Vector2 = Vector2(120.0, 40.0)
+	assert_eq(_events(AudioEvents.MONSTER_DEATH), [where, where] as Array[Vector2], "both devices")
 
 
 func test_the_spider_runs_at_300_without_stamina() -> void:

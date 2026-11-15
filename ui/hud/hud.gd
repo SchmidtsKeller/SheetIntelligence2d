@@ -38,6 +38,15 @@ const ACTION_ICONS: Dictionary[String, StringName] = {
 	"Sprint": InputActions.SPRINT,
 	"Perk": InputActions.PERK,
 }
+## What the player hears when their own active perk starts and ends; only
+## their device has their HUD, so the other player never does (#23).
+const PERK_START_CUES: Dictionary[StringName, StringName] = {
+	PerkIds.INVISIBILITY: AudioEvents.INVISIBILITY_ON,
+	PerkIds.ALLIED_BAT: AudioEvents.BAT_SENT,
+}
+const PERK_END_CUES: Dictionary[StringName, StringName] = {
+	PerkIds.INVISIBILITY: AudioEvents.INVISIBILITY_OFF,
+}
 
 var _stage: RoundStage
 var _catalog: PerkCatalog = PerkCatalog.load_default()
@@ -51,6 +60,7 @@ var _actions: HBoxContainer
 var _role: GameEnums.Role = GameEnums.Role.NONE
 var _perk_cooldown: HudReadout.CooldownTracker = HudReadout.CooldownTracker.new()
 var _perk_was_cooling: bool = false
+var _perk_was_running: bool = false
 
 
 ## A HUD for the round on [param stage].
@@ -142,6 +152,7 @@ func _set_role(role: GameEnums.Role) -> void:
 	for element_name: String in MONSTER_ELEMENTS:
 		_elements[element_name].visible = monster
 	_perk_was_cooling = false
+	_perk_was_running = false
 
 
 func _refresh_herder() -> void:
@@ -221,8 +232,14 @@ func _refresh_perk(role: GameEnums.Role) -> void:
 	var cooldown: float = _perk_cooldown.ratio(perks.get_perk_cooldown_remaining(role))
 	var running: bool = perks.is_perk_active(role)
 	_show_action("Perk", cooldown, perks.get_perk_charge(role), running, cooldown <= 0.0)
+	if running != _perk_was_running:
+		var cues: Dictionary[StringName, StringName] = PERK_START_CUES if running else PERK_END_CUES
+		if cues.has(definition.id):
+			Services.audio.play_ui(cues[definition.id])
+	_perk_was_running = running
 	if _perk_was_cooling and cooldown <= 0.0:
 		show_message("%s is ready" % definition.display_name)
+		Services.audio.play_ui(AudioEvents.ALERT_PERK_READY)
 	_perk_was_cooling = cooldown > 0.0
 
 
@@ -244,11 +261,13 @@ func _show_action(
 func _on_ammo_depleted() -> void:
 	if _role == GameEnums.Role.SHEEPHERDER:
 		show_message("Out of bullets")
+		Services.audio.play_ui(AudioEvents.ALERT_OUT_OF_BULLETS)
 
 
 func _on_kill_unlocked() -> void:
 	if _role == GameEnums.Role.MONSTER:
 		show_message("You can kill the Sheepherder now")
+		Services.audio.play_ui(AudioEvents.ALERT_KILL_UNLOCKED)
 
 
 func _on_monster_form_changed(form: GameEnums.MonsterForm) -> void:

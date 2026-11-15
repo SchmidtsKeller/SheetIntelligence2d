@@ -103,6 +103,20 @@ func test_the_bots_see_by_the_same_light() -> void:
 	assert_true(_vision.can_see(VisionTarget.of(dark)))
 
 
+func test_a_torch_flares_up_and_then_crackles() -> void:
+	var torch: Torch = _torch(Vector2(0.0, -500.0))
+	assert_false(_audio.is_looping(AudioEvents.TORCH_BURN), "an unlit torch is silent")
+
+	torch.light()
+
+	assert_true(_audio.is_looping(AudioEvents.TORCH_BURN))
+	var flares: Array[Vector2] = []
+	for entry: Dictionary in _audio.played:
+		if entry["event"] == AudioEvents.TORCH_IGNITE:
+			flares.append(entry["position"])
+	assert_eq(flares, [torch.global_position] as Array[Vector2])
+
+
 func test_a_lit_torch_reveals_what_is_around_it() -> void:
 	await _stage_herder()
 	var torch: Torch = _torch(Vector2(0.0, -500.0))

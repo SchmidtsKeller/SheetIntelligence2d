@@ -21,6 +21,10 @@ var kind: Kind = Kind.MENU
 var _icon_slot: Control
 
 
+func _init() -> void:
+	pressed.connect(_on_pressed)
+
+
 ## Leaves room on the left for an icon, or takes it back.
 func _make_room_for_icon(room: bool) -> void:
 	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
@@ -52,6 +56,10 @@ static func create(
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return button
+
+
+func _on_pressed() -> void:
+	Services.audio.play_ui(AudioEvents.UI_CLICK)
 
 
 ## Shows [param texture] as the choice's icon, with room for it on the left.

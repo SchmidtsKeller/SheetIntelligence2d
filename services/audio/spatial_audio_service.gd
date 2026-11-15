@@ -12,6 +12,9 @@ extends AudioService
 ##   listener nothing positional plays.
 ## - Looping sounds of the listener's own character play
 ##   [member GameConfig.audio_own_sound_volume_db] quieter on this device.
+## - The ambience plays its layers on the ambience bus, not in the world. A
+##   cue that ducks it (bell, gunshot) makes it
+##   [member GameConfig.audio_ambience_duck_db] quieter for a moment.
 ## - Bus volumes are kept in [member settings_path]. In the Web build every
 ##   sound is muted while the page is hidden.
 
@@ -37,6 +40,17 @@ class Emitter:
 	var audible: bool = false
 
 
+## A layer of the ambience.
+class AmbienceLayer:
+	var event_id: StringName
+	var cue: AudioCue
+	var player: AudioStreamPlayer
+	## 0 to 1 while it fades in.
+	var level: float = 0.0
+	## Seconds until a layer of one-shots plays again; negative for a loop.
+	var next_in: float = -1.0
+
+
 ## Where the bus volumes are kept; empty keeps them for this run only.
 var settings_path: String = DEFAULT_SETTINGS_PATH
 ## The playback type of sounds started from now on. The default is the
@@ -51,6 +65,12 @@ var _ear: AudioListener2D = AudioListener2D.new()
 var _emitters: Dictionary[int, Emitter] = {}
 var _next_handle: int = 1
 var _one_shots: Node = Node.new()
+var _ambience_node: Node = Node.new()
+var _ambience: Array[AmbienceLayer] = []
+## Seconds the ambience fades in over.
+var _ambience_fade: float = 1.0
+## 1 right after a cue ducked the ambience, back to 0 over the duck time.
+var _duck: float = 0.0
 var _document: JavaScriptObject
 ## Kept, or JavaScript can no longer call it.
 var _visibility_callback: JavaScriptObject
@@ -64,6 +84,8 @@ func _init(config: GameConfig = null, catalog: AudioCatalog = null) -> void:
 	add_child(_ear)
 	_one_shots.name = "OneShots"
 	add_child(_one_shots)
+	_ambience_node.name = "Ambience"
+	add_child(_ambience_node)
 
 
 func _ready() -> void:
@@ -71,18 +93,21 @@ func _ready() -> void:
 	_watch_page_visibility()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var listener: Node2D = get_listener()
 	if listener != null:
 		_ear.global_position = listener.global_position
 	for emitter: Emitter in _emitters.values():
 		if emitter.player != null and is_instance_valid(emitter.target):
 			emitter.player.global_position = emitter.target.global_position
+	_advance_ambience(delta)
 
 
 func play_event(event_id: StringName, world_position: Vector2) -> void:
 	event_played.emit(event_id, world_position)
 	var cue: AudioCue = _catalog.get_cue(event_id)
+	if cue != null and cue.duck_ambience:
+		_duck = 1.0
 	if cue == null or cue.streams.is_empty() or get_listener() == null:
 		return
 	var player: AudioStreamPlayer2D = _new_player(event_id, cue)
@@ -152,6 +177,43 @@ func stop_all(fade_seconds: float = 0.0) -> void:
 		stop_emitter(handle, fade_seconds)
 	for player: Node in _one_shots.get_children():
 		_fade_out(player, fade_seconds)
+	set_ambience([], fade_seconds)
+
+
+func set_ambience(layers: Array[StringName], fade_seconds: float = 1.0) -> void:
+	if layers == get_ambience():
+		return
+	for layer: AmbienceLayer in _ambience:
+		_fade_out(layer.player, fade_seconds)
+	_ambience.clear()
+	_ambience_fade = fade_seconds
+	for event_id: StringName in layers:
+		var cue: AudioCue = _catalog.get_cue(event_id)
+		if cue == null or cue.streams.is_empty():
+			continue
+		var layer: AmbienceLayer = AmbienceLayer.new()
+		layer.event_id = event_id
+		layer.cue = cue
+		layer.level = 0.0 if fade_seconds > 0.0 else 1.0
+		layer.player = AudioStreamPlayer.new()
+		layer.player.name = String(event_id)
+		layer.player.bus = cue.bus
+		layer.player.playback_type = playback_type
+		_ambience_node.add_child(layer.player)
+		_ambience.append(layer)
+		_apply_ambience_volume(layer)
+		if cue.repeat_interval.y > 0.0:
+			layer.next_in = _random.randf_range(cue.repeat_interval.x, cue.repeat_interval.y)
+		else:
+			layer.player.stream = cue.streams[0]
+			layer.player.play()
+
+
+func get_ambience() -> Array[StringName]:
+	var layers: Array[StringName] = []
+	for layer: AmbienceLayer in _ambience:
+		layers.append(layer.event_id)
+	return layers
 
 
 func set_listener(listener: Node2D) -> void:
@@ -262,6 +324,37 @@ func _update_emitter(emitter: Emitter) -> void:
 	# Always from the start: in the Web build every loop of a sample begins
 	# again where the sample was started (docs/audio.md).
 	player.play()
+
+
+## Fades the ambience in, lets the duck wear off, and plays the next one-shot
+## of a layer like the owl.
+func _advance_ambience(delta: float) -> void:
+	var duck_time: float = _config.audio_ambience_duck_time
+	_duck = maxf(_duck - delta / duck_time, 0.0) if duck_time > 0.0 else 0.0
+	for layer: AmbienceLayer in _ambience:
+		if _ambience_fade > 0.0:
+			layer.level = minf(layer.level + delta / _ambience_fade, 1.0)
+		else:
+			layer.level = 1.0
+		_apply_ambience_volume(layer)
+		if layer.next_in < 0.0:
+			continue
+		layer.next_in -= delta
+		if layer.next_in <= 0.0:
+			var interval: Vector2 = layer.cue.repeat_interval
+			layer.next_in = _random.randf_range(interval.x, interval.y)
+			var streams: Array[AudioStream] = layer.cue.streams
+			layer.player.stream = streams[_random.randi_range(0, streams.size() - 1)]
+			layer.player.play()
+
+
+func _apply_ambience_volume(layer: AmbienceLayer) -> void:
+	var volume: float = layer.cue.volume_db + linear_to_db(maxf(layer.level, 0.0001))
+	volume += _config.audio_ambience_duck_db * _duck
+	# Only a real change, since in the Web build every change is a call into
+	# the browser.
+	if absf(layer.player.volume_db - volume) > 0.05:
+		layer.player.volume_db = volume
 
 
 func _fade_out(player: Node, fade_seconds: float) -> void:

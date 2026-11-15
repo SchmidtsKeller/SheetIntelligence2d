@@ -68,7 +68,7 @@ const WALK_SPEED_THRESHOLD: float = 5.0
 ## The walk animation never plays slower than this, even at a crawl.
 const MIN_WALK_ANIMATION_SPEED: float = 0.4
 ## Faster than this share of the sheep's top speed, a sheep-like runs and
-## rustles louder: only the sprinting Monster or the spider gets there.
+## plays its run sound: only the sprinting Monster or the spider gets there.
 const RUN_SPEED_FACTOR: float = 1.2
 
 ## Everything this sheep can look like.
@@ -246,6 +246,16 @@ func set_visual_override(visual: Node2D) -> void:
 	(_facing.get_node(^"Pose") as Node2D).visible = visual == null
 	if visual != null:
 		_facing.add_child(visual)
+
+
+## Replaces the sounds it makes walking and running, e.g. with the spider's
+## (#23). They go on as before: playing while it walks or runs.
+func set_movement_sounds(walk_event: StringName, run_event: StringName) -> void:
+	Services.audio.stop_emitter(_move_emitter)
+	Services.audio.stop_emitter(_run_emitter)
+	_move_emitter = Services.audio.start_emitter(walk_event, _facing)
+	_run_emitter = Services.audio.start_emitter(run_event, _facing)
+	_update_movement_sound()
 
 
 ## Shows the living sheep at [param shown_position], facing [param heading]
