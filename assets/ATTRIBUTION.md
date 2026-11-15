@@ -22,3 +22,16 @@ All are **CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>), as s
 | `spider_screech.ogg` | [Spider Attack 2](https://freesound.org/people/kongg_/sounds/672712/) | kongg_ | the whole sound |
 | `dog_bark.ogg` | [Single Dog Bark](https://freesound.org/people/kwahmah_02/sounds/277058/) | kwahmah_02 | the bark |
 | `bat_01.ogg` … `bat_03.ogg` | [Bat Screeches](https://opengameart.org/content/bat-screeches) (from [fruit_bats3](https://freesound.org/s/104205/) by polymorpheva) | AntumDeluge | `bat_01` to `bat_03.flac` of the pack |
+
+## Painted ground (#76)
+
+Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.
+
+| Files in `arena/ground/` | Source image |
+|:--|:--|
+| `grass.png`, `grass_normal.png` | `terrain_grass_turf_1794741903241.jpg` |
+| `clover.png`, `clover_normal.png` | `terrain_clover_meadow_1794741902823.jpg` |
+| `path.png`, `path_normal.png` | `terrain_dirt_path_1794741905313.jpg` |
+| `gravel.png`, `gravel_normal.png` | `terrain_gravel_dirt_1794741903283.jpg` |
+| `mud.png`, `mud_normal.png` | `terrain_mud_puddle_1794741903398.jpg` |
+| `layout.png`, `relief.png` | generated |
