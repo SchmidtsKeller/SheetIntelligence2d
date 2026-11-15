@@ -188,9 +188,10 @@ Companions
       (entities/companions/allied_bat.tscn -> Art)
       covered: #30 bat_fly_sheet.png, bat_harass_sheet.png
 
-Blood (entities/evidence/blood_decal.tscn -> Art)
-  assets/evidence/placeholder/blood.svg
-      covered: #30 fx_blood_decal_01..03.png
+Blood (entities/evidence/blood_decal.tscn)
+  No image needed: blood is generated in code (#91), a pool with droplets
+  and splatter drawn by entities/evidence/blood.gdshader from a shape seeded
+  by its position. #30's fx_blood_decal_01..03.png are not needed.
 
 Obstacles (entities/obstacles/<name>.tscn -> Art)
   Painted and in the game (#83): assets/arena/painted/tree_01.png (and
