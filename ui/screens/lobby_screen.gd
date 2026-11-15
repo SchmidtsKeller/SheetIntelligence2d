@@ -29,6 +29,9 @@ const LABEL_WIDTH: float = 460.0
 ## the command line gives them ([code]--port[/code], [code]--join=[/code],
 ## [code]--lan[/code]); tests set their own.
 var connect_options: LaunchOptions
+## This computer's addresses: [code]() -> PackedStringArray[/code]. Tests
+## replace it.
+var local_addresses: Callable = IP.get_local_addresses
 
 var _session: GameSession
 var _flow: MatchFlow
@@ -174,13 +177,10 @@ func _describe_status() -> String:
 		return "The match starts when both are ready."
 	if _is_connecting():
 		if _session.is_host():
-			var reach: String = (
-				"other computers can join" if connect_options.lan else "on this computer"
-			)
-			return (
-				"Hosting on port %d (%s). Waiting for the other player …"
-				% [connect_options.port, reach]
-			)
+			var addresses: PackedStringArray = []
+			if connect_options.lan:
+				addresses = lan_addresses(local_addresses.call())
+			return describe_hosting(connect_options.port, connect_options.lan, addresses)
 		return "Joining %s:%d …" % [connect_options.address, connect_options.port]
 	var lines: PackedStringArray = []
 	if not _problem.is_empty():
@@ -189,12 +189,41 @@ func _describe_status() -> String:
 		lines.append("The last session ended: %s" % _session.last_end_message)
 	if _connects_by_address():
 		lines.append(
-			"Host a game, or join one at the host's address (127.0.0.1 is this computer)."
-			+ " No second player? Play against the computer."
+			(
+				"Host a game, or join one at the host's address (127.0.0.1 is this computer)."
+				+ " No second player? Play against the computer."
+			)
 		)
 	elif not _session.requires_pairing_codes():
 		lines.append("Play against the computer.")
 	return "\n".join(lines)
+
+
+## The addresses in [param addresses] at which another computer in the
+## network can reach this one: IPv4, without loopback (127.*) and link-local
+## (169.254.*) addresses.
+static func lan_addresses(addresses: PackedStringArray) -> PackedStringArray:
+	var reachable: PackedStringArray = []
+	for address: String in addresses:
+		if not address.is_valid_ip_address() or address.contains(":"):
+			continue
+		if address.begins_with("127.") or address.begins_with("169.254."):
+			continue
+		reachable.append(address)
+	return reachable
+
+
+## What the host sees while waiting: the port and, when hosting for the whole
+## network ([param lan]), the [param addresses] to type into Join on the
+## other computer.
+static func describe_hosting(port: int, lan: bool, addresses: PackedStringArray) -> String:
+	var waiting: String = "Waiting for the other player …"
+	if not lan:
+		return "Hosting on port %d (on this computer). %s" % [port, waiting]
+	var hosting: String = "Hosting on port %d (other computers can join)" % port
+	if addresses.is_empty():
+		return "%s, but this computer has no network address. %s" % [hosting, waiting]
+	return "%s. On the other computer, join %s. %s" % [hosting, " or ".join(addresses), waiting]
 
 
 func _on_session_ended(_reason: NetworkService.DisconnectReason, _message: String) -> void:

@@ -184,6 +184,69 @@ func test_the_host_can_open_the_game_to_the_network() -> void:
 	assert_true(_button_shown(LobbyScreen.WHOLE_NETWORK))
 
 
+# --- The host's address (#103) -----------------------------------------------------
+
+
+func test_only_addresses_another_computer_can_reach_are_offered() -> void:
+	var all: PackedStringArray = [
+		"127.0.0.1",
+		"192.168.0.20",
+		"::1",
+		"fe80::1c2b:3a4d:5e6f:7a8b",
+		"169.254.12.7",
+		"172.29.80.1",
+		"::ffff:10.0.0.5",
+		"not an address",
+	]
+
+	assert_eq(LobbyScreen.lan_addresses(all), PackedStringArray(["192.168.0.20", "172.29.80.1"]))
+
+
+func test_hosting_for_the_network_names_the_port_and_where_to_join() -> void:
+	var addresses: PackedStringArray = ["192.168.0.20", "172.29.80.1"]
+
+	assert_eq(
+		LobbyScreen.describe_hosting(24565, true, addresses),
+		(
+			"Hosting on port 24565 (other computers can join). On the other computer, join"
+			+ " 192.168.0.20 or 172.29.80.1. Waiting for the other player …"
+		)
+	)
+
+
+func test_hosting_for_this_computer_names_no_network_address() -> void:
+	var text: String = LobbyScreen.describe_hosting(24565, false, ["192.168.0.20"])
+
+	assert_eq(text, "Hosting on port 24565 (on this computer). Waiting for the other player …")
+
+
+func test_hosting_without_a_network_address_says_so() -> void:
+	var text: String = LobbyScreen.describe_hosting(24565, true, [])
+
+	assert_true(text.contains("this computer has no network address"), text)
+
+
+func test_the_waiting_host_sees_its_network_address() -> void:
+	var port: int = _connect_over_sockets()
+	var addresses: Callable = func() -> PackedStringArray: return ["127.0.0.1", "192.168.0.20"]
+	_lobby.set(&"local_addresses", addresses)
+	_press(_lobby, LobbyScreen.HOST)
+
+	var status: String = _lobby.call(&"get_status_text")
+	assert_true(status.contains("(on this computer)"), status)
+	assert_false(status.contains("192.168.0.20"), "only this computer may join")
+
+	# Hosted on this computer only, so the test opens no port to the network;
+	# the text follows the switch.
+	(_lobby.find_child("Network", true, false) as Button).button_pressed = true
+
+	status = _lobby.call(&"get_status_text")
+	assert_true(status.contains("port %d (other computers can join)" % port), status)
+	assert_true(status.contains("join 192.168.0.20."), status)
+	assert_false(status.contains("127.0.0.1"), status)
+	assert_eq(_address().text, LaunchOptions.DEFAULT_ADDRESS, "Join still starts at this computer")
+
+
 func test_the_computer_is_still_offered_after_hosting() -> void:
 	_connect_over_sockets()
 	_press(_lobby, LobbyScreen.HOST)

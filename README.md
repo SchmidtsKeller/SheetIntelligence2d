@@ -35,7 +35,7 @@ The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/mo
 
 ### Two instances on one computer
 
-The game is always played by two devices. Two desktop instances pair in the lobby: one presses **Host a game**, the other **Join a game** (the address field says where the host is; `127.0.0.1` is this computer). The host lets other computers join with **Hosts for the whole network**. They can also connect by themselves:
+The game is always played by two devices. Two desktop instances pair in the lobby: one presses **Host a game**, the other **Join a game** (the address field says where the host is; `127.0.0.1` is this computer). The host lets other computers join with **Hosts for the whole network**; while it waits, its lobby shows the addresses of this computer to type into Join on the other one (a computer with Hyper-V, WSL or a VPN shows several; the one in the network both computers share works). They can also connect by themselves:
 
 ```bash
 godot --path . -- --host
