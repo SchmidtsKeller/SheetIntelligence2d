@@ -166,7 +166,8 @@ Sheep (entities/sheep/appearance/sheep_appearance_catalog.tres; layers built
 by entities/sheep/sheep_body.gd under Facing/Pose/Visual/Body). The Monster in
 sheep form uses exactly the same images: no art of its own (no tell).
   The painted, animated sheep is in the game (#74): assets/sheep/
-  sheep_sheet.png with idle, walk, graze and sprint. All sheep are this one
+  sheep_sheet.png with idle, walk, graze and sprint, and eat_feed (#95): the
+  Monster's sheep splits open and swallows its prey. All sheep are this one
   sheep in a few shades of wool; the pattern, marking and accessory layers
   were dropped on purpose, so #30's sheep_marking_* and sheep_accessory_*
   images are not needed. Still missing, played as code-driven motion for now:
@@ -175,7 +176,8 @@ sheep form uses exactly the same images: no art of its own (no tell).
 
 The Monster's spider form (entities/monster/spider_visual.gd)
   The painted spider is in the game (#74): assets/monster/spider_sheet.png
-  with idle, stalk, walk and eat_lunge. Still missing:
+  with idle, stalk, walk, eat_lunge (not played since #95) and eat_feed (#95,
+  played while it eats). Still missing:
       covered: #30 spider_transform_sheet.png
 
 Sheepherder (entities/sheepherder/sheepherder.tscn -> Art)

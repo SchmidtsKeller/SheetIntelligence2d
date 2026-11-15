@@ -8,10 +8,6 @@ All are **CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>), as s
 
 | File in `assets/audio/placeholder/` | Source | Author | What was taken |
 |:--|:--|:--|:--|
-| `bleat_01.ogg` | [Sheep baaing 1](https://freesound.org/people/michaelperfect/sounds/710296/) | michaelperfect | the whole bleat |
-| `bleat_02.ogg` | [Sheep baaing 3](https://freesound.org/people/michaelperfect/sounds/710298/) | michaelperfect | the whole bleat |
-| `bleat_03.ogg` | [Sheep baaing 4](https://freesound.org/people/michaelperfect/sounds/710299/) | michaelperfect | the whole bleat |
-| `bleat_04.ogg` | [Sheep baaing 5](https://freesound.org/people/michaelperfect/sounds/710300/) | michaelperfect | the whole bleat |
 | `grass_move_loop.ogg` | [Rustling grass](https://freesound.org/people/Wigglesworth/sounds/767220/) | Wigglesworth | 3.5–11.5 s as a loop |
 | `graze_loop.ogg` | [sheep chewing gras](https://freesound.org/people/krnd/sounds/319782/) | krnd | 20–32 s as a loop |
 | `herder_step_loop.ogg` | [Hiking Boot Footsteps on Grass](https://freesound.org/people/Fission9/sounds/521587/) | Fission9 | eight of its steps, one every 0.5 s |
@@ -23,14 +19,18 @@ All are **CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>), as s
 | `dog_bark.ogg` | [Single Dog Bark](https://freesound.org/people/kwahmah_02/sounds/277058/) | kwahmah_02 | the bark |
 | `bat_01.ogg` … `bat_03.ogg` | [Bat Screeches](https://opengameart.org/content/bat-screeches) (from [fruit_bats3](https://freesound.org/s/104205/) by polymorpheva) | AntumDeluge | `bat_01` to `bat_03.flac` of the pack |
 
+## Sheep bleats (#95)
+
+Made for this project by the team, not third-party assets. `audio/sheep/bleat_01.wav` … `bleat_08.wav` are the cleaned takes `resources/sounds/NPC/Pass1/Sheep1.wav` … `Sheep8.wav` (mono, 48 kHz), unchanged; the raw takes and the editing project are in `resources/sounds/NPC/Raw/`. Godot compresses them (QOA) on import.
+
 ## Character animations (#74)
 
 Made for this project by the team, not third-party assets. The painted top-down characters were animated and baked into Godot `SpriteFrames` packs (384x384 cells, facing +x) with the team's AI Studio app "MonsterWalk" (Google AI Studio, Gemini), which rigs the source paintings and bakes keyframed walk cycles. The packs were imported with `tools/import_sprite_pack.gd`: cropped to what the frames cover, scaled down (0.4, the spider 0.5) and repacked; the animations, frame rates and loops are unchanged.
 
 | Files | Pack | Animations (frames @ fps) |
 |:--|:--|:--|
-| `sheep/sheep_sheet.png`, `sheep/sheep_frames.tres` | NPC Sheep | idle 14 @ 10, graze 20 @ 12, walk 18 @ 20, sprint 14 @ 24 |
-| `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24 |
+| `sheep/sheep_sheet.png`, `sheep/sheep_frames.tres` | NPC Sheep (`resources/animations/npc/all/x/`, #95) | idle 14 @ 10, graze 20 @ 12, walk 18 @ 20, sprint 14 @ 24, eat_feed 20 @ 20 |
+| `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) (`resources/animations/monster/all/x/`, #95) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24, eat_feed 20 @ 20 |
 | `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
 | `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
 
