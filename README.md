@@ -361,7 +361,7 @@ The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role n
 | Role | Elements |
 |:--|:--|
 | Both | Round timer, short messages ("Out of bullets", "You can kill the Sheepherder now", "… is ready") |
-| Sheepherder | Bullets (3, or 4 with *Spare Bullet*), reload progress, Fire and Bell with their cooldowns |
+| Sheepherder | Bullets (3, or 4 with *Spare Bullet*), reload progress, Fire and Bell with their cooldowns; in the world, the [aim line](entities/sheepherder/aim_line.gd) to the first obstacle (it passes through sheep, so it never reveals a hidden one) |
 | Monster | Evolution bar with the kill and the spider milestones (and when the spider is out of reach), living sheep, stamina, Graze / Bleat / Eat / Sprint and the active perk with its charge and cooldown |
 
 - **Display only.** The HUD reads what the match flow, the combat service, the perk service and the round's characters expose; the arithmetic is in [HudReadout](ui/hud/hud_readout.gd), tested on its own. It switches with the roles by itself.

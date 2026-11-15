@@ -98,6 +98,9 @@ func _ready() -> void:
 	if controlled_locally and not is_bot:
 		_camera.enabled = true
 		_camera.make_current()
+		var aim_line: AimLine = AimLine.new()
+		aim_line.name = "AimLine"
+		add_child(aim_line)
 		get_viewport().size_changed.connect(_update_zoom)
 		_update_zoom()
 
