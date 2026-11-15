@@ -245,6 +245,8 @@ func _build_layout() -> void:
 	_history_label = _add_label(past, GameTheme.SMALL)
 	_lobby_button = _add_button(past, "Back to lobby", _back_to_lobby)
 	_next_role_label = _add_label(next, GameTheme.HEADING)
+	# Wraps rather than running into the board's frame.
+	(_next_role_label as GameLabel).wrapped()
 	_ready_button = _add_button(next, READY, Callable())
 	_ready_button.name = "Ready"
 	_ready_button.toggle_mode = true

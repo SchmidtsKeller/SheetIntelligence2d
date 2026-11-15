@@ -223,7 +223,9 @@ Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena
 godot --headless --path . --script res://tools/cut_art_sheets.gd
 ```
 
-What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt).
+What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
+
+**Font (#86).** Text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink, through the shared theme. Its digits are old-style figures that blur at small sizes, so the small HUD texts with numbers use Godot's plain built-in font (`GameTheme.readable_font()`).
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 
