@@ -2,10 +2,11 @@ class_name VisionSystem
 extends Node2D
 ## Decides, on this device, what the local player can see (GDD §3.1, §3.2).
 ##
-## [b]Sheepherder:[/b] the world lies in heavy darkness in which only static
-## scenery stays faintly visible. Entities and marks on the ground are seen
-## only where the flashlight lights them: inside the cone and not in an
-## obstacle's shadow.
+## [b]Sheepherder:[/b] the night is dim, not black: static scenery stays
+## readable. Entities and marks on the ground are seen only where light falls
+## on them: the flashlight or a lit torch, not blocked by an obstacle (see
+## [LightRules]). An entity in the soft edge of a light is shown as dim as
+## the light there.
 ## [br][b]Monster:[/b] no darkness. Entities are seen unless an obstacle stands
 ## between them and the Monster; the ground, with its marks and the
 ## Sheepherder's light, is always seen.
@@ -20,8 +21,9 @@ extends Node2D
 ## Place it in the world (not in a [CanvasLayer]): its darkness darkens the
 ## canvas it is in.
 
-## The colour unlit areas keep in the Sheepherder's view.
-@export var darkness: Color = Color(0.11, 0.11, 0.14)
+## The colour unlit areas keep in the Sheepherder's view: darker and colder
+## than the light, not black (#63).
+@export var darkness: Color = Color(0.3, 0.31, 0.39)
 ## How fast an entity fades in or out, in full fades per second.
 @export var fade_speed: float = 8.0
 
@@ -49,40 +51,50 @@ func _process(delta: float) -> void:
 	update(delta)
 
 
-## Decides every target and moves it toward being shown or hidden. Called
-## every frame.
+## Decides every target and moves it toward how visible it is. Called every
+## frame.
 func update(delta: float) -> void:
 	var step: float = fade_speed * delta
+	var torches: Array[Torch] = _lit_torches()
 	for target: VisionTarget in get_targets():
-		var seen: bool = can_see(target)
-		target.shown = move_toward(target.shown, 1.0 if seen else 0.0, step)
+		target.shown = move_toward(target.shown, _visibility(target, torches), step)
 
 
-## Whether the local player can see [param target] right now.
+## How visible [param target] is to the local player right now, from 0 to 1.
+func get_visibility(target: VisionTarget) -> float:
+	return _visibility(target, _lit_torches())
+
+
+## Whether the local player can see [param target] right now: it is at least
+## half visible.
 func can_see(target: VisionTarget) -> bool:
+	return get_visibility(target) >= LightRules.SEEN_LEVEL
+
+
+func _visibility(target: VisionTarget, torches: Array[Torch]) -> float:
 	if viewer != null and target.get_parent() == viewer:
-		return true
+		return 1.0
 	if target.cloaked:
-		return false
+		return 0.0
 	match role:
 		GameEnums.Role.SHEEPHERDER:
-			return _is_lit(target)
+			return _light_on(target, torches)
 		GameEnums.Role.MONSTER:
-			return target.kind == VisionTarget.Kind.GROUND_MARK or _is_in_sight(target)
-	return true
+			var seen: bool = target.kind == VisionTarget.Kind.GROUND_MARK or _is_in_sight(target)
+			return 1.0 if seen else 0.0
+	return 1.0
 
 
-## Sheepherder: some part of the target is inside the cone and not in the
-## shadow of an obstacle.
-func _is_lit(target: VisionTarget) -> bool:
+## Sheepherder: the brightest light on any part of the target.
+func _light_on(target: VisionTarget, torches: Array[Torch]) -> float:
 	var cone: FlashlightCone = _get_cone()
-	if cone == null:
-		return false
 	var world: World2D = get_world_2d()
+	var best: float = 0.0
 	for point: Vector2 in target.get_sample_points():
-		if cone.contains(point) and WorldQueries.has_line_of_sight(world, cone.origin, point):
-			return true
-	return false
+		best = maxf(best, LightRules.level_at(world, point, cone, torches))
+		if best >= 1.0:
+			break
+	return best
 
 
 ## Monster: no obstacle hides all of the target from the Monster.
@@ -104,6 +116,12 @@ func get_targets() -> Array[VisionTarget]:
 			if child is VisionTarget:
 				targets.append(child)
 	return targets
+
+
+func _lit_torches() -> Array[Torch]:
+	if role != GameEnums.Role.SHEEPHERDER:
+		return []
+	return LightRules.lit_torches(get_tree())
 
 
 func _get_cone() -> FlashlightCone:

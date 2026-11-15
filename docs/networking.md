@@ -138,6 +138,12 @@ The meter of a running perk is kept on both devices for the HUD, but only the ho
 | `companion.dog_bark` | Host | `[entity_id]` |
 | `companion.bat_arrived` | Host | `[entity_id]`; both devices shrink the cone for the disruption time |
 
+**Torches** (see [Arena](../systems/arena/arena.gd)). The host checks every physics frame whether a living Sheepherder stands next to an unlit torch; the round's new arena starts with all torches unlit.
+
+| Event | Sender | Payload |
+|:--|:--|:--|
+| `arena.torch_lit` | Host | `[torch index]`; both devices light that torch for the rest of the round |
+
 ## Session
 
 `Services.session` answers what every system needs to know:

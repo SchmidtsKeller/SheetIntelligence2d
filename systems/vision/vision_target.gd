@@ -19,6 +19,9 @@ enum Kind {
 	GROUND_MARK,
 }
 
+## Shown at least this much, the entity counts as seen: its attached effects
+## show, and the bots see it (see [LightRules]).
+const SEEN_SHOWN: float = 0.5
 ## How visible a [member cloaked] entity is to its own player.
 const CLOAKED_ALPHA: float = 0.4
 
@@ -62,7 +65,7 @@ func _ready() -> void:
 ## Shows [param effect] only while the entity is shown.
 func attach(effect: CanvasItem) -> void:
 	_effects.append(effect)
-	effect.visible = shown >= 0.5
+	effect.visible = shown >= SEEN_SHOWN
 
 
 ## Where the entity is shown, in world coordinates.
@@ -92,6 +95,6 @@ func _apply() -> void:
 		visual.modulate.a = shown * (CLOAKED_ALPHA if cloaked else 1.0)
 	for index: int in range(_effects.size() - 1, -1, -1):
 		if is_instance_valid(_effects[index]):
-			_effects[index].visible = shown >= 0.5
+			_effects[index].visible = shown >= SEEN_SHOWN
 		else:
 			_effects.remove_at(index)

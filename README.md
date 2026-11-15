@@ -256,12 +256,14 @@ Services.combat.begin_round(sheepherder, Monster.of(body).get_body())
 
 What a player sees is decided on their own device by the [VisionSystem](systems/vision/vision_system.gd) (GDD §3.1, §3.2). It changes only what is drawn, never the simulation or what is sent.
 
-- **Sheepherder:** heavy darkness, in which static scenery stays faintly visible. Entities and blood are seen only where the [flashlight](entities/sheepherder/flashlight_light.gd) lights them: inside the cone and not in an obstacle's shadow.
+- **Sheepherder:** a dim night (darker, not black), in which static scenery stays readable. Entities and blood are seen only where light falls on them: the [flashlight](entities/sheepherder/flashlight_light.gd) or a lit [torch](entities/torch/torch.gd), not blocked by an obstacle. [LightRules](systems/vision/light_rules.gd) gives every point a light level from 0 to 1: full inside the cone and near a torch, fading out softly beyond. An entity is shown as bright as the light on it and counts as seen at half light or more. The bots' senses ([BotSenses](systems/bots/bot_senses.gd)) ask the same `LightRules`, so the bots see what a player would.
 - **Monster:** no darkness. Entities are seen unless an obstacle hides them; all of the ground is seen, including blood and the Sheepherder's light.
 - **Everybody** always sees their own character.
 - **The invisible Monster** (a cloaked `VisionTarget`) is seen by nobody else; its own player sees it faded.
 
 **Rule:** anything that may be hidden (a character, a sheep, a companion, a mark on the ground) has a [VisionTarget](systems/vision/vision_target.gd) child that names the part to fade, and its root is in the group `dynamic_entities`. Effects that belong to it (a muzzle flash, an eating effect) are attached to that target with `attach()`, so they are never seen when the entity is not. There are no rules per entity type.
+
+**Torches** stand at fixed spots in the arena (`Torches` in [arena.tscn](systems/arena/arena.tscn)). The host lights one when a living Sheepherder walks up to it and announces it with `arena.torch_lit`; it burns for the rest of the round. The flicker, the sway of the flashlight while walking and the dust and embers are presentation only.
 
 The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
 

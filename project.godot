@@ -42,6 +42,7 @@ dynamic_entities="Everything the vision system may hide: characters, sheep, comp
 obstacles="Solid props that block movement and line of sight."
 static_scenery="Static map elements that stay faintly visible in darkness."
 arena="The arena of the running round."
+torches="The arena's torches, lit or not."
 
 [input]
 

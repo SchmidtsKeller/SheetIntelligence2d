@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://entities/obstacles/shed.tscn" id="13_lpsg0"]
 [ext_resource type="Script" path="res://systems/arena/spawn_area.gd" id="14_fop6x"]
 [ext_resource type="Script" path="res://systems/arena/arena_debug_overlay.gd" id="15_yl510"]
+[ext_resource type="PackedScene" path="res://entities/torch/torch.tscn" id="16_torch"]
 
 [node name="Arena" type="Node2D" unique_id=1763971139]
 script = ExtResource("1_4b6ef")
@@ -134,6 +135,26 @@ position = Vector2(650, 1600)
 
 [node name="Shed2" type="StaticBody2D" parent="Obstacles" unique_id=1916185280 instance=ExtResource("13_lpsg0")]
 position = Vector2(2750, 1650)
+
+[node name="Torches" type="Node2D" parent="."]
+
+[node name="Torch1" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(1200, 420)
+
+[node name="Torch2" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(2250, 900)
+
+[node name="Torch3" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(750, 1150)
+
+[node name="Torch4" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(1600, 1700)
+
+[node name="Torch5" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(2550, 1950)
+
+[node name="Torch6" parent="Torches" instance=ExtResource("16_torch")]
+position = Vector2(2650, 1250)
 
 [node name="Overlays" type="Node2D" parent="." unique_id=305067853]
 

@@ -19,6 +19,12 @@ const GDD_DEFAULTS: Dictionary[StringName, Variant] = {
 	&"flashlight_cone_length": 350.0,
 	&"bell_cooldown": 12.0,
 	&"bell_radius": 400.0,
+	# Lighting (#63)
+	&"flashlight_fade_length_share": 0.6,
+	&"flashlight_fade_angle_deg": 12.0,
+	&"torch_light_radius": 200.0,
+	&"torch_fade_length": 120.0,
+	&"torch_ignite_range": 60.0,
 	# Monster
 	&"monster_move_speed": 180.0,
 	&"monster_sprint_speed": 270.0,
