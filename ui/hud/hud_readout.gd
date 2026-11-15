@@ -45,9 +45,7 @@ static func milestone_position(at: int, spider_at: int) -> float:
 
 ## Sheep the Monster can still eat: the living ones and the bodies of shot
 ## ones it has not eaten yet (GDD §2.3: those count toward the evolution).
-static func sheep_left_to_eat(
-	living: int, shot: int, eaten: int, eaten_alive: int
-) -> int:
+static func sheep_left_to_eat(living: int, shot: int, eaten: int, eaten_alive: int) -> int:
 	var bodies_eaten: int = maxi(eaten - eaten_alive, 0)
 	return living + maxi(shot - bodies_eaten, 0)
 

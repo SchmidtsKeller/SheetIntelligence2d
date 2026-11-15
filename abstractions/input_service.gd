@@ -107,7 +107,5 @@ func get_action_hint(_action: StringName) -> String:
 ## ([param cooldown], 1 to 0), a meter that belongs to it ([param meter], 0 to
 ## 1, e.g. stamina) and whether it is happening ([param active]). The HUD
 ## calls this every frame; schemes without such controls ignore it.
-func show_action_state(
-	_action: StringName, _cooldown: float, _meter: float, _active: bool
-) -> void:
+func show_action_state(_action: StringName, _cooldown: float, _meter: float, _active: bool) -> void:
 	pass
