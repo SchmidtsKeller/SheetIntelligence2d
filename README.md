@@ -19,7 +19,7 @@ Open the folder in the Godot 4.7 editor and press **F5**, or from a terminal:
 godot --path .
 ```
 
-The game starts in the boot screen, which checks the services and hands over to the lobby. The lobby is a placeholder screen for now; its button starts a match: five rounds with the rules of GDD §2, each followed by the results screen (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against the computer (see [Offline match against the computer](#offline-match-against-the-computer)).
+The game starts in the boot screen, which checks the services and hands over to the lobby. In the [lobby](#lobby-and-scoreboard) both players choose a perk and get ready; then the match begins: five rounds with the rules of GDD §2, each followed by the scoreboard (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against the computer (see [Offline match against the computer](#offline-match-against-the-computer)).
 
 The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
 
@@ -43,9 +43,9 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-Both end up in the lobby, which shows who is host and who plays which role. The host's button starts the match on both instances; after every round the host continues from the results screen. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+Both end up in the lobby, which shows who is host and who plays which role. The match starts when both are ready; after every round both get ready again on the scoreboard. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
 
-Until the lobby has a perk selection, `--perk=<id>[,<id>]` selects perks for the roles an instance plays, e.g. `godot --path . -- --join --perk=long_flashlight,invisibility`. The ids are those in [PerkIds](abstractions/types/perk_ids.gd).
+For automated checks, `--perk=<id>[,<id>]` selects perks for the roles an instance plays without the lobby, e.g. `godot --path . -- --join --perk=long_flashlight,invisibility`. The ids are those in [PerkIds](abstractions/types/perk_ids.gd).
 
 ## Run the tests
 
@@ -313,7 +313,7 @@ setup → spawn → countdown → active → resolved → results ─┬→ setu
 - **Points** are always recorded, whoever wins: the Monster gets 1 for every sheep it ate alive (0 for the body of a shot one), the Sheepherder 1 for every sheep that survived and −2 for every sheep they shot.
 - **Same tick.** The host reports lethal events in the order its combat service decides them, and the first one decides the round. The timer is looked at after the events of a tick, so a kill in the tick in which the time runs out still counts.
 
-**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played. Round 1 is played in the roles the session drew at random when it started, which are the ones the lobby shows; they swap after every round, and a rematch draws them anew. The player with more round wins takes the match; equal wins are a draw.
+**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played. Round 1 is played in the roles the session drew at random when it started, which are the ones the lobby shows; they swap after every round, and a rematch draws them anew when the last results come up, so that the players choose perks for the roles they will play. The player with more round wins takes the match; equal wins are a draw.
 
 ```gdscript
 var flow: MatchFlow = Services.match_flow
@@ -327,9 +327,11 @@ flow.get_last_result().get_sheepherder_points()
 flow.request_next_round()                          # host, on the results screen
 flow.request_rematch()                             # host, after the last round
 flow.request_lobby()                               # host: end the match
+flow.set_ready(true)                               # either device, in the lobby and on the results
+flow.is_ready(MatchScore.Player.GUEST)             # the computer of an offline match always is
 ```
 
-The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round and the role in a plain line and carries the [HUD](#in-game-hud); the [results screen](ui/screens/results_screen.gd) shows the record of the round, the standing and the host's buttons until the styled scoreboard (#20) replaces it. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round and the role in a plain line and carries the [HUD](#in-game-hud); the [results screen](ui/screens/results_screen.gd) is the scoreboard (see [Lobby and scoreboard](#lobby-and-scoreboard)). When the connection is lost, the match ends on the remaining device and it returns to the lobby.
 
 ### In-game HUD
 
@@ -345,9 +347,20 @@ The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role n
 - **Keyboard and mouse:** the actions sit in a row at the bottom, each with its key, which the input layer names (`InputService.get_action_hint`).
 - **Touchscreen:** no icons next to the buttons; the HUD hands each action's cooldown and meter to its touch button (`InputService.show_action_state`), which draws them. The HUD's own elements stay at the top, away from the controls in the bottom corners.
 
+### Lobby and scoreboard
+
+From page load to the first round (GDD §8.1, #20): pair once, see your role, choose a perk, get ready.
+
+- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
+- **Perk choice.** One perk from the pool of the role you play next, or none; each shows its name, its type (passive, active, companion) and what it does. The other role's perks and choice never appear on your screen (GDD §8.1). Ready locks the choice; it can be taken back until the other player is ready too.
+- **Ready.** `MatchFlow.set_ready` tells the host; when both are ready, the host starts the match, the next round or the rematch. Offline, the computer is always ready.
+- **[Scoreboard](ui/screens/results_screen.gd).** Left: the round's outcome and reason, both players' points with where they come from (GDD §8.2), the round wins and, after the last round, the winner and every round from your view. Right: the role you play next, the perk choice and Ready. The host can end the match and take both back to the lobby. Perks are not revealed.
+- **Disconnects.** Losing the other player on any screen ends the session and returns to the lobby, which says why; on the Web the pairing panel offers to pair again.
+- **Layout.** Two columns, so a phone held sideways shows all of it; smaller screens scroll.
+
 ### Offline match against the computer
 
-One player can play a whole match on one device, without pairing (#57). In the Web build the lobby offers **Sheepherder vs. computer** and **Monster vs. computer** next to Host and Join; on the desktop, *Go to Round* without a session does the same with a random role. The chosen role is the player's in round 1; the roles swap after every round as usual.
+One player can play a whole match on one device, without pairing (#57). In the Web build the lobby offers **Sheepherder vs. computer** and **Monster vs. computer** next to Host and Join; on the desktop the lobby has the same two buttons. The chosen role is the player's in round 1; the roles swap after every round as usual. Then the player chooses a perk and gets ready, like in a match of two.
 
 - **Offline session.** `Services.session.play_offline()` starts a session of this device alone on every build. Where the transport needs a second device (WebRTC pairing), an offline transport stands in until the session ends; hosting or joining from the lobby ends the offline session first.
 - **Bots.** The [RoundStage](systems/match/round_stage.gd) spawns the character nobody plays for this device, marked as a bot's: it gets its own [BotInput](systems/bots/bot_input.gd), never `Services.input`, and no camera. A [MonsterBot](systems/bots/monster_bot.gd) or [SheepherderBot](systems/bots/sheepherder_bot.gd) presses its buttons, only while the player may act too.

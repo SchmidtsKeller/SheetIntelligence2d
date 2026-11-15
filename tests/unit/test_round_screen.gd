@@ -250,11 +250,11 @@ func test_the_results_screen_starts_the_next_round() -> void:
 	var results: Control = add_child_autofree((load(RESULTS_SCENE) as PackedScene).instantiate())
 	_loaded_scenes.clear()
 
-	var next: Button = _button(results, "Next round")
-	assert_true(next.visible)
-	assert_false(_button(results, "Rematch").visible)
+	var ready: Button = results.find_child("Ready", true, false)
+	assert_true(ready.visible)
 	assert_true(_button(results, "Back to lobby").visible)
-	next.pressed.emit()
+	# Alone, the computer is always ready: this player's Ready starts the round.
+	ready.button_pressed = true
 
 	assert_eq(_loaded_scenes, PackedStringArray([ROUND_SCENE]))
 

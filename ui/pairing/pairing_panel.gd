@@ -86,7 +86,8 @@ func _ready() -> void:
 	messenger.register_event(EVENT_PONG, NetMessenger.SenderRule.ANYONE)
 	messenger.subscribe(EVENT_PING, _on_ping)
 	messenger.subscribe(EVENT_PONG, _on_pong)
-	_go_to(Step.CONNECTED if session.has_remote_player() else Step.CHOOSE)
+	var playing: bool = session.has_remote_player() or session.is_offline()
+	_go_to(Step.CONNECTED if playing else Step.CHOOSE)
 
 
 func _exit_tree() -> void:
@@ -102,7 +103,7 @@ func _exit_tree() -> void:
 
 
 func _process(delta: float) -> void:
-	if _step != Step.CONNECTED:
+	if _step != Step.CONNECTED or not Services.session.has_remote_player():
 		return
 	_ping_left -= delta
 	if _ping_left <= 0.0:
@@ -232,12 +233,10 @@ func _host() -> void:
 func play_offline(role: GameEnums.Role) -> void:
 	browser.close()
 	var session: GameSession = Services.session
-	var error: Error = session.play_offline()
+	# The lobby below takes over: the perk for the first round, then Ready.
+	var error: Error = session.play_offline(role)
 	if error != OK:
 		_fail("Could not start the match (%s)." % error_string(error))
-		return
-	session.assign_roles(role)
-	session.request_screen(SceneFlowController.Screen.ROUND)
 
 
 func _join() -> void:
@@ -289,9 +288,6 @@ func _on_copy_finished(copied: bool) -> void:
 
 
 func _on_session_started() -> void:
-	if Services.session.is_offline():
-		# Nobody to pair with: the round screen follows at once.
-		return
 	browser.close()
 	_round_trip_ms = -1
 	_go_to(Step.CONNECTED)
@@ -393,6 +389,9 @@ func _show_problem(message: String) -> void:
 
 func _update_status_bar() -> void:
 	var session: GameSession = Services.session
+	if session.is_offline():
+		_status_bar.text = "Playing against the computer"
+		return
 	var who: String = "host" if session.is_host() else "guest"
 	var ping: String = (
 		", round trip %d ms" % _round_trip_ms if _round_trip_ms >= 0 else ", measuring …"

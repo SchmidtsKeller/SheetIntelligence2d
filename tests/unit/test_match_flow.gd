@@ -431,12 +431,15 @@ func test_on_the_results_screen_the_players_have_the_roles_of_the_next_round() -
 	assert_eq(_guest.get_score().get_role_in_round(0, MatchScore.Player.GUEST), Role.MONSTER)
 
 
-func test_after_the_last_round_the_roles_stay() -> void:
+func test_after_the_last_round_the_roles_of_a_rematch_are_drawn() -> void:
 	_config.match_rounds = 1
+	# The results screen comes up at the end of this.
 	await _play_round(Role.SHEEPHERDER, Role.SHEEPHERDER)
 
 	assert_true(_host.is_match_over())
-	assert_eq(_pair.host.get_local_role(), Role.SHEEPHERDER)
+	var host_role: GameEnums.Role = _pair.host.get_local_role()
+	assert_ne(host_role, Role.NONE)
+	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(host_role))
 	assert_false(_host_perks.is_selection_locked())
 
 
@@ -554,6 +557,99 @@ func test_a_rematch_starts_a_new_match_from_nothing() -> void:
 		assert_eq(flow.get_score().get_rounds_played(), 0)
 		assert_null(flow.get_last_result())
 		assert_false(flow.is_match_over())
+
+
+# --- Ready ----------------------------------------------------------------------
+
+
+func test_the_match_starts_when_both_players_are_ready_in_the_lobby() -> void:
+	watch_signals(_guest)
+
+	assert_true(_host.set_ready(true))
+	await wait_frames(2)
+
+	assert_true(_guest.is_ready(MatchScore.Player.HOST), "the guest sees it")
+	assert_false(_guest.is_locally_ready())
+	assert_signal_emitted(_guest, &"ready_changed")
+	assert_eq(_host.get_phase(), Phase.IDLE, "one player is not enough")
+
+	assert_true(_guest.set_ready(true))
+	await wait_frames(4)
+
+	for flow: MatchFlow in [_host, _guest]:
+		assert_eq(flow.get_phase(), Phase.COUNTDOWN)
+		assert_eq(flow.get_round_number(), 1)
+		assert_false(flow.is_ready(MatchScore.Player.HOST), "a new round asks anew")
+		assert_false(flow.is_ready(MatchScore.Player.GUEST))
+
+
+func test_a_player_can_take_back_their_ready() -> void:
+	_guest.set_ready(true)
+	await wait_frames(2)
+
+	_guest.set_ready(false)
+	await wait_frames(2)
+	_host.set_ready(true)
+	await wait_frames(4)
+
+	assert_false(_host.is_ready(MatchScore.Player.GUEST))
+	assert_eq(_host.get_phase(), Phase.IDLE)
+
+
+func test_nobody_gets_ready_during_a_round() -> void:
+	await _start_active_round(Role.SHEEPHERDER)
+
+	assert_false(_host.may_get_ready())
+	assert_false(_guest.set_ready(true))
+	assert_false(_host.set_ready(true))
+	assert_false(_host.is_ready(MatchScore.Player.HOST))
+
+
+func test_both_ready_on_the_results_starts_the_next_round() -> void:
+	await _play_round(Role.SHEEPHERDER, Role.SHEEPHERDER)
+	assert_eq(_host.get_phase(), Phase.RESULTS)
+	assert_true(_guest.may_get_ready())
+
+	_host.set_ready(true)
+	_guest.set_ready(true)
+	await wait_frames(6)
+
+	for flow: MatchFlow in [_host, _guest]:
+		assert_eq(flow.get_round_number(), 2)
+		assert_eq(flow.get_phase(), Phase.COUNTDOWN)
+	assert_eq(_pair.host.get_local_role(), Role.MONSTER, "the roles swapped")
+
+
+func test_both_ready_after_the_last_round_starts_a_rematch_in_the_roles_shown() -> void:
+	_config.match_rounds = 1
+	await _play_round(Role.MONSTER, Role.MONSTER)
+	assert_true(_host.is_match_over())
+	# The rematch's roles are drawn when the results come up, so that the
+	# players choose their perks for the roles they will play.
+	var shown: GameEnums.Role = _pair.host.get_local_role()
+	assert_eq(_pair.guest.get_local_role(), GameEnums.opposite_role(shown))
+
+	_host.set_ready(true)
+	_guest.set_ready(true)
+	await wait_frames(6)
+
+	for flow: MatchFlow in [_host, _guest]:
+		assert_eq(flow.get_round_number(), 1)
+		assert_eq(flow.get_score().get_rounds_played(), 0)
+	assert_eq(_pair.host.get_local_role(), shown)
+
+
+func test_alone_the_computer_is_always_ready() -> void:
+	var session: GameSession = add_child_autofree(GameSession.new())
+	var network: StubNetworkService = add_child_autofree(StubNetworkService.new())
+	session.scene_flow = _pair.host_flow
+	session.bind_network(network)
+	session.host()
+	var flow: MatchFlow = _create_flow(session, _host_combat, _host_perks, _host_input)
+
+	assert_true(flow.is_ready(MatchScore.Player.GUEST))
+	assert_false(flow.is_ready(MatchScore.Player.HOST))
+	session.leave()
 
 
 # --- The end of a match ----------------------------------------------------------

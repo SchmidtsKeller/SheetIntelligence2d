@@ -50,7 +50,9 @@ func get_available_perks(role: GameEnums.Role) -> Array[StringName]:
 
 
 func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool:
-	if _locked or not _catalog.is_valid_for(role, perk_id):
+	if _locked:
+		return false
+	if perk_id != PerkIds.NONE and not _catalog.is_valid_for(role, perk_id):
 		return false
 	_selected[role] = perk_id
 	perk_selected.emit(role, perk_id)
