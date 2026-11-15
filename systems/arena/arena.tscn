@@ -1,8 +1,11 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://systems/arena/arena.gd" id="1_4b6ef"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/fence.svg" id="2_46ogl"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/water.svg" id="3_6fvct"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/tree_02.png" id="17_tree2"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/ground_grass_patch_01.png" id="18_patch"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/ground_flowers_01.png" id="19_flowers"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/fence_straight.png" id="2_46ogl"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/river_bank_straight.png" id="3_6fvct"]
 [ext_resource type="Texture2D" path="res://assets/arena/ground/relief.png" id="4_qw4ae"]
 [ext_resource type="Material" path="res://systems/arena/ground_material.tres" id="5_ground"]
 [ext_resource type="PackedScene" path="res://entities/obstacles/tree.tscn" id="8_lkula"]
@@ -20,6 +23,10 @@ fence_texture = ExtResource("2_46ogl")
 river_texture = ExtResource("3_6fvct")
 ground_texture = ExtResource("4_qw4ae")
 ground_material = ExtResource("5_ground")
+ground_details = Dictionary[Texture2D, int]({
+ExtResource("18_patch"): 22,
+ExtResource("19_flowers"): 14
+})
 
 [node name="Ground" type="Node2D" parent="." unique_id=1516983522]
 
@@ -166,3 +173,24 @@ size = Vector2(500, 400)
 
 [node name="DebugOverlay" type="Node2D" parent="." unique_id=712583864]
 script = ExtResource("15_yl510")
+
+[node name="Art" parent="Obstacles/Tree2"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree4"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree6"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree8"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree10"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree12"]
+texture = ExtResource("17_tree2")
+
+[node name="Art" parent="Obstacles/Tree14"]
+texture = ExtResource("17_tree2")

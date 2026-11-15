@@ -23,19 +23,51 @@ func test_every_label_style_has_its_font_size() -> void:
 		assert_eq(theme.get_font_size(&"font_size", style), GameTheme.LABEL_SIZES[style])
 
 
-func test_buttons_and_boards_are_placeholders_that_say_so() -> void:
+func test_buttons_and_boards_are_painted() -> void:
 	var theme: Theme = GameTheme.build()
-	for type: StringName in [&"Button", GameTheme.CHOICE_BUTTON]:
-		for state: StringName in BUTTON_STATES:
-			var box: PlaceholderStyleBox = theme.get_stylebox(state, type) as PlaceholderStyleBox
-			assert_not_null(box, "%s %s is a placeholder" % [type, state])
-			assert_true(box.marked, "%s %s says Placeholder" % [type, state])
-		var focus: PlaceholderStyleBox = theme.get_stylebox(&"focus", type)
-		assert_false(focus.marked, "the focus frame does not repeat the word")
-	for panel: StringName in [GameTheme.BOARD_PANEL, GameTheme.BACKDROP_PANEL]:
-		var box: PlaceholderStyleBox = theme.get_stylebox(&"panel", panel)
-		assert_true(box.marked, "%s says Placeholder" % panel)
-		assert_false(box.image_id.is_empty(), "%s names its image" % panel)
+	var pieces: Dictionary[StringName, String] = {
+		&"Button": "ui_button", GameTheme.CHOICE_BUTTON: "ui_choice_button"
+	}
+	for type: StringName in pieces:
+		for state: StringName in BUTTON_STATES + ([&"focus"] as Array[StringName]):
+			var box: StyleBoxTexture = theme.get_stylebox(state, type) as StyleBoxTexture
+			assert_not_null(box, "%s %s is painted" % [type, state])
+			var expected: String = "%s%s_%s.png" % [PaintedUi.FOLDER, pieces[type], state]
+			assert_eq(box.texture.resource_path, expected)
+		var held: StyleBoxTexture = theme.get_stylebox(&"hover_pressed", type)
+		assert_eq(held.texture, (theme.get_stylebox(&"pressed", type) as StyleBoxTexture).texture)
+	var board: StyleBoxTexture = theme.get_stylebox(&"panel", GameTheme.BOARD_PANEL)
+	assert_eq(board.texture.resource_path, PaintedUi.FOLDER + "ui_board.png")
+	assert_gt(board.texture_margin_left, 0.0, "the frame does not stretch")
+
+
+func test_the_backdrop_is_still_a_placeholder_that_says_so() -> void:
+	var theme: Theme = GameTheme.build()
+	var box: PlaceholderStyleBox = theme.get_stylebox(&"panel", GameTheme.BACKDROP_PANEL)
+
+	assert_true(box.marked)
+	assert_eq(box.image_id, "ui_backdrop")
+
+
+func test_text_on_the_parchment_board_is_dark_ink() -> void:
+	var board: Theme = GameTheme.get_board_theme()
+
+	assert_eq(board.get_color(&"font_color", GameTheme.BODY), PaintedUi.INK)
+	assert_eq(board.get_color(&"font_color", GameTheme.HEADING), PaintedUi.INK)
+	assert_ne(GameTheme.get_theme().get_color(&"font_color", GameTheme.BODY), PaintedUi.INK)
+	var panel: GamePanel = autofree(GamePanel.create("Board", Control.new()))
+	assert_eq(panel.theme, board)
+
+
+func test_the_touch_sticks_are_painted() -> void:
+	var theme: Theme = GameTheme.build()
+	var items: Array[StringName] = [
+		&"normal_joystick", &"pressed_joystick", &"normal_tip", &"pressed_tip"
+	]
+	for item: StringName in items:
+		var box: StyleBoxTexture = theme.get_stylebox(item, &"VirtualJoystick") as StyleBoxTexture
+		assert_not_null(box, "%s is painted" % item)
+		assert_true(box.texture.resource_path.begins_with(PaintedUi.FOLDER + "touch_joystick_"))
 
 
 # --- Components ------------------------------------------------------------------
@@ -145,8 +177,17 @@ func test_a_large_area_is_tagged_once_per_tile() -> void:
 	assert_eq(tag.get_centers().size(), 3)
 
 
-func test_an_obstacle_is_tagged_on_its_art() -> void:
+func test_a_painted_obstacle_is_not_tagged() -> void:
 	var tree: Node2D = add_child_autofree(TREE_SCENE.instantiate())
+	await wait_frames(1)
+
+	assert_null(PlaceholderTag.of(tree.get_node(^"Art")), "the tree is painted (#83)")
+
+
+func test_an_obstacle_with_placeholder_art_is_tagged_on_its_art() -> void:
+	var tree: Node2D = TREE_SCENE.instantiate()
+	(tree.get_node(^"Art") as Sprite2D).texture = PLACEHOLDER_TEXTURE
+	add_child_autofree(tree)
 	await wait_frames(1)
 
 	assert_not_null(PlaceholderTag.of(tree.get_node(^"Art")))

@@ -4,23 +4,23 @@ extends Control
 ##
 ## The touch handling is Godot's [TouchScreenButton], which presses the same
 ## input action as the keyboard does (GDD §9.2) and supports several fingers
-## at once. This control gives it a place in the layout and a placeholder
-## look in the colours of [UiPalette], marked "Placeholder" until the art
-## pass (#70) paints it.
+## at once. This control gives it a place in the layout and its painted look
+## (#83): an iron button that is pressed in while touched and glows red while
+## its action is happening, with the cooldown and the meter drawn on top.
 
-const FILL: Color = UiPalette.TOUCH_FILL
-const FILL_PRESSED: Color = UiPalette.TOUCH_FILL_PRESSED
-const OUTLINE: Color = UiPalette.TOUCH_OUTLINE
 const FONT_SIZE: int = 20
+const OUTLINE_SIZE: int = 5
 const COOLDOWN: Color = UiPalette.TOUCH_COOLDOWN
 const METER: Color = UiPalette.HUD_FILL
-const ACTIVE: Color = UiPalette.HUD_ACTIVE
 
 ## The input action this button triggers.
 var action: StringName
 ## The word shown on the button.
 var label: String
 
+var _base_normal: Texture2D = PaintedUi.texture("touch_button_base_normal")
+var _base_pressed: Texture2D = PaintedUi.texture("touch_button_base_pressed")
+var _base_active: Texture2D = PaintedUi.texture("touch_button_base_active")
 var _button: TouchScreenButton = TouchScreenButton.new()
 var _shape: CircleShape2D = CircleShape2D.new()
 var _cooldown: float = 0.0
@@ -77,7 +77,12 @@ func get_meter() -> float:
 func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = size.x / 2.0
-	draw_circle(center, radius, FILL_PRESSED if _button.is_pressed() else FILL)
+	var base: Texture2D = _base_normal
+	if _active:
+		base = _base_active
+	elif _button.is_pressed():
+		base = _base_pressed
+	draw_texture_rect(base, Rect2(Vector2.ZERO, size), false)
 	if _cooldown > 0.0:
 		var points: PackedVector2Array = [center]
 		var steps: int = maxi(ceili(32.0 * _cooldown), 2)
@@ -85,14 +90,12 @@ func _draw() -> void:
 			var angle: float = -PI / 2.0 + TAU * _cooldown * step / steps
 			points.append(center + Vector2.from_angle(angle) * (radius - 3.0))
 		draw_colored_polygon(points, COOLDOWN)
-	draw_arc(center, radius - 1.5, 0.0, TAU, 48, ACTIVE if _active else OUTLINE, 3.0, true)
 	if _meter > 0.0:
 		draw_arc(center, radius - 7.0, -PI / 2.0, -PI / 2.0 + TAU * _meter, 48, METER, 5.0, true)
 	var font: Font = get_theme_default_font()
 	var text_size: Vector2 = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
 	var baseline: Vector2 = center + Vector2(-text_size.x / 2.0, text_size.y / 4.0)
-	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
-	var placeholder_size: int = PlaceholderArt.font_size_for(size.x * 0.7, 11)
-	PlaceholderArt.draw_word(
-		get_canvas_item(), center + Vector2(0.0, radius * 0.55), placeholder_size
+	draw_string_outline(
+		font, baseline, label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, OUTLINE_SIZE, Color.BLACK
 	)
+	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, UiPalette.TEXT)

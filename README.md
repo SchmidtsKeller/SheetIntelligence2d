@@ -215,7 +215,15 @@ The [Arena](systems/arena/arena.gd) is the playing field. It provides:
 
 Its size comes from the config, and the borders are built from it.
 
-Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it.
+Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it. Its `Art` sprite only shows it.
+
+**Painted pieces (#83).** The obstacles, the fence, the river, the torches and the scattered ground details are painted, and so are the menu boards, buttons and touch controls ([PaintedUi](ui/theme/painted_ui.gd)). They are cut from two collage sheets in `resources/art_sources/` (`uiElements.webp`, `MapElements.webp`) by [tools/cut_art_sheets.gd](tools/cut_art_sheets.gd), which knows where each piece sits on its sheet, removes the flat background and writes one PNG per piece into `assets/ui/painted/` and `assets/arena/painted/`. After editing a sheet, cut again and re-import:
+
+```bash
+godot --headless --path . --script res://tools/cut_art_sheets.gd
+```
+
+What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt).
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 

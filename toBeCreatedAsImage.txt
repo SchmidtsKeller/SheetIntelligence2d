@@ -12,6 +12,9 @@ Where the work is tracked:
   #70  Design and create the buttons and UI elements in the game's painted
        style: sections A, B and C (menus, HUD, touch controls). #30 leaves
        these out on purpose.
+  #83  Brought the painted UI pieces (board, buttons, touch bases) and the
+       map pieces (obstacles, fence, river, torch) in; they are listed as
+       done where they were.
   #22  Art direction pass: wires the images into the scenes and the theme.
 
 Style for all of them: resources/documents/art_style_constraints.md
@@ -60,42 +63,12 @@ ui_backdrop  The picture behind every menu screen.
             boards so text on top stays readable.
   covered:  #70
 
-ui_board  The board behind a group of texts and buttons.
-  used in:  ui/components/game_panel.gd (GamePanel): LeftBoard, RightBoard
-            (ui/lobby/two_columns.gd, lobby and scoreboard), Board (the
-            pairing panel); style BoardPanel in ui/theme/game_theme.gd
-  size:     256x256 nine-patch (StyleBoxTexture), 32 px margins, opaque or
-            mostly opaque; stretches to 300..560 px wide and 200..700 px high.
-            Content margins today: 22 px left/right, 16 px top/bottom.
-  style:    stained parchment nailed to weathered wood, or a dark wooden
-            board with iron corners; the middle must be calm and even.
-  covered:  #70
-
-ui_button  The menu button, in six states.
-  used in:  ui/components/game_button.gd (GameButton.Kind.MENU): every action
-            button: Host a game, Join a game, the two offline matches,
-            Ready, Leave, Back to lobby, Copy code, Scan, Cancel, ...
-            styles "Button" in ui/theme/game_theme.gd
-  size:     384x96 nine-patch per state, 24 px margins; shown at least
-            300x56 px. States: normal, hover, pressed (also a toggled Ready),
-            hover_pressed, disabled, focus (a frame only, drawn on top of the
-            others: transparent middle).
-  style:    a worn wooden plank or iron-banded leather tag; pressed sinks in
-            and warms to burnt sienna; disabled is darker and duller, not
-            greyed out to blue.
-  covered:  #70
-
-ui_choice_button  The wide toggle button of the perk choice, in six states.
-  used in:  ui/components/game_button.gd (GameButton.Kind.CHOICE) in
-            ui/lobby/perk_picker.gd -> PerkPicker/Perk_<id>;
-            style ChoiceButton in ui/theme/game_theme.gd
-  size:     512x128 nine-patch per state, 24 px margins; shown 460 px wide and
-            64..180 px high (the description wraps to up to six lines). The
-            left 68 px hold the perk icon: keep that part plain.
-            States as ui_button; "pressed" is the chosen perk and must stand
-            out clearly (highlight border today).
-  style:    a parchment card or a slip of paper pinned to the board.
-  covered:  #70
+Painted and in the game (#83), cut from resources/art_sources/uiElements.webp
+by tools/cut_art_sheets.gd into assets/ui/painted/: ui_board, ui_button_*
+and ui_choice_button_* (normal, hover, pressed, disabled, focus), used by
+GameTheme through PaintedUi (ui/theme/painted_ui.gd). The pieces are small
+(the board 151x151, a button 146x50); larger versions in the same style would
+look sharper on big screens.
 
 perk_icon_<id>  One icon per perk, plus one for "no perk".
   ids:      wide_flashlight, long_flashlight, faster_reload, shepherd_dog,
@@ -172,26 +145,11 @@ hud_timer_plate  A plate behind the round timer. (Not drawn yet.)
 C. TOUCH CONTROLS                                                -> #70
 --------------------------------------------------------------------------
 
-touch_joystick_base, touch_joystick_tip  The two virtual sticks.
-  used in:  ui/touch/touch_controls.gd -> Root/MoveStick, Root/AimStick
-            (VirtualJoystick, 220x220; tip 0.36 of it). Today Godot's default
-            circles with a "Placeholder" badge.
-  size:     base 256x256, tip 128x128, transparent
-  style:    base: a faint ring scratched into dark wood or iron, mostly
-            see-through (the game is behind it); tip: a worn brass knob.
-  covered:  #70
-
-touch_button_base, touch_button_base_pressed, touch_button_base_active
-  The round base of a touch action button.
-  used in:  ui/touch/touch_action_button.gd (TouchActionButton, 108x108):
-            Root/ShootButton, BellButton, GrazeButton, BleatButton, EatButton,
-            SprintButton, PerkButton; the action glyph (hud_action_<action>)
-            goes on top, the cooldown slice and the meter ring stay in code.
-  size:     256x256 each, transparent outside the circle
-  style:    like hud_icon_base, but more see-through (it covers the game):
-            pressed is lighter, active glows crimson.
-  covered:  #70
-
+Painted and in the game (#83), in assets/ui/painted/: touch_joystick_base,
+touch_joystick_tip (the sticks, through the theme's VirtualJoystick styles)
+and touch_button_base_normal / _pressed / _active (ui/touch/
+touch_action_button.gd). The action glyphs on top are still to come
+(hud_action_<action>, section B).
 
 D. THE WORLD (characters, creatures, scenery, blood)             -> #30
 --------------------------------------------------------------------------
@@ -235,28 +193,25 @@ Blood (entities/evidence/blood_decal.tscn -> Art)
       covered: #30 fx_blood_decal_01..03.png
 
 Obstacles (entities/obstacles/<name>.tscn -> Art)
-  assets/arena/placeholder/tree.svg       covered: #30 tree_01.png, tree_02.png
-  assets/arena/placeholder/bush.svg       covered: #30 bush_01.png
-  assets/arena/placeholder/barn.svg       covered: #30 barn_01.png
-  assets/arena/placeholder/shed.svg       covered: #30 shed_01.png
-  assets/arena/placeholder/hay_bale.svg   covered: #30 hay_bale_01.png
+  Painted and in the game (#83): assets/arena/painted/tree_01.png (and
+  tree_02.png on every second tree of the arena), bush_01, barn_01, shed_01,
+  hay_bale_01, cut from resources/art_sources/MapElements.webp.
 
 Ground and borders (systems/arena/arena.tscn, built by systems/arena/arena.gd)
   The painted ground is in the game (#76): assets/arena/ground/, five
   terrains blended by systems/arena/ground.gdshader, with hills and paths
-  baked into its layout, so #30's ground_grass_tile.png and
-  ground_grass_patch_01.png and the hill and flower details are not needed.
-  assets/arena/placeholder/fence.svg      Borders/Fence*/Art (tiled)
-      covered: #30 fence_straight.png, fence_corner.png
-  assets/arena/placeholder/water.svg      Borders/River/Art (tiled)
-      covered: #30 river_water_tile.png, river_bank_straight.png,
-               river_bank_corner.png
+  baked into its layout.
+  Painted and in the game (#83): fence_straight.png (Borders/Fence*/Art,
+  tiled), river_bank_straight.png (Borders/River/Art, tiled), and
+  ground_grass_patch_01.png and ground_flowers_01.png scattered as ground
+  details.
+  Cut but not used yet (assets/arena/painted/): fence_corner.png (no corner
+  pieces at the borders yet), river_water_tile.png and river_bank_corner.png
+  (the river is one straight strip), ground_grass_tile.png and
+  ground_hill_01.png (the painted ground covers them).
 
 Torches (entities/torch/torch.tscn -> Art; the flame and embers stay in code)
-  assets/arena/placeholder/torch.svg
-      NOT in #30.  torch_01.png, 256x256, transparent: a wooden post with an
-               iron fire basket seen from above, charred wood and soot; no
-               flame painted in (the code draws it and lights the area).
+  Painted and in the game (#83): assets/arena/painted/torch_01.png.
 
 
 E. DRAWN IN CODE ON PURPOSE (no image planned; listed so nothing is missed)
