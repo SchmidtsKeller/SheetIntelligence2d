@@ -22,7 +22,7 @@ const COOLDOWN: Color = UiPalette.HUD_COOLDOWN
 const ACTIVE: Color = UiPalette.HUD_ACTIVE
 const MARK: Color = UiPalette.HUD_MARK
 const FONT_SIZE: int = 18
-const SMALL_FONT_SIZE: int = 14
+const SMALL_FONT_SIZE: int = 16
 
 var style: Style = Style.BAR
 ## The text on or under the element.
@@ -124,7 +124,7 @@ func _draw_icon() -> void:
 	if value > 0.0:
 		draw_arc(center, radius + 1.0, -PI / 2.0, -PI / 2.0 + TAU * value, 48, FILL, 4.0, true)
 	draw_arc(center, radius, 0.0, TAU, 48, ACTIVE if active else EMPTY, 2.0, true)
-	var font: Font = get_theme_font(&"font", GameTheme.HUD_TEXT)
+	var font: Font = get_theme_default_font()
 	var text_size: Vector2 = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
 	_draw_text(caption, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0), FONT_SIZE)
 	if not hint.is_empty():
@@ -144,8 +144,7 @@ func _draw_slice(center: Vector2, radius: float, share: float) -> void:
 func _draw_text(text: String, baseline: Vector2, font_size: int) -> void:
 	if text.is_empty():
 		return
-	# Captions carry numbers: the plain font reads them at a glance.
-	var font: Font = get_theme_font(&"font", GameTheme.HUD_TEXT)
+	var font: Font = get_theme_default_font()
 	draw_string_outline(
 		font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, BACKGROUND
 	)

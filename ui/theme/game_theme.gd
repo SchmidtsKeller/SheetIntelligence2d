@@ -7,10 +7,10 @@ extends RefCounted
 ##
 ## Buttons, choice buttons, boards and the touch joysticks are painted
 ## ([PaintedUi], #83). The menu backdrop is still a [PlaceholderStyleBox] that
-## says so. Text is set in IM Fell English (#86), old print with worn ink.
-## Its digits are old-style figures, which blur at small sizes, so the small
-## HUD texts and numbers read during a round use the plain
-## [method readable_font] instead.
+## says so. All text is set in IM Fell English (#86), old print with worn
+## ink; it is also the project's default font, so nothing falls back to
+## another face. Its digits are old-style figures, so the small HUD texts are
+## a little larger than they would be in a modern face.
 
 ## The game's name in large letters, until the logo exists.
 const TITLE: StringName = &"TitleLabel"
@@ -49,7 +49,7 @@ const LABEL_SIZES: Dictionary[StringName, int] = {
 	HUD_TITLE: 40,
 	HUD_TIMER: 34,
 	HUD_MESSAGE: 24,
-	HUD_TEXT: 18,
+	HUD_TEXT: 20,
 }
 const HUD_OUTLINES: Dictionary[StringName, int] = {
 	HUD_TITLE: 6,
@@ -69,11 +69,6 @@ static func get_theme() -> Theme:
 	if _theme == null:
 		_theme = build()
 	return _theme
-
-
-## For small HUD texts with numbers: Godot's plain built-in font.
-static func readable_font() -> Font:
-	return ThemeDB.fallback_font
 
 
 ## Gives [param control] and everything below it the shared theme.
@@ -108,8 +103,6 @@ static func _add_labels(theme: Theme) -> void:
 		theme.set_type_variation(variation, &"Label")
 		theme.set_font_size(&"font_size", variation, LABEL_SIZES[variation])
 	theme.set_color(&"font_color", TITLE, UiPalette.HIGHLIGHT)
-	for variation: StringName in [HUD_TEXT, HUD_MESSAGE]:
-		theme.set_font(&"font", variation, readable_font())
 	theme.set_color(&"font_color", WARNING, UiPalette.WARNING)
 	for variation: StringName in HUD_OUTLINES:
 		theme.set_constant(&"outline_size", variation, HUD_OUTLINES[variation])
