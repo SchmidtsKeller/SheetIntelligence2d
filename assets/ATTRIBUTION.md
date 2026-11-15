@@ -34,6 +34,15 @@ Made for this project by the team, not third-party assets. The painted top-down 
 | `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
 | `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
 
+## Painted UI and map pieces (#83)
+
+Made for this project by the team, not third-party assets. Two painted collage sheets from the team's React art page (`assetsInsideReactPageTemp/`): "Asset Pack 2: UI buttons & boards" and "Asset Pack 4: environment & obstacles". The sources are kept in `resources/art_sources/` (not in the build); `tools/cut_art_sheets.gd` cut them into one PNG per piece and made the flat background transparent.
+
+| Folder | Pieces |
+|:--|:--|
+| `ui/painted/` | `ui_board`; `ui_button_*` and `ui_choice_button_*` (normal, hover, pressed, disabled, focus); `touch_joystick_base`, `touch_joystick_tip`; `touch_button_base_normal`, `_pressed`, `_active` |
+| `arena/painted/` | `tree_01`, `tree_02`, `bush_01`, `barn_01`, `shed_01`, `hay_bale_01`, `fence_straight`, `fence_corner`, `torch_01`, `river_water_tile`, `river_bank_straight`, `river_bank_corner`, `ground_grass_tile`, `ground_grass_patch_01`, `ground_hill_01`, `ground_flowers_01` |
+
 ## Painted ground (#76)
 
 Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.
