@@ -209,6 +209,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
     * Bullet counter (visual display of remaining bullets out of 3, or 4 with *Spare Bullet*).
     * Reload progress indicator.
     * Bell cooldown icon.
+    * Aim line: a thin red line from the rifle along the aim, with a dot at the first obstacle or the arena's edge. It passes through sheep and the Monster, so it never shows a sheep hidden in the dark (see 3.1). Faint while no shot is possible (reloading), gone when the magazine is empty. Only the Sheepherder sees it.
   * *Monster Only:*
     * Action and cooldown icons for Graze, Bleat, Eat, and the active Perk, plus the sprint stamina meter.
     * "Evolution Bar" (tracks progress toward the 5-sheep Herder kill unlock and 10-sheep "Giant Scary Monster" (GSM) evolution).
