@@ -227,6 +227,24 @@ func test_layers_are_in_drawing_order() -> void:
 	assert_eq(_arena.get_overlays_layer().name, &"Overlays")
 
 
+func test_the_painted_ground_covers_the_arena() -> void:
+	var ground: Sprite2D = _arena.get_node(^"Ground").get_child(0)
+	var material: ShaderMaterial = ground.material
+
+	assert_not_null(material, "the ground is drawn by the painted ground shader")
+	assert_eq(material.shader.resource_path, "res://systems/arena/ground.gdshader")
+	assert_eq(material.get_shader_parameter(&"world_size"), _arena.get_bounds().size)
+	var covered: Rect2 = Rect2(
+		ground.global_position - ground.texture.get_size() * ground.scale / 2.0,
+		ground.texture.get_size() * ground.scale
+	)
+	assert_eq(covered, _arena.get_bounds())
+	assert_true(ground.is_in_group(Groups.STATIC_SCENERY))
+	for terrain: String in ["grass", "clover", "path", "gravel", "mud"]:
+		assert_not_null(material.get_shader_parameter(terrain + "_albedo"), terrain)
+		assert_not_null(material.get_shader_parameter(terrain + "_normal"), terrain)
+
+
 func test_ground_details_are_static_scenery() -> void:
 	var details: Array[Node] = _arena.get_node(^"GroundDetails").get_children()
 

@@ -27,6 +27,9 @@ const SWAY_PER_PIXEL: float = 0.035
 const BREATH_ENERGY: float = 0.04
 ## Walking speed at which the sway is strongest, in pixels per second.
 const FULL_SWAY_SPEED: float = 180.0
+## Height of the lamp above the ground, in pixels: the painted ground (#76)
+## shows its relief by the angle the light comes from.
+const LAMP_HEIGHT: float = 160.0
 ## Dust motes in the beam at once.
 const DUST_AMOUNT: int = 28
 ## Points the dust is emitted from, spread over the lit cone.
@@ -48,6 +51,7 @@ var _dust: CPUParticles2D
 
 func _ready() -> void:
 	shadow_enabled = true
+	height = LAMP_HEIGHT
 	shadow_filter = Light2D.SHADOW_FILTER_PCF5
 	shadow_filter_smooth = 1.5
 	_base_energy = energy

@@ -3,10 +3,8 @@
 [ext_resource type="Script" path="res://systems/arena/arena.gd" id="1_4b6ef"]
 [ext_resource type="Texture2D" path="res://assets/arena/placeholder/fence.svg" id="2_46ogl"]
 [ext_resource type="Texture2D" path="res://assets/arena/placeholder/water.svg" id="3_6fvct"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/grass.svg" id="4_qw4ae"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/hill.svg" id="5_whijb"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/grass_patch.svg" id="6_g3bih"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/flowers.svg" id="7_bbex0"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/relief.png" id="4_qw4ae"]
+[ext_resource type="Material" path="res://systems/arena/ground_material.tres" id="5_ground"]
 [ext_resource type="PackedScene" path="res://entities/obstacles/tree.tscn" id="8_lkula"]
 [ext_resource type="PackedScene" path="res://entities/obstacles/bush.tscn" id="10_2w6um"]
 [ext_resource type="PackedScene" path="res://entities/obstacles/barn.tscn" id="11_e1hjj"]
@@ -21,11 +19,7 @@ script = ExtResource("1_4b6ef")
 fence_texture = ExtResource("2_46ogl")
 river_texture = ExtResource("3_6fvct")
 ground_texture = ExtResource("4_qw4ae")
-ground_details = Dictionary[Texture2D, int]({
-ExtResource("5_whijb"): 10,
-ExtResource("6_g3bih"): 140,
-ExtResource("7_bbex0"): 70
-})
+ground_material = ExtResource("5_ground")
 
 [node name="Ground" type="Node2D" parent="." unique_id=1516983522]
 
