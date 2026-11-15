@@ -18,8 +18,15 @@ extends Node2D
 ## rules per entity type. The decision only changes what is drawn here. It
 ## never touches the simulation or what is sent to the other device.
 ##
+## The Monster sees the world through its [NightVision]: a red vignette and a
+## subtle filter, shown on this device only while its player is the Monster.
+## It is a look only and changes nothing of what is seen.
+##
 ## Place it in the world (not in a [CanvasLayer]): its darkness darkens the
 ## canvas it is in.
+
+## The Monster's look; its parameters are tuned in the scene.
+const NIGHT_VISION_SCENE: PackedScene = preload("res://systems/vision/night_vision.tscn")
 
 ## The colour unlit areas keep in the Sheepherder's view: darker and colder
 ## than the light, not black (#63).
@@ -38,17 +45,27 @@ var role: GameEnums.Role = GameEnums.Role.NONE:
 var viewer: Node2D
 
 var _canvas_modulate: CanvasModulate
+var _night_vision: NightVision
 
 
 func _ready() -> void:
 	_canvas_modulate = CanvasModulate.new()
 	_canvas_modulate.name = "Darkness"
 	add_child(_canvas_modulate)
+	_night_vision = NIGHT_VISION_SCENE.instantiate()
+	add_child(_night_vision)
 	_update_darkness()
 
 
 func _process(delta: float) -> void:
 	update(delta)
+	_night_vision.spider = _is_viewer_a_spider()
+
+
+## The Monster's night vision: shown only while the local player is the
+## Monster.
+func get_night_vision() -> NightVision:
+	return _night_vision
 
 
 ## Decides every target and moves it toward how visible it is. Called every
@@ -129,8 +146,17 @@ func _get_cone() -> FlashlightCone:
 	return herder.get_flashlight_cone() if herder != null else null
 
 
+func _is_viewer_a_spider() -> bool:
+	if role != GameEnums.Role.MONSTER or not is_instance_valid(viewer):
+		return false
+	var monster: Monster = Monster.of(viewer)
+	return monster != null and monster.get_form() == GameEnums.MonsterForm.SPIDER
+
+
+## The darkness for the Sheepherder, the night vision for the Monster.
 func _update_darkness() -> void:
 	if _canvas_modulate == null:
 		return
 	_canvas_modulate.color = darkness
 	_canvas_modulate.visible = role == GameEnums.Role.SHEEPHERDER
+	_night_vision.visible = role == GameEnums.Role.MONSTER
