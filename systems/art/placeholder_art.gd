@@ -29,9 +29,9 @@ static func is_placeholder(texture: Texture2D) -> bool:
 ## [param width].
 static func font_size_for(width: float, largest: int = MAX_FONT_SIZE) -> int:
 	var font: Font = ThemeDB.fallback_font
-	var reference: float = font.get_string_size(
-		WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, MAX_FONT_SIZE
-	).x
+	var reference: float = (
+		font.get_string_size(WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, MAX_FONT_SIZE).x
+	)
 	var fitting: int = floori(width / reference * MAX_FONT_SIZE) if reference > 0.0 else 0
 	return clampi(fitting, MIN_FONT_SIZE, maxi(largest, MIN_FONT_SIZE))
 
@@ -54,9 +54,7 @@ static func draw_word(canvas_item: RID, center: Vector2, font_size: int) -> void
 		OUTLINE_SIZE,
 		OUTLINE_COLOR
 	)
-	font.draw_string(
-		canvas_item, baseline, WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR
-	)
+	font.draw_string(canvas_item, baseline, WORD, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR)
 
 
 ## Draws the word in [param corner] of [param rect], small enough to leave

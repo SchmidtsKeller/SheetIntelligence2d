@@ -164,9 +164,7 @@ func test_a_sheep_is_tagged_once_on_what_the_vision_system_fades() -> void:
 
 
 func _children(node: Node, type: Script) -> Array[Node]:
-	return node.get_children().filter(
-		func(child: Node) -> bool: return is_instance_of(child, type)
-	)
+	return node.get_children().filter(func(child: Node) -> bool: return is_instance_of(child, type))
 
 
 func _descendants(node: Node, type: Script) -> Array[Node]:
