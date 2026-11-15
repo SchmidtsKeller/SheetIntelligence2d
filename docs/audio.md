@@ -125,4 +125,5 @@ The sounds are in `assets/audio/`, by who makes them: `sheep/`, `sheepherder/`, 
 - **Loop gaps in the Web build** (see above). If they are audible on devices, the next step is longer loops, or a sound pass that hides the seam in a pause.
 - **Panning follows the screen.** It goes by the share of the screen width, as in Godot: on a phone held upright, which shows less of the world across, a sound to the side pans further than on a wide screen.
 - **Stream playback** is unusable without Thread Support. Revisiting that needs the Progressive Web App option ([web-build.md](web-build.md#decision-no-thread-support-no-progressive-web-app)).
+- **Sounds at quit.** A sound still playing when the program quits (the fading ambience, the last round's cues) stays in Godot's audio server, which reports `N resources still in use at exit`. Godot frees a stopped sound only in its next mix step, and at quit none comes (`AudioServer::finish()` in 4.7.2). Harmless; the two-instance checks show it.
 - **Partly heard by a person.** Chrome on Windows was checked by ear before the sound pass (#23); its sounds and the other devices are still to be heard.
