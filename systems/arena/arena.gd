@@ -31,7 +31,12 @@ const EVENT_TORCH_LIT: StringName = &"arena.torch_lit"
 @export var river_texture: Texture2D
 
 @export_group("Ground")
+## Without [member ground_material]: tiled over the arena. With it: stretched
+## over the arena, as the canvas the material draws on.
 @export var ground_texture: Texture2D
+## The painted ground (#76): a material with [code]ground.gdshader[/code], which
+## blends the painted terrains and lets the lights shape them.
+@export var ground_material: ShaderMaterial
 ## Scattered ground details (hills, grass patches, flowers) and how many of
 ## each. Drawn in this order.
 @export var ground_details: Dictionary[Texture2D, int] = {}
@@ -285,6 +290,14 @@ func _build_ground() -> void:
 	var bounds: Rect2 = get_bounds()
 	var ground: Sprite2D = _tiled_sprite("Grass", ground_texture, bounds.size)
 	ground.position = bounds.size / 2.0
+	if ground_material != null and ground_texture != null:
+		# One texel of the canvas per stretch of arena; the shader draws the rest.
+		ground.region_enabled = false
+		ground.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
+		ground.scale = bounds.size / ground_texture.get_size()
+		var material: ShaderMaterial = ground_material.duplicate()
+		material.set_shader_parameter(&"world_size", bounds.size)
+		ground.material = material
 	ground.add_to_group(Groups.STATIC_SCENERY)
 	_ground.add_child(ground)
 

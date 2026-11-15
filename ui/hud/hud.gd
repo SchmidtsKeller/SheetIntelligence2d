@@ -42,8 +42,8 @@ const ACTION_ICONS: Dictionary[String, StringName] = {
 var _stage: RoundStage
 var _catalog: PerkCatalog = PerkCatalog.load_default()
 var _elements: Dictionary[String, Control] = {}
-var _timer: Label
-var _message: Label
+var _timer: GameLabel
+var _message: GameLabel
 var _message_left: float = 0.0
 var _herder_panel: VBoxContainer
 var _monster_panel: VBoxContainer
@@ -264,29 +264,20 @@ func _build() -> void:
 	root.name = "Root"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	GameTheme.apply(root)
 	add_child(root)
 
-	_timer = Label.new()
-	_timer.name = "Timer"
+	_timer = GameLabel.create(GameTheme.HUD_TIMER, "", "Timer")
 	_timer.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_timer.position.y = EDGE
-	_timer.add_theme_font_size_override(&"font_size", 34)
-	_timer.add_theme_constant_override(&"outline_size", 6)
-	_timer.add_theme_color_override(&"font_outline_color", HudGauge.BACKGROUND)
 	root.add_child(_timer)
 	_elements["Timer"] = _timer
 
-	_message = Label.new()
-	_message.name = "Message"
+	_message = GameLabel.create(GameTheme.HUD_MESSAGE, "", "Message")
 	_message.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_message.position.y = EDGE + 56.0
-	_message.add_theme_font_size_override(&"font_size", 24)
-	_message.add_theme_constant_override(&"outline_size", 6)
-	_message.add_theme_color_override(&"font_outline_color", HudGauge.BACKGROUND)
 	_message.visible = false
 	root.add_child(_message)
 	_elements["Message"] = _message
@@ -298,10 +289,8 @@ func _build() -> void:
 	_add(_herder_panel, HudGauge.new("Reload", HudGauge.Style.BAR, BAR_SIZE))
 	_monster_panel = _panel(root, "MonsterPanel")
 	_add(_monster_panel, HudGauge.new("Evolution", HudGauge.Style.BAR, BAR_SIZE))
-	var sheep_count: Label = Label.new()
-	sheep_count.name = "SheepCount"
-	sheep_count.add_theme_constant_override(&"outline_size", 4)
-	sheep_count.add_theme_color_override(&"font_outline_color", HudGauge.BACKGROUND)
+	var sheep_count: GameLabel = GameLabel.create(GameTheme.HUD_TEXT, "", "SheepCount")
+	sheep_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_add(_monster_panel, sheep_count)
 	_add(_monster_panel, HudGauge.new("Stamina", HudGauge.Style.BAR, BAR_SIZE))
 

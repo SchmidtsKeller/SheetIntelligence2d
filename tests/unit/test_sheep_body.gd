@@ -173,7 +173,7 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 	var sheep: SheepBody = _spawn()
 	var move_emitter: int = 1
 	var graze_emitter: int = 2
-	assert_eq(_audio.get_emitter_count(), 2, "rustle and grazing emitters")
+	assert_eq(_audio.get_emitter_count(), 3, "rustle, grazing and running emitters")
 
 	sheep.set_move_input(Vector2.RIGHT)
 	await _physics_frames(5)
@@ -187,6 +187,31 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 	sheep.kill(GameEnums.DeathCause.SHOT)
 	assert_false(_audio.playing[move_emitter])
 	assert_false(_audio.playing[graze_emitter])
+
+
+func test_faster_than_a_sheep_it_rustles_louder() -> void:
+	var sheep: SheepBody = _spawn()
+	var move_emitter: int = 1
+	var run_emitter: int = 3
+	sheep.set_move_input(Vector2.RIGHT)
+	await _physics_frames(20)
+	assert_true(_audio.playing[move_emitter], "a sheep's top speed is walking")
+	assert_false(_audio.playing.get(run_emitter, false))
+
+	# The Monster's sprint (GDD §3.2).
+	sheep.speed_override = Services.config.monster_sprint_speed
+	await _physics_frames(30)
+	assert_false(_audio.playing[move_emitter])
+	assert_true(_audio.playing[run_emitter], "running")
+
+	sheep.speed_override = -1.0
+	await _physics_frames(30)
+	assert_true(_audio.playing[move_emitter], "walking again")
+	assert_false(_audio.playing[run_emitter])
+	sheep.set_move_input(Vector2.ZERO)
+	await _physics_frames(20)
+	assert_false(_audio.playing[move_emitter])
+	assert_false(_audio.playing[run_emitter])
 
 
 func test_sounds_come_from_where_the_sheep_is_shown() -> void:

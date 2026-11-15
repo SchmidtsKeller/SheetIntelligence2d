@@ -10,6 +10,9 @@ extends RefCounted
 const BLEAT: StringName = &"bleat"
 ## A sheep-like entity moves through grass.
 const GRASS_MOVE: StringName = &"grass_move"
+## A sheep-like entity moves through grass faster than a sheep can: the
+## Monster sprinting, or the spider. Louder than walking.
+const GRASS_RUN: StringName = &"grass_run"
 ## A sheep-like entity eats grass.
 const GRAZE: StringName = &"graze"
 ## The Sheepherder rings the bell.
@@ -33,6 +36,7 @@ const BAT: StringName = &"bat"
 const ALL: Array[StringName] = [
 	BLEAT,
 	GRASS_MOVE,
+	GRASS_RUN,
 	GRAZE,
 	BELL,
 	HERDER_STEP,
@@ -50,6 +54,7 @@ const ALL: Array[StringName] = [
 const RANGE_CLASS: Dictionary[StringName, GameEnums.HearingRange] = {
 	BLEAT: GameEnums.HearingRange.LOUD,
 	GRASS_MOVE: GameEnums.HearingRange.QUIET,
+	GRASS_RUN: GameEnums.HearingRange.QUIET,
 	GRAZE: GameEnums.HearingRange.QUIET,
 	BELL: GameEnums.HearingRange.WHOLE_MAP,
 	HERDER_STEP: GameEnums.HearingRange.QUIET,

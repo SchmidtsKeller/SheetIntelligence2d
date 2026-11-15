@@ -27,6 +27,9 @@ const FLICKER_SPEED: float = 9.0
 ## Brightness at the edge of the fully lit circle, relative to the middle, so
 ## the light looks brightest at the flame.
 const EDGE_BRIGHTNESS: float = 0.7
+## Height of the flame above the ground, in pixels: the painted ground (#76)
+## shows its relief by the angle the light comes from.
+const FLAME_HEIGHT: float = 90.0
 
 ## Light textures by the share of the fade in the reach, shared by all torches.
 static var _textures: Dictionary[int, Texture2D] = {}
@@ -47,6 +50,7 @@ func _ready() -> void:
 	_light = PointLight2D.new()
 	_light.name = "Light"
 	_light.color = LIGHT_COLOR
+	_light.height = FLAME_HEIGHT
 	_light.shadow_enabled = true
 	_light.shadow_filter = Light2D.SHADOW_FILTER_PCF5
 	_light.shadow_filter_smooth = 1.5

@@ -14,8 +14,8 @@ extends CanvasLayer
 ## fingers work at the same time (move, aim and a button).
 ##
 ## The controls are only shown in the touch scheme, while gameplay input is
-## on and the player has a role. Layout and looks are functional
-## placeholders; the HUD task arranges and styles them.
+## on and the player has a role. The looks are placeholders, marked as such
+## until the art pass (#70) paints them.
 
 const STICK_SIZE: float = 220.0
 const BUTTON_SIZE: float = 108.0
@@ -185,4 +185,5 @@ func _create_stick(
 	stick.action_up = up
 	stick.action_down = down
 	_root.add_child(stick)
+	PlaceholderBadge.over(stick, "touch_joystick_base")
 	return stick

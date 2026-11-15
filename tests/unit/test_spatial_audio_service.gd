@@ -4,7 +4,7 @@ extends TestCase
 
 const SETTINGS_PATH: String = "user://test_audio_settings.cfg"
 const LOOPING: Array[StringName] = [
-	AudioEvents.GRASS_MOVE, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
+	AudioEvents.GRASS_MOVE, AudioEvents.GRASS_RUN, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
 ]
 const SCREEN_WIDTH: float = 1600.0
 

@@ -89,8 +89,8 @@ extends Resource
 ## How likely a sheep grazes after a walk instead of just standing.
 @export_range(0.0, 1.0, 0.01) var flock_graze_chance: float = 0.45
 ## Shortest and longest time between two bleats of one sheep.
-@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_min: float = 8.0
-@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_max: float = 25.0
+@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_min: float = 16.0
+@export_range(0.0, 120.0, 0.5, "suffix:s") var flock_bleat_interval_max: float = 50.0
 ## How far a sheep walks in one go, at least and at most.
 @export_range(0.0, 1000.0, 1.0, "suffix:px") var flock_wander_distance_min: float = 80.0
 @export_range(0.0, 1000.0, 1.0, "suffix:px") var flock_wander_distance_max: float = 240.0

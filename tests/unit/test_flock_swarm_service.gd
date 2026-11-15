@@ -191,11 +191,15 @@ func test_sheep_bleat_from_time_to_time() -> void:
 			func() -> void: bleats[0] += 1
 		)
 
-	await _simulate(30.0)
+	var shortest: float = Services.config.flock_bleat_interval_min
+	var longest: float = Services.config.flock_bleat_interval_max
+	var seconds: float = longest + 5.0
+	await _simulate(seconds)
 
-	# Ten sheep, each bleating every 8 to 25 s.
-	assert_gt(bleats[0], 5)
-	assert_lt(bleats[0], 45)
+	# Every sheep bleats within the longest interval, and after that at most
+	# once in every shortest interval.
+	assert_gte(bleats[0], _flock_size)
+	assert_lte(bleats[0], _flock_size * (1 + floori(seconds / shortest)))
 
 
 # --- Bell ------------------------------------------------------------------------

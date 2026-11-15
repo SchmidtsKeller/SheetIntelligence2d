@@ -33,3 +33,16 @@ Made for this project by the team, not third-party assets. The painted top-down 
 | `monster/spider_sheet.png`, `monster/spider_frames.tres` | Giant Scary Monster (spider) | idle 16 @ 12, stalk 20 @ 14, walk 22 @ 25, eat_lunge 14 @ 24 |
 | `sheepherder/sheepherder_sheet.png`, `sheepherder/sheepherder_frames.tres` | The Shepherd | idle 14 @ 10, walk 18 @ 20, run 14 @ 24, fire 16 @ 22 |
 | `companions/shepherd_dog_sheet.png`, `companions/shepherd_dog_frames.tres` | Friendly Shepherd Dog | idle 14 @ 10, walk 18 @ 22, run 14 @ 26, bark 14 @ 22 |
+
+## Painted ground (#76)
+
+Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.
+
+| Files in `arena/ground/` | Source image |
+|:--|:--|
+| `grass.png`, `grass_normal.png` | `terrain_grass_turf_1794741903241.jpg` |
+| `clover.png`, `clover_normal.png` | `terrain_clover_meadow_1794741902823.jpg` |
+| `path.png`, `path_normal.png` | `terrain_dirt_path_1794741905313.jpg` |
+| `gravel.png`, `gravel_normal.png` | `terrain_gravel_dirt_1794741903283.jpg` |
+| `mud.png`, `mud_normal.png` | `terrain_mud_puddle_1794741903398.jpg` |
+| `layout.png`, `relief.png` | generated |

@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://systems/arena/ground.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/layout.png" id="2_layout"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/relief.png" id="3_relief"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/grass.png" id="4_grass"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/grass_normal.png" id="5_grass_normal"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/clover.png" id="6_clover"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/clover_normal.png" id="7_clover_normal"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/path.png" id="8_path"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/path_normal.png" id="9_path_normal"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/gravel.png" id="10_gravel"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/gravel_normal.png" id="11_gravel_normal"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/mud.png" id="12_mud"]
+[ext_resource type="Texture2D" path="res://assets/arena/ground/mud_normal.png" id="13_mud_normal"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/layout_map = ExtResource("2_layout")
+shader_parameter/relief_map = ExtResource("3_relief")
+shader_parameter/grass_albedo = ExtResource("4_grass")
+shader_parameter/grass_normal = ExtResource("5_grass_normal")
+shader_parameter/clover_albedo = ExtResource("6_clover")
+shader_parameter/clover_normal = ExtResource("7_clover_normal")
+shader_parameter/path_albedo = ExtResource("8_path")
+shader_parameter/path_normal = ExtResource("9_path_normal")
+shader_parameter/gravel_albedo = ExtResource("10_gravel")
+shader_parameter/gravel_normal = ExtResource("11_gravel_normal")
+shader_parameter/mud_albedo = ExtResource("12_mud")
+shader_parameter/mud_normal = ExtResource("13_mud_normal")

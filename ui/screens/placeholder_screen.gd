@@ -17,6 +17,8 @@ var _buttons: Array[Button] = []
 
 
 func _ready() -> void:
+	GameTheme.apply(self)
+	ScreenBackdrop.fill(self)
 	var layout: VBoxContainer = VBoxContainer.new()
 	layout.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	layout.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -25,28 +27,17 @@ func _ready() -> void:
 	layout.add_theme_constant_override(&"separation", 16)
 	add_child(layout)
 
-	var heading: Label = Label.new()
-	heading.text = title
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override(&"font_size", 48)
-	layout.add_child(heading)
+	layout.add_child(GameLabel.create(GameTheme.TITLE, title))
 
 	if not description.is_empty():
-		var body: Label = Label.new()
-		body.text = description
-		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		layout.add_child(body)
+		layout.add_child(GameLabel.create(GameTheme.BODY, description))
 
-	_session_label = Label.new()
-	_session_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_session_label = GameLabel.create(GameTheme.BODY)
 	layout.add_child(_session_label)
 
 	for screen: SceneFlowController.Screen in SceneFlow.get_next_screens():
-		var button: Button = Button.new()
-		button.text = "Go to %s" % SceneFlowController.screen_name(screen)
-		button.custom_minimum_size = Vector2(240.0, 56.0)
-		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		button.pressed.connect(_go_to.bind(screen))
+		var label: String = "Go to %s" % SceneFlowController.screen_name(screen)
+		var button: GameButton = GameButton.create(label, _go_to.bind(screen))
 		layout.add_child(button)
 		_buttons.append(button)
 

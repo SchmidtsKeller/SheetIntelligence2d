@@ -21,7 +21,7 @@ extends Node2D
 enum Motion { ORBIT, SWEEP, STILL }
 
 const LOOPING: Array[StringName] = [
-	AudioEvents.GRASS_MOVE, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
+	AudioEvents.GRASS_MOVE, AudioEvents.GRASS_RUN, AudioEvents.GRAZE, AudioEvents.HERDER_STEP
 ]
 const TONES: Dictionary[String, StringName] = {
 	"tone-quiet": AudioEvents.GRASS_MOVE,

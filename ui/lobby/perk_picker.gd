@@ -17,11 +17,10 @@ const KIND_NAMES: Dictionary[PerkDefinition.Kind, String] = {
 	PerkDefinition.Kind.ACTIVE: "Active",
 	PerkDefinition.Kind.COMPANION: "Companion",
 }
-const BUTTON_SIZE: Vector2 = Vector2(460.0, 64.0)
 
 var _catalog: PerkCatalog = PerkCatalog.load_default()
 var _role: GameEnums.Role = GameEnums.Role.NONE
-var _title: Label
+var _title: GameLabel
 var _buttons: Dictionary[StringName, Button] = {}
 var _group: ButtonGroup = ButtonGroup.new()
 
@@ -29,9 +28,7 @@ var _group: ButtonGroup = ButtonGroup.new()
 func _init() -> void:
 	name = "PerkPicker"
 	add_theme_constant_override(&"separation", 8)
-	_title = Label.new()
-	_title.name = "Title"
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title = GameLabel.create(GameTheme.HEADING, "", "Title")
 	add_child(_title)
 
 
@@ -107,22 +104,19 @@ func _rebuild() -> void:
 		return
 	for perk_id: StringName in _catalog.pool_for(_role):
 		var perk: PerkDefinition = _catalog.get_perk(perk_id)
-		_add_choice(
-			perk_id, "%s · %s\n%s" % [perk.display_name, KIND_NAMES[perk.kind], perk.description]
+		var text: String = (
+			"%s · %s\n%s" % [perk.display_name, KIND_NAMES[perk.kind], perk.description]
 		)
-	_add_choice(PerkIds.NONE, "%s\n%s" % [NO_PERK_NAME, NO_PERK_TEXT])
+		_add_choice(perk_id, text, perk.icon)
+	_add_choice(PerkIds.NONE, "%s\n%s" % [NO_PERK_NAME, NO_PERK_TEXT], null)
 
 
-func _add_choice(perk_id: StringName, text: String) -> void:
-	var button: Button = Button.new()
-	button.name = "Perk_%s" % (perk_id if perk_id != PerkIds.NONE else &"none")
-	button.text = text
-	button.toggle_mode = true
+func _add_choice(perk_id: StringName, text: String, icon: Texture2D) -> void:
+	var id: String = String(perk_id) if perk_id != PerkIds.NONE else "none"
+	var button: GameButton = GameButton.create(text, choose.bind(perk_id), GameButton.Kind.CHOICE)
+	button.name = "Perk_%s" % id
 	button.button_group = _group
-	button.custom_minimum_size = BUTTON_SIZE
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.pressed.connect(choose.bind(perk_id))
+	button.set_choice_icon(icon, "perk_icon_%s" % id)
 	add_child(button)
 	_buttons[perk_id] = button
 

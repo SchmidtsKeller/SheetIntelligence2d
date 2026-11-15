@@ -13,6 +13,7 @@ Every sound happens somewhere in the world and is heard from the local player's 
 | Event | Range | Heard by | Plays from |
 |:--|:--|:--|:--|
 | `grass_move`, `graze` | quiet | both | a sheep's or the Monster's picture (loop) |
+| `grass_run` | quiet | both | the picture of a sheep-like that moves faster than a sheep can: the sprinting Monster or the spider (loop, 4 dB louder than walking). Decided by the simulated speed and carried in the snapshots like grazing |
 | `herder_step` | quiet | both | the Sheepherder (loop) |
 | `reload_click` | quiet | **the Sheepherder's player only** | the Sheepherder |
 | `bleat`, `eat`, `dog_bark`, `bat` | loud | both | where it happens |
@@ -78,7 +79,7 @@ Use headphones, and hold a phone sideways: upright, it shows only about 400 px o
 | Browser | Direction and range | Loops | Notes |
 |:--|:-:|:-:|:--|
 | Chrome 157, Windows (headless, measured) | ✅ | gaps of 8–32 ms per loop | see the measurements above |
-| Chrome, Windows (by ear) | pending | pending | |
+| Chrome, Windows (by ear) | ✅ | ✅ | 2026-11-15. Afterwards bleats were halved and the sprint made louder (#73) |
 | Firefox, Windows (by ear) | pending | pending | |
 | Chrome, Android (by ear) | pending | pending | |
 | Safari, iOS and macOS | not tested | not tested | no device available |
