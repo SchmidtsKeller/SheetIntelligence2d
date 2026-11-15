@@ -1,13 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/obstacles/arena_obstacle.gd" id="1_nlt1d"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/hay_bale.svg" id="2_o5wex"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/hay_bale_01.png" id="2_o5wex"]
 
 [node name="HayBale" type="StaticBody2D" unique_id=1856337987]
 script = ExtResource("1_nlt1d")
 
 [node name="Art" type="Sprite2D" parent="." unique_id=439426308]
 texture = ExtResource("2_o5wex")
+scale = Vector2(0.47, 0.47)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="." unique_id=1518370637]
 polygon = PackedVector2Array(28, 0, 23, 16, 9, 27, -9, 27, -23, 16, -28, 0, -23, -16, -9, -27, 9, -27, 23, -16)

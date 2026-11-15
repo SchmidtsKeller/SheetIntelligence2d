@@ -347,20 +347,30 @@ func _add_border(border_name: String, rect: Rect2, texture: Texture2D, upright: 
 	collision.shape = shape
 	body.add_child(collision)
 	# Tiles run along the strip; upright strips use the texture turned by 90°.
+	# The texture is scaled to the strip's thickness, so the painted fence and
+	# river fill it whatever size they were painted at.
 	var length: Vector2 = Vector2(rect.size.y, rect.size.x) if upright else rect.size
-	var art: Sprite2D = _tiled_sprite("Art", texture, length)
+	var thickness_scale: float = 1.0
+	if texture != null and texture.get_height() > 0:
+		thickness_scale = length.y / texture.get_height()
+	var art: Sprite2D = _tiled_sprite("Art", texture, length, thickness_scale)
 	art.rotation = PI / 2.0 if upright else 0.0
 	body.add_child(art)
 	_borders.add_child(body)
 
 
-func _tiled_sprite(sprite_name: String, texture: Texture2D, size: Vector2) -> Sprite2D:
+## A sprite that repeats [param texture] over [param size], each repetition
+## drawn [param texture_scale] times its own size.
+func _tiled_sprite(
+	sprite_name: String, texture: Texture2D, size: Vector2, texture_scale: float = 1.0
+) -> Sprite2D:
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.name = sprite_name
 	sprite.texture = texture
 	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	sprite.region_enabled = true
-	sprite.region_rect = Rect2(Vector2.ZERO, size)
+	sprite.region_rect = Rect2(Vector2.ZERO, size / texture_scale)
+	sprite.scale = Vector2(texture_scale, texture_scale)
 	return sprite
 
 
