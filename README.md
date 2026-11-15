@@ -35,7 +35,7 @@ The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/mo
 
 ### Two instances on one computer
 
-The game is always played by two devices. For development, two desktop instances connect to each other by themselves:
+The game is always played by two devices. Two desktop instances pair in the lobby: one presses **Host a game**, the other **Join a game** (the address field says where the host is; `127.0.0.1` is this computer). The host lets other computers join with **Hosts for the whole network**. They can also connect by themselves:
 
 ```bash
 godot --path . -- --host
@@ -382,7 +382,7 @@ The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role n
 
 From page load to the first round (GDD §8.1, #20): pair once, see your role, choose a perk, get ready.
 
-- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
+- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows Host a game and Join a game by address over ENet (#99) and the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
 - **Perk choice.** One perk from the pool of the role you play next, or none; each shows its name, its type (passive, active, companion) and what it does. The other role's perks and choice never appear on your screen (GDD §8.1). Ready locks the choice; it can be taken back until the other player is ready too.
 - **Ready.** `MatchFlow.set_ready` tells the host; when both are ready, the host starts the match, the next round or the rematch. Offline, the computer is always ready.
 - **[Scoreboard](ui/screens/results_screen.gd).** Left: the round's outcome and reason, both players' points with where they come from (GDD §8.2), the round wins and, after the last round, the winner and every round from your view. Right: the role you play next, the perk choice and Ready. The host can end the match and take both back to the lobby. Perks are not revealed.
