@@ -16,6 +16,17 @@ func test_the_theme_is_built_once_and_shared() -> void:
 	assert_eq(control.theme, GameTheme.get_theme())
 
 
+func test_the_text_is_set_in_the_games_font() -> void:
+	var theme: Theme = GameTheme.build()
+
+	assert_eq(theme.default_font, GameTheme.FONT)
+	assert_eq(GameTheme.FONT.resource_path, "res://assets/fonts/IMFellEnglish-Regular.ttf")
+	assert_eq(theme.get_font(&"font", GameTheme.HEADING), GameTheme.FONT)
+	# Small HUD numbers keep the plain font: the old-style digits blur there.
+	assert_eq(theme.get_font(&"font", GameTheme.HUD_TEXT), GameTheme.readable_font())
+	assert_ne(GameTheme.readable_font(), GameTheme.FONT)
+
+
 func test_every_label_style_has_its_font_size() -> void:
 	var theme: Theme = GameTheme.build()
 	for style: StringName in GameTheme.LABEL_SIZES:
