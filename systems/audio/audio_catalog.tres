@@ -31,6 +31,11 @@ script = ExtResource("1_fwnrb")
 streams = Array[AudioStream]([ExtResource("6_23knf")])
 volume_db = -8.0
 
+[sub_resource type="Resource" id="Resource_grun1"]
+script = ExtResource("1_fwnrb")
+streams = Array[AudioStream]([ExtResource("6_23knf")])
+volume_db = -4.0
+
 [sub_resource type="Resource" id="Resource_3dh8v"]
 script = ExtResource("1_fwnrb")
 streams = Array[AudioStream]([ExtResource("7_5owlm")])
@@ -89,6 +94,7 @@ cues = Dictionary[StringName, ExtResource("1_fwnrb")]({
 &"dog_bark": SubResource("Resource_8gfke"),
 &"eat": SubResource("Resource_b8to6"),
 &"grass_move": SubResource("Resource_ibdyj"),
+&"grass_run": SubResource("Resource_grun1"),
 &"graze": SubResource("Resource_3dh8v"),
 &"gunshot": SubResource("Resource_dv38d"),
 &"herder_step": SubResource("Resource_sxnwp"),

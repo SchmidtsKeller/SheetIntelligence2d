@@ -48,6 +48,9 @@ const ANIMATION_BLEAT: StringName = &"bleat"
 const WALK_SPEED_THRESHOLD: float = 5.0
 ## The walk animation never plays slower than this, even at a crawl.
 const MIN_WALK_ANIMATION_SPEED: float = 0.4
+## Faster than this share of the sheep's top speed, a sheep-like runs and
+## rustles louder: only the sprinting Monster or the spider gets there.
+const RUN_SPEED_FACTOR: float = 1.2
 
 ## Everything this sheep can look like.
 @export var catalog: SheepAppearanceCatalog
@@ -84,10 +87,13 @@ var _visual_override: Node2D
 ## presented externally.
 var _shown_speed: float = 0.0
 var _shown_grazing: bool = false
+var _shown_running: bool = false
 var _state: State = State.IDLE
 var _layers: Array[Sprite2D] = []
 var _move_emitter: int = -1
 var _graze_emitter: int = -1
+var _run_emitter: int = -1
+var _running: bool = false
 
 @onready var _collision: CollisionShape2D = $Collision
 @onready var _facing: Node2D = $Facing
@@ -107,6 +113,7 @@ func _ready() -> void:
 	# Its sounds come from where it is shown, like everything else of it.
 	_move_emitter = Services.audio.start_emitter(AudioEvents.GRASS_MOVE, _facing)
 	_graze_emitter = Services.audio.start_emitter(AudioEvents.GRAZE, _facing)
+	_run_emitter = Services.audio.start_emitter(AudioEvents.GRASS_RUN, _facing)
 	_play_state_animation()
 
 
@@ -129,7 +136,7 @@ func _physics_process(delta: float) -> void:
 		_push_velocity = Vector2.ZERO
 		move_and_slide()
 	if not presented_externally:
-		_show(_motion.heading, _motion.speed, _grazing)
+		_show(_motion.heading, _motion.speed, _grazing, is_running())
 
 
 # --- Look ------------------------------------------------------------------------
@@ -220,14 +227,25 @@ func set_visual_override(visual: Node2D) -> void:
 
 
 ## Shows the living sheep at [param shown_position], facing [param heading]
-## (radians), as if walking at [param speed] and grazing or not. Only for a
-## sheep that is [member presented_externally]; its animation and sounds
-## follow what is shown, not the simulation.
-func present(shown_position: Vector2, heading: float, speed: float, grazing: bool) -> void:
+## (radians), as if walking at [param speed], grazing or not and running or
+## not (see [method is_running]). Only for a sheep that is
+## [member presented_externally]; its animation and sounds follow what is
+## shown, not the simulation.
+func present(
+	shown_position: Vector2, heading: float, speed: float, grazing: bool, running: bool = false
+) -> void:
 	if not is_alive():
 		return
 	_facing.global_position = shown_position
-	_show(heading, speed, grazing)
+	_show(heading, speed, grazing, running)
+
+
+## Whether it moves faster than a sheep can: only the sprinting Monster or the
+## spider does. Goes by the simulation, so only the device that simulates the
+## sheep knows; the snapshots carry it to the picture on both devices.
+func is_running() -> bool:
+	var top_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
+	return is_alive() and _motion.speed > top_speed * RUN_SPEED_FACTOR
 
 
 # --- Death -----------------------------------------------------------------------
@@ -327,10 +345,11 @@ func _apply_presentation_mode() -> void:
 		_facing.position = Vector2.ZERO
 
 
-func _show(heading: float, speed: float, grazing: bool) -> void:
+func _show(heading: float, speed: float, grazing: bool, running: bool) -> void:
 	_facing.rotation = heading
 	_shown_speed = speed
 	_shown_grazing = grazing
+	_shown_running = running
 	_update_state()
 
 
@@ -346,6 +365,8 @@ func _update_state() -> void:
 		state = State.WALK
 	if state != _state:
 		_enter_state(state)
+	elif _shows_running() != _running:
+		_update_movement_sound()
 	if _state == State.WALK:
 		var max_speed: float = Services.perks.get_stat(StatIds.SHEEP_MOVE_SPEED)
 		_animation.speed_scale = (
@@ -362,16 +383,28 @@ func _enter_state(state: State) -> void:
 		_devour_left = 0.0
 		_shown_speed = 0.0
 		_shown_grazing = false
+		_shown_running = false
 		if presented_externally:
 			# The body lies where the sheep died, not where it was last shown.
 			_facing.global_position = global_position
 		_voice.stop()
 		_collision.set_deferred(&"disabled", true)
 		_hit_shape.set_deferred(&"disabled", true)
-	Services.audio.set_emitter_playing(_move_emitter, state == State.WALK)
+	_update_movement_sound()
 	Services.audio.set_emitter_playing(_graze_emitter, state == State.GRAZE)
 	_play_state_animation()
 	state_changed.emit(state)
+
+
+func _shows_running() -> bool:
+	return _state == State.WALK and _shown_running
+
+
+## Rustles while it walks, louder while it runs.
+func _update_movement_sound() -> void:
+	_running = _shows_running()
+	Services.audio.set_emitter_playing(_move_emitter, _state == State.WALK and not _running)
+	Services.audio.set_emitter_playing(_run_emitter, _running)
 
 
 func _play_state_animation() -> void:

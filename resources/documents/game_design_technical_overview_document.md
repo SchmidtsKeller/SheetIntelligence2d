@@ -80,7 +80,7 @@
   * It sees the Sheepherder's light wherever it falls, even when the Sheepherder is hidden.
 - **Movement:**
   * *PC/Mobile Controls:* Directional movement matching PC/Mobile inputs, at the same speed as the NPC sheep.
-  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. Not available in "giant scary monster" (GSM) form.
+  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. It also rustles louder than a walking sheep, within the quiet hearing range, so a sprint can be heard as well. Not available in "giant scary monster" (GSM) form.
 - **Abilities & Progression:**
   * **Graze (Mimicry Action):** Hold a dedicated button (PC/Mobile) to lower the head and eat grass, matching NPC sheep idle cycles. The Monster can't move while grazing.
   * **Bleat (Mimicry Action):** Press a dedicated button (PC/Mobile) to bleat like an NPC sheep.
@@ -158,7 +158,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
 | **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD, from when it ends); can be ended early |
 | | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%`, from when the bat arrives (`30.0s` CD, from when it leaves) |
-| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass, grazing, the Sheepherder's footsteps; the reload click (heard by the Sheepherder only) |
+| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass (louder when the Monster sprints), grazing, the Sheepherder's footsteps; the reload click (heard by the Sheepherder only) |
 | | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking, the bat |
 | | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired; also the spider's screech. These still get quieter with distance |
 | **Arena** | Arena Size | `3200 × 2400 px` | One arena; the border fences and river are included |

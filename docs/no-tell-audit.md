@@ -44,14 +44,14 @@ All positions are sent to both devices; what is hidden is hidden when it is draw
 
 These are things the Monster's player does, and the Sheepherder is meant to catch them (GDD §3.2):
 
-- **Sprinting:** 270 px/s instead of 180, with the walk animation running faster to match.
+- **Sprinting:** 270 px/s instead of 180, with the walk animation running faster to match, and a louder rustle (`grass_run`, #73). The rustle goes by the speed of the simulated body, faster than a sheep can be, and travels in the snapshots like grazing. The same would happen to an NPC sheep, but none moves that fast.
 - **Eating:** the 1.0 s eating animation, the loud eating sound, the blood on the ground and the missing sheep.
 - **The spider:** it is not a disguise.
 - **Behaving unlike a sheep:** walking too straight, too far, never grazing, ignoring the bell.
 
 ## Limits
 
-- **Packet loss with a hosting Sheepherder.** When the Sheepherder hosts, the flock is simulated on their device and the Monster arrives over the network. Both are drawn from the same buffer with the same delay, but only the Monster's snapshots can be lost. One lost snapshot is bridged without a trace; several in a row make the Monster keep its course for up to 0.1 s and then stand still until the next one arrives, which an NPC sheep on that device never does. On a local network this is rare, and the two-instance check sees no jumps with 10 % loss. It is the one way left in which the network could give the Monster away.
+- **Packet loss with a hosting Sheepherder.** When the Sheepherder hosts, the flock is simulated on their device and the Monster arrives over the network. Both are drawn from the same buffer with the same delay, but only the Monster's snapshots can be lost. One lost snapshot is bridged without a trace; several in a row make the Monster keep its course for up to 0.1 s and then stand still until the next one arrives, which an NPC sheep on that device never does. On a local network this is rare, and the two-instance check sees no jumps with 10 % loss. It is the one way left in which the network could give the Monster away. When the picture then catches up, it moves faster than a sheep for a moment. The louder running rustle does not follow: whether a sheep runs travels in the snapshots, like grazing.
 - **Not checked by a human yet.** The automated audit compares numbers. Nobody has yet sat in front of two devices and tried to pick the Monster out by eye and ear; do that with the steps below before a release.
 
 ## Repeating the audit by hand
