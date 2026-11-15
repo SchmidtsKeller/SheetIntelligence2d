@@ -112,10 +112,13 @@ These are clean synthetic frames. A real camera adds blur, glare and moiré, so 
 
 ## Testing on devices
 
-Camera and clipboard only work in a secure context: `https://` or `localhost`.
+The game starts only in a *secure context*: `https://`, `localhost`, or an address the browser was told to treat as secure. Godot 4.7.2's web loader refuses to start without one, with or without threads ([`Engine.getMissingFeatures()`](https://github.com/godotengine/godot/blob/4.7.2-stable/platform/web/js/engine/features.js#L90)). The page then shows only "Secure Context - Check web server configuration (use HTTPS)". Camera and clipboard need a secure context as well.
 
 - **Deployed build:** the GitHub Pages URL is HTTPS. Use it once the change is on `main`.
-- **Before merging:** download the pull request's `web-build` artifact (or run `tools/export_web.sh`), serve it with `tools/serve_web.sh --lan`, and open `http://localhost:8060` on the computer that serves it. On an Android phone, open `http://<computer's address>:8060` after adding that address in Chrome under `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (then restart Chrome). In Firefox on another computer, set `media.devices.insecure.enabled` and `media.getusermedia.insecure.enabled` to `true` in `about:config`. Without these, the device can still pair with text codes typed in by hand, but neither the camera nor the clipboard works, and its code holds only a hidden `.local` name.
+- **Before merging:** download the pull request's `web-build` artifact (or run `tools/export_web.sh`), serve it with `tools/serve_web.sh --lan`, and open `http://localhost:8060` on the computer that serves it. Another device can open `http://<computer's address>:8060` only after its browser treats that address as secure:
+  - **Chrome** (also on Android): add the address under `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, then restart Chrome.
+  - **Firefox:** set `dom.securecontext.allowlist` in `about:config` to the computer's address, without the port; separate several with commas. The setting is in Firefox's source ([`nsMixedContentBlocker::IsPotentiallyTrustworthyOrigin`](https://hg.mozilla.org/mozilla-central/file/d8bafdec3ad5c530e76809804fefa9cf90ada931/dom/security/nsMixedContentBlocker.cpp#l307), which decides `window.isSecureContext`). Mozilla's documentation doesn't mention it, and it hasn't been tried with this game yet. `media.devices.insecure.enabled` and `media.getusermedia.insecure.enabled` only allow the camera; they don't make the page a secure context.
+  - Without such a setting the device shows only Godot's error, and nothing can be tested there.
 
 ## Known limits
 
