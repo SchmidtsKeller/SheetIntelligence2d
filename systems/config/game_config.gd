@@ -202,6 +202,10 @@ extends Resource
 ## Volume of a player's own looping sounds (footsteps, rustle, grazing) on
 ## their own device, so they don't cover the sounds nearby.
 @export_range(-40.0, 0.0, 0.5, "suffix:dB") var audio_own_sound_volume_db: float = -10.0
+## How much quieter the ambience gets under a crucial cue (bell, gunshot) ...
+@export_range(-40.0, 0.0, 0.5, "suffix:dB") var audio_ambience_duck_db: float = -9.0
+## ... and how long it takes to come back.
+@export_range(0.0, 10.0, 0.05, "suffix:s") var audio_ambience_duck_time: float = 1.5
 
 @export_group("Network")
 ## State snapshots each device sends per second.

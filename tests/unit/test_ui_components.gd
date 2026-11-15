@@ -244,3 +244,24 @@ func _descendants(node: Node, type: Script) -> Array[Node]:
 	return node.find_children("*", "", true, false).filter(
 		func(child: Node) -> bool: return is_instance_of(child, type)
 	)
+
+
+func test_every_button_clicks_when_pressed() -> void:
+	var audio: StubAudioService = StubAudioService.new(Services.config)
+	var original: Node = Services.replace(AudioService, audio)
+	var presses: Array[int] = [0]
+	var menu: GameButton = add_child_autofree(
+		GameButton.create("Ready", func() -> void: presses[0] += 1)
+	)
+	var choice: GameButton = add_child_autofree(
+		GameButton.create("Invisibility", Callable(), GameButton.Kind.CHOICE)
+	)
+
+	menu.pressed.emit()
+	choice.pressed.emit()
+
+	var clicks: Array[StringName] = [AudioEvents.UI_CLICK, AudioEvents.UI_CLICK]
+	assert_eq(audio.get_cues(), clicks)
+	assert_eq(presses[0], 1, "and still does its job")
+	Services.replace(AudioService, original)
+	audio.free()

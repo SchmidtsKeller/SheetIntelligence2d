@@ -180,6 +180,7 @@ func is_alive() -> bool:
 func _on_killed(_position: Vector2) -> void:
 	_alive = false
 	velocity = Vector2.ZERO
+	Services.audio.play_event(AudioEvents.HERDER_DEATH, global_position)
 
 
 # --- Aim and flashlight ----------------------------------------------------------
@@ -257,7 +258,11 @@ func _on_action_pressed(action: StringName) -> void:
 			# step left the Sheepherder facing.
 			var aim: Vector2 = input.get_aim_direction(global_position)
 			rotation = aim.angle()
+			var empty: bool = Services.combat.is_ammo_depleted()
 			Services.combat.request_shot(global_position, aim)
+			# Only its own player hears the empty rifle, like the reload.
+			if empty and not is_bot:
+				Services.audio.play_event(AudioEvents.EMPTY_CLICK, global_position)
 		InputActions.BELL:
 			ring_bell()
 
@@ -304,8 +309,12 @@ func _entity_id_of(node: Node) -> int:
 # --- Presentation ----------------------------------------------------------------
 
 
-func _on_shot_fired(origin: Vector2, end_position: Vector2, _result: int) -> void:
+func _on_shot_fired(origin: Vector2, end_position: Vector2, result: int) -> void:
 	_add_effect(ShotEffect.new(origin, end_position))
+	# Where the bullet stopped in an obstacle or the fence; never in a creature,
+	# which in the dark would tell the Sheepherder they hit something.
+	if result in [CombatService.ShotResult.HIT_OBSTACLE, CombatService.ShotResult.MISSED]:
+		Services.audio.play_event(AudioEvents.BULLET_IMPACT, end_position)
 	if _alive:
 		_art.speed_scale = 1.0
 		_art.play(ANIMATION_FIRE)

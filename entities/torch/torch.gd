@@ -40,6 +40,7 @@ var _flicker_phase: float = 0.0
 var _light: PointLight2D
 var _flame: Node2D
 var _embers: CPUParticles2D
+var _crackle: int = -1
 
 
 func _ready() -> void:
@@ -62,6 +63,7 @@ func _ready() -> void:
 	add_child(_flame)
 	_embers = _build_embers()
 	add_child(_embers)
+	_crackle = Services.audio.start_emitter(AudioEvents.TORCH_BURN, self)
 	_apply()
 
 
@@ -88,6 +90,7 @@ func light() -> void:
 		return
 	_lit = true
 	_apply()
+	Services.audio.play_event(AudioEvents.TORCH_IGNITE, global_position)
 	lit.emit()
 
 
@@ -102,6 +105,7 @@ func _apply() -> void:
 	_light.enabled = _lit
 	_flame.visible = _lit
 	_embers.emitting = _lit
+	Services.audio.set_emitter_playing(_crackle, _lit)
 	set_process(_lit)
 
 

@@ -21,6 +21,10 @@ var kind: Kind = Kind.MENU
 var _icon_slot: Control
 
 
+func _init() -> void:
+	pressed.connect(_on_pressed)
+
+
 ## A button saying [param label] that calls [param action] when pressed.
 static func create(
 	label: String, action: Callable = Callable(), button_kind: Kind = Kind.MENU
@@ -41,6 +45,10 @@ static func create(
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return button
+
+
+func _on_pressed() -> void:
+	Services.audio.play_ui(AudioEvents.UI_CLICK)
 
 
 ## Shows [param texture] as the choice's icon, or a placeholder slot naming

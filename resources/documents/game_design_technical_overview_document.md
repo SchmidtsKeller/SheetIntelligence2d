@@ -158,8 +158,8 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
 | **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD, from when it ends); can be ended early |
 | | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%`, from when the bat arrives (`30.0s` CD, from when it leaves) |
-| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass (louder when the Monster sprints), grazing, the Sheepherder's footsteps; the reload click (heard by the Sheepherder only) |
-| | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking, the bat |
+| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass (louder when the Monster sprints), grazing, the Sheepherder's footsteps, the spider moving, a bullet hitting an obstacle or the fence, a torch lighting and burning; the reload and empty-rifle clicks (heard by the Sheepherder only) |
+| | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking, the bat and its wings, the Sheepherder's and the Monster's death cries |
 | | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired; also the spider's screech. These still get quieter with distance |
 | **Arena** | Arena Size | `3200 × 2400 px` | One arena; the border fences and river are included |
 
@@ -180,12 +180,14 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - See file "art_style_giant_scary_monster.md"
 
 ### 7.2 Audio Design
-- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, the Sheepherder's footsteps, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, "Giant Scary Monster" (GSM) screech upon full evolution.
-- **Music & Ambience:** Ambient wind, realistic, minimal, layered night sounds.
+- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, the Sheepherder's footsteps, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, "Giant Scary Monster" (GSM) screech upon full evolution. Also (#23): the empty-rifle click, a bullet hitting wood, the Sheepherder's and the Monster's death cries, the spider skittering, the bat's wings, a torch lighting and crackling.
+- **Music & Ambience:** Ambient wind, realistic, minimal, layered night sounds. *Decided (#23):* no music. During a round a soft wind and a sparse night layer (crickets, a distant owl now and then) play the same for both players. They dip for a moment under the bell and the gunshot, so those stay clear.
+- **Cues not in the world (#23):** Each player hears their own messages: the Sheepherder "out of bullets"; the Monster "you can kill the Sheepherder now", its invisibility starting and ending, the bat being sent, and its perk being ready again. These cues are never heard on the other player's device, where they would give something away. Both players hear the menus (button clicks, connecting, the other player leaving, getting ready) and the round's flow: the countdown ticks, the start, the round's outcome from their own side, and the end of the match.
 - **Spatial Audio Rules:** Critical for locating entities hidden in the Fog of War. Directional/distance-attenuated audio cues apply to the Shepherd Dog barking, unseen sheep moving through grass, and Monster consumption sounds.
   * Every sound is heard from the player's own character. It fades out at the end of its hearing range (see 5) and comes from its direction, whether or not its source can be seen.
   * A player's own movement sounds (footsteps, rustle, grazing) play `10 dB` quieter on their own device, so they don't drown out the sounds nearby. The other player hears them as usual.
-  * The reload click is heard only by the Sheepherder (see 4.1).
+  * The reload click and the empty-rifle click are heard only by the Sheepherder (see 4.1).
+  * A bullet is heard hitting an obstacle or the fence, never a sheep or the Monster: in the dark that would tell the Sheepherder they hit something.
 
 ---
 

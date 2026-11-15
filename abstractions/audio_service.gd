@@ -43,6 +43,15 @@ const BUS_UI: StringName = &"UI"
 ## (round end, leaving a scene).
 @abstract func stop_all(fade_seconds: float = 0.0) -> void
 
+## Plays [param layers] (see [constant AudioEvents.AMBIENCE]) as the
+## background, on the ambience bus and not placed in the world, instead of the
+## layers before. Looping layers loop; a layer of one-shots repeats at random
+## times. An empty list stops the ambience. Fades over [param fade_seconds].
+@abstract func set_ambience(layers: Array[StringName], fade_seconds: float = 1.0) -> void
+
+## The layers of the ambience that plays now.
+@abstract func get_ambience() -> Array[StringName]
+
 ## Sets the node sounds are heard from. [code]null[/code] removes the listener;
 ## positional sounds are then silent.
 @abstract func set_listener(listener: Node2D) -> void

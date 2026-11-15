@@ -302,10 +302,12 @@ func _on_form_changed(form: GameEnums.MonsterForm) -> void:
 	var vision: VisionTarget = _body.get_node_or_null(^"VisionTarget") as VisionTarget
 	if not spider:
 		_body.set_visual_override(null)
+		_body.set_movement_sounds(AudioEvents.GRASS_MOVE, AudioEvents.GRASS_RUN)
 		if vision != null:
 			vision.radius = _sheep_radius
 		return
 	_body.set_grazing(false)
+	_body.set_movement_sounds(AudioEvents.SPIDER_MOVE, AudioEvents.SPIDER_MOVE)
 	var visual: SpiderVisual = SpiderVisual.new()
 	visual.name = "Spider"
 	visual.body = _body
@@ -316,5 +318,6 @@ func _on_form_changed(form: GameEnums.MonsterForm) -> void:
 
 
 ## A bullet ends the Monster like a sheep: it stays on the ground.
-func _on_monster_shot(_position: Vector2) -> void:
+func _on_monster_shot(where: Vector2) -> void:
 	_body.kill(GameEnums.DeathCause.SHOT)
+	Services.audio.play_event(AudioEvents.MONSTER_DEATH, where)

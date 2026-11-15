@@ -201,6 +201,7 @@ func test_the_next_round_has_a_new_stage_and_the_other_role() -> void:
 
 func test_leaving_the_round_cleans_up() -> void:
 	_pass(Services.config.round_countdown_duration)
+	assert_eq(Services.audio.get_ambience(), AudioEvents.AMBIENCE, "the night around the round")
 
 	_screen.free()
 	await wait_frames(2)
@@ -209,6 +210,7 @@ func test_leaving_the_round_cleans_up() -> void:
 	assert_eq(Services.swarm.get_living_count(), 0)
 	assert_eq(_session.entities.get_entity_ids().size(), 0)
 	assert_false(Services.combat.can_shoot())
+	assert_eq(Services.audio.get_ambience(), [] as Array[StringName], "and it is quiet again")
 
 
 func test_the_end_of_the_session_ends_the_match() -> void:
