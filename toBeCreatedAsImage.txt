@@ -2,7 +2,10 @@ IMAGES STILL TO BE CREATED
 ==========================
 
 Every texture or drawn shape in the game that a painted image will replace.
-In the running game each of them says "Placeholder" (pink letters) until its
+None of them is marked in the game any more (#96): what has no image yet is
+drawn plainly or left out. PlaceholderArt.marks_shown switches the pink
+"Placeholder" marks back on while developing. Earlier, each of them said
+"Placeholder" (pink letters) until its
 image exists. Remove an entry when its image is in the game.
 
 Where the work is tracked:
@@ -66,6 +69,8 @@ ui_backdrop  The picture behind every menu screen.
             boards so text on top stays readable.
   covered:  #70
 
+The board is the large one since #96 (ui_board_large, from
+resources/art_sources/board_large.png).
 Painted and in the game (#83), cut from resources/art_sources/uiElements.webp
 by tools/cut_art_sheets.gd into assets/ui/painted/: ui_board, ui_button_*
 and ui_choice_button_* (normal, hover, pressed, disabled, focus), used by
@@ -94,35 +99,15 @@ perk_icon_<id>  One icon per perk, plus one for "no perk".
 B. HUD (during a round)                                          -> #70
 --------------------------------------------------------------------------
 
-hud_action_<action>  The icon of an action.
-  actions:  shoot (Fire), bell, graze, bleat, eat, sprint; the Perk action
-            uses the perk's icon (see perk_icon_<id>)
-  used in:  ui/hud/hud.gd -> Root/Actions/<Name> (HudGauge, Style.ICON, 76x76,
-            keyboard and mouse) and ui/touch/touch_controls.gd ->
-            Root/<Action>Button (TouchActionButton, 108x108, touchscreen).
-            Today the name is written in the circle instead.
-  size:     128x128, transparent glyph that sits on the round base
-            (hud_icon_base / touch_button_base)
-  style:    pale parchment glyphs (rifle, hand bell, grass tuft, open mouth,
-            fangs, running legs); readable at 64 px.
-  covered:  #70
-
-hud_icon_base  The round base of an action icon on PC.
-  used in:  ui/hud/hud_gauge.gd (_draw_icon), Root/Actions/<Name>
-  size:     128x128, transparent outside the circle; the cooldown slice and
-            the meter ring stay drawn in code on top of it.
-  style:    a dark iron disc with a worn rim; an "active" variant with a
-            crimson glow (hud_icon_base_active).
-  covered:  #70
-
-hud_bar_frame, hud_bar_fill, hud_bar_fill_active  The bars.
-  used in:  ui/hud/hud_gauge.gd (_draw_bar): Root/SheepherderPanel/Reload,
-            Root/MonsterPanel/Evolution, Root/MonsterPanel/Stamina
-  size:     frame 320x24 nine-patch (8 px margins); fills 320x24, stretched
-            horizontally; shown 300x18 px
-  style:    frame of dark leather or iron; fill pale parchment; active fill
-            oxidized crimson (sprinting, the kill unlocked).
-  covered:  #70
+Painted and in the game (#96), in assets/ui/painted/, cut from
+resources/art_sources/hud_icons.png and hud_bars.png:
+  icon_shoot, icon_bell, icon_graze, icon_bleat, icon_eat and icon_print
+  (sprint): round icons with their base painted in, on the HUD's action row
+  and on the touch buttons; so hud_action_<action> and hud_icon_base are
+  done. The Perk action still shows its name (see perk_icon_<id>).
+  hud_bar_empty (the frame) with hud_bar_fill_gold (reload, evolution) and
+  hud_bar_fill_olive (stamina); the active state reddens the fill.
+  icon_bullets in front of the bullet count (the pips stay drawn in code).
 
 hud_milestone_kill, hud_milestone_spider  The two marks on the evolution bar.
   used in:  ui/hud/hud_gauge.gd (marks, white lines today):

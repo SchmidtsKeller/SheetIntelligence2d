@@ -223,9 +223,9 @@ Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena
 godot --headless --path . --script res://tools/cut_art_sheets.gd
 ```
 
-What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
+The HUD's action icons, bars and bullet icon and the large board are painted too (#96). Nothing on screen says "Placeholder" any more: what has no image yet is drawn plainly or left out (`PlaceholderArt.marks_shown` brings the marks back while developing). What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
 
-**Font (#86).** Text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink, through the shared theme. Its digits are old-style figures that blur at small sizes, so the small HUD texts with numbers use Godot's plain built-in font (`GameTheme.readable_font()`).
+**Font (#86).** All text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink: through the shared theme, and as the fallback font of everything else, set at start-up by `GameTheme.use_font_everywhere()` from the `SceneFlow` autoload (not through the `gui/theme/custom_font` project setting, which fails the first import of a fresh clone). Its digits are old-style figures, so the small HUD texts are set a little larger.
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 

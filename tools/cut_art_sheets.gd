@@ -1,6 +1,6 @@
 extends SceneTree
 ## Cuts the painted asset sheets in resources/art_sources/ into one PNG per
-## piece (#83).
+## piece (#83, #96).
 ##
 ## [codeblock lang=text]
 ## godot --headless --path . --script res://tools/cut_art_sheets.gd
@@ -24,7 +24,8 @@ const EDGE: int = 1
 ## Everywhere: for thin frames whose inside is background.
 const ALL: int = 2
 
-## Per sheet: [code]name -> [x, y, width, height, key, erase][/code].
+## Per sheet: [code]name -> [x, y, width, height, key, erase, scale][/code];
+## [code]scale[/code] is optional and shrinks the cut piece (1.0 keeps it).
 ## [code]key[/code] says how the background goes ([constant NONE],
 ## [constant EDGE] or [constant ALL]);
 ## [code]erase[/code] is a list of rectangles (relative to the piece) cleared
@@ -51,6 +52,38 @@ const SHEETS: Dictionary = {
 			"touch_button_base_normal": [664, 440, 92, 92, EDGE, []],
 			"touch_button_base_pressed": [784, 440, 92, 92, EDGE, []],
 			"touch_button_base_active": [896, 436, 106, 92, EDGE, []],
+		},
+	},
+	"board_large.png":
+	{
+		"folder": "res://assets/ui/painted/",
+		"pieces":
+		{
+			"ui_board_large": [10, 9, 332, 396, EDGE, [], 0.75],
+		},
+	},
+	"hud_bars.png":
+	{
+		"folder": "res://assets/ui/painted/",
+		"pieces":
+		{
+			"hud_bar_empty": [14, 6, 364, 94, EDGE, [], 0.4],
+			"hud_bar_fill_gold": [18, 117, 363, 91, EDGE, [], 0.4],
+			"hud_bar_fill_olive": [18, 219, 360, 87, EDGE, [], 0.4],
+		},
+	},
+	"hud_icons.png":
+	{
+		"folder": "res://assets/ui/painted/",
+		"pieces":
+		{
+			"icon_bullets": [562, 2, 113, 111, EDGE, []],
+			"icon_shoot": [689, 1, 110, 112, EDGE, []],
+			"icon_bell": [564, 151, 108, 109, EDGE, []],
+			"icon_graze": [690, 151, 109, 109, EDGE, []],
+			"icon_bleat": [456, 293, 98, 100, EDGE, []],
+			"icon_eat": [578, 295, 98, 98, EDGE, []],
+			"icon_print": [699, 295, 98, 98, EDGE, []],
 		},
 	},
 	"MapElements.webp":
@@ -107,6 +140,11 @@ func _init() -> void:
 				piece.fill_rect(Rect2i(erase[0], erase[1], erase[2], erase[3]), background)
 			if spec[4] != NONE:
 				piece = _key_out(piece, background, spec[4] == ALL)
+			if spec.size() > 6 and not is_equal_approx(spec[6], 1.0):
+				var scaled: Vector2i = Vector2i(
+					roundi(piece.get_width() * spec[6]), roundi(piece.get_height() * spec[6])
+				)
+				piece.resize(scaled.x, scaled.y, Image.INTERPOLATE_LANCZOS)
 			var path: String = folder + piece_name + ".png"
 			piece.save_png(ProjectSettings.globalize_path(path))
 			print("%s  %dx%d" % [path, piece.get_width(), piece.get_height()])

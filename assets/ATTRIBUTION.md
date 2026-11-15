@@ -49,6 +49,10 @@ Made for this project by the team, not third-party assets. Two painted collage s
 | `ui/painted/` | `ui_board`; `ui_button_*` and `ui_choice_button_*` (normal, hover, pressed, disabled, focus); `touch_joystick_base`, `touch_joystick_tip`; `touch_button_base_normal`, `_pressed`, `_active` |
 | `arena/painted/` | `tree_01`, `tree_02`, `bush_01`, `barn_01`, `shed_01`, `hay_bale_01`, `fence_straight`, `fence_corner`, `torch_01`, `river_water_tile`, `river_bank_straight`, `river_bank_corner`, `ground_grass_tile`, `ground_grass_patch_01`, `ground_hill_01`, `ground_flowers_01` |
 
+## Painted board, HUD bars and icons (#96)
+
+Made for this project by the team, not third-party assets, from the team's React art page (`assetsInsideReactPageTemp/`). The sources are kept in `resources/art_sources/` (`board_large.png`, `hud_bars.png`, `hud_icons.png`); `tools/cut_art_sheets.gd` cut them into `ui/painted/`: `ui_board_large`, `hud_bar_empty`, `hud_bar_fill_gold`, `hud_bar_fill_olive`, `icon_bullets`, `icon_shoot`, `icon_bell`, `icon_graze`, `icon_bleat`, `icon_eat`, `icon_print`.
+
 ## Painted ground (#76)
 
 Made for this project by the team, not third-party assets. The five painted terrain images (grass turf, clover meadow, dirt path, gravel, mud) come from the team's AI Studio ground page ("grasUpdate", Google AI Studio, Gemini). `tools/bake_ground.gd` made them seamless, scaled them to 512x512 and derived from them the normal maps (their brightness as height) and the gloss in the alpha channel; it also generated `layout.png` and `relief.png`, the arena's terrain layout, hills, wetness and cart ruts.
