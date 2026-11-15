@@ -1,0 +1,4 @@
+Source material (concept art, documents, full-size animation sheets) that the game
+does not load. Godot skips folders holding a .gdignore file: it neither imports
+nor exports them, so none of this ends up in the Web build's index.pck.
+Copy or re-export what the game needs into assets/ instead (#79).

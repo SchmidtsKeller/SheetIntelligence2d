@@ -20,11 +20,36 @@ class RecordingCombatService:
 		return true
 
 
+## Remembers which looping sound of which sheep body is switched on.
+class RecordingAudioService:
+	extends StubAudioService
+
+	var _bodies: Dictionary[int, Node] = {}
+	var _loops: Dictionary[int, StringName] = {}
+	var _playing: Dictionary[int, bool] = {}
+
+	func start_emitter(event_id: StringName, target: Node2D) -> int:
+		var handle: int = super(event_id, target)
+		# The sheep's sounds follow its picture, a node inside its scene.
+		_bodies[handle] = target.owner if target.owner != null else target
+		_loops[handle] = event_id
+		return handle
+
+	func set_emitter_playing(handle: int, is_playing: bool) -> void:
+		_playing[handle] = is_playing
+
+	func is_looping(body: Node, event_id: StringName) -> bool:
+		for handle: int in _loops:
+			if _bodies[handle] == body and _loops[handle] == event_id:
+				return _playing.get(handle, false)
+		return false
+
+
 var _pair: SessionPair
 var _input: StubInputService
 var _combat: RecordingCombatService
 var _swarm: StubSwarmService
-var _audio: StubAudioService
+var _audio: RecordingAudioService
 var _originals: Dictionary = {}
 
 
@@ -33,7 +58,7 @@ func before_each() -> void:
 	_input.set_role(GameEnums.Role.MONSTER)
 	_combat = RecordingCombatService.new(Services.config)
 	_swarm = StubSwarmService.new()
-	_audio = StubAudioService.new(Services.config)
+	_audio = RecordingAudioService.new(Services.config)
 	_originals[InputService] = Services.replace(InputService, _input)
 	_originals[CombatService] = Services.replace(CombatService, _combat)
 	_originals[SwarmService] = Services.replace(SwarmService, _swarm)
@@ -160,6 +185,31 @@ func test_it_sprints_while_the_button_is_held() -> void:
 	assert_false(monster.is_sprinting())
 	assert_almost_eq(monster.get_body().get_speed(), 180.0, 0.01)
 	assert_almost_eq(monster.get_stamina(), 2.5, 0.1, "refilled at half the rate")
+
+
+func test_the_other_device_hears_the_sprint() -> void:
+	var monsters: Array[Monster] = _spawn(GUEST_ID)
+	_input.move_vector = Vector2.RIGHT
+	var running_frames: int = 0
+	for _frame: int in 60:
+		await _physics_frames(1)
+		for monster: Monster in monsters:
+			running_frames += int(_audio.is_looping(monster.get_body(), AudioEvents.GRASS_RUN))
+	assert_eq(running_frames, 0, "walking never sounds like running, on neither device")
+	for monster: Monster in monsters:
+		var body: SheepBody = monster.get_body()
+		assert_true(_audio.is_looping(body, AudioEvents.GRASS_MOVE), "walking like a sheep")
+		assert_false(_audio.is_looping(body, AudioEvents.GRASS_RUN))
+
+	_input.simulate_press(InputActions.SPRINT)
+	await _physics_frames(45)
+
+	# On the guest it sprints; on the host its copy is shown sprinting.
+	for monster: Monster in monsters:
+		var body: SheepBody = monster.get_body()
+		assert_true(_audio.is_looping(body, AudioEvents.GRASS_RUN), "louder on both devices")
+		assert_false(_audio.is_looping(body, AudioEvents.GRASS_MOVE))
+	_input.simulate_release(InputActions.SPRINT)
 
 
 func test_the_sprint_ends_when_the_stamina_is_used_up() -> void:

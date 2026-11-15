@@ -1,13 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/obstacles/arena_obstacle.gd" id="1_cxco0"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/tree.svg" id="2_cb4vv"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/tree_01.png" id="2_cb4vv"]
 
 [node name="Tree" type="StaticBody2D" unique_id=867413194]
 script = ExtResource("1_cxco0")
 
 [node name="Art" type="Sprite2D" parent="." unique_id=1937614695]
 texture = ExtResource("2_cb4vv")
+scale = Vector2(0.65, 0.65)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="." unique_id=1981360042]
 polygon = PackedVector2Array(44, 0, 38, 22, 22, 38, 0, 44, -22, 38, -38, 22, -44, 0, -38, -22, -22, -38, 0, -44, 22, -38, 38, -22)

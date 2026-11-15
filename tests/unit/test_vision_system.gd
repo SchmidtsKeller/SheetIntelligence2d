@@ -3,7 +3,7 @@ extends TestCase
 ## flashlight lights, the Monster everything an obstacle does not hide.
 ##
 ## The world: a wall at x 250..270, y -100..100; the Sheepherder at the origin,
-## aiming right (cone 60°, 350 px).
+## aiming right (cone 60°, 350 px, fading out by 560 px and 12° beside it).
 
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 const BLOOD_SCENE: PackedScene = preload("res://entities/evidence/blood_decal.tscn")
@@ -62,7 +62,9 @@ func test_part_of_a_sheep_in_the_cone_is_enough() -> void:
 
 
 func test_a_wider_cone_reveals_more() -> void:
-	var sheep: SheepBody = _sheep(Vector2.from_angle(deg_to_rad(42.0)) * 200.0)
+	# Its nearest part is 44.8° off the aim: beyond the 30° half angle and its
+	# 12° fade, but inside the 45° half angle of the wide cone.
+	var sheep: SheepBody = _sheep(Vector2.from_angle(deg_to_rad(48.0)) * 200.0)
 	await _decide_as(GameEnums.Role.SHEEPHERDER)
 	assert_eq(_shown(sheep), 0.0)
 

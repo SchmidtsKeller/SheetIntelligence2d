@@ -1,13 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/obstacles/arena_obstacle.gd" id="1_4spjf"]
-[ext_resource type="Texture2D" path="res://assets/arena/placeholder/barn.svg" id="2_16wfo"]
+[ext_resource type="Texture2D" path="res://assets/arena/painted/barn_01.png" id="2_16wfo"]
 
 [node name="Barn" type="StaticBody2D" unique_id=583861253]
 script = ExtResource("1_4spjf")
 
 [node name="Art" type="Sprite2D" parent="." unique_id=121513994]
 texture = ExtResource("2_16wfo")
+scale = Vector2(1, 1)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="." unique_id=312847712]
-polygon = PackedVector2Array(-120, -80, 120, -80, 120, 80, -120, 80)
+polygon = PackedVector2Array(-118, -62, 118, -62, 118, 62, -118, 62)

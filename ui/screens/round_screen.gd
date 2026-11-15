@@ -10,10 +10,15 @@ extends Node2D
 ## With [code]--host[/code] or [code]--join[/code] on the command line it
 ## starts the session itself (docs/networking.md).
 
+## The layer of the status and the banners: above the world and the
+## [NightVision] (#90), below the [Hud].
+const OVERLAY_LAYER: int = 30
+
 var _session: GameSession
 var _flow: MatchFlow
 var _status: Label
 var _banner: Label
+var _hud: Hud
 
 @onready var _stage: RoundStage = $Stage
 
@@ -22,6 +27,8 @@ func _ready() -> void:
 	_session = Services.session
 	_flow = Services.match_flow
 	_build_overlay()
+	_hud = Hud.new(_stage)
+	add_child(_hud)
 	if _session.is_active():
 		# Arriving with the session's screen change, the flow starts the round
 		# when both devices are ready.
@@ -52,17 +59,21 @@ func get_stage() -> RoundStage:
 	return _stage
 
 
-## The line at the top: the round, this player's role and the timer.
+func get_hud() -> Hud:
+	return _hud
+
+
+## The line at the top: the round and this player's role. The timer is on
+## the HUD.
 func get_status_text() -> String:
 	if not _flow.is_match_running():
 		return ""
 	return (
-		"Round %d of %d  |  You are the %s  |  %s"
+		"Round %d of %d  |  You are the %s"
 		% [
 			_flow.get_round_number(),
 			_flow.get_rounds_total(),
 			GameEnums.role_name(_session.get_local_role()),
-			format_time(_flow.get_round_time_left()),
 		]
 	)
 
@@ -89,9 +100,7 @@ func get_banner_text() -> String:
 ## [param seconds] as minutes and seconds, rounded up: the timer shows 0:00
 ## only when the time is over.
 static func format_time(seconds: float) -> String:
-	var whole: int = maxi(ceili(seconds), 0)
-	@warning_ignore("integer_division")
-	return "%d:%02d" % [whole / 60, whole % 60]
+	return HudReadout.format_time(seconds)
 
 
 func _on_session_started() -> void:
@@ -102,16 +111,19 @@ func _on_session_started() -> void:
 func _build_overlay() -> void:
 	var layer: CanvasLayer = CanvasLayer.new()
 	layer.name = "Overlay"
+	layer.layer = OVERLAY_LAYER
 	add_child(layer)
-	_status = Label.new()
-	_status.name = "Status"
-	_status.position = Vector2(12.0, 12.0)
+	# Top right: the top left is the HUD's.
+	_status = GameLabel.create(GameTheme.HUD_TEXT, "", "Status")
+	GameTheme.apply(_status)
+	_status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_status.position += Vector2(-12.0, 12.0)
 	layer.add_child(_status)
-	_banner = Label.new()
-	_banner.name = "Banner"
+	_banner = GameLabel.create(GameTheme.HUD_TITLE, "", "Banner")
+	GameTheme.apply(_banner)
 	_banner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_banner.add_theme_font_size_override(&"font_size", 40)
 	layer.add_child(_banner)

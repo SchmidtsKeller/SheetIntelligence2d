@@ -2,24 +2,32 @@ class_name BotSenses
 extends RefCounted
 ## What a bot may know about the round: only what its player could see or hear.
 ##
-## The Sheepherder sees what their flashlight lights (GDD §3.1), decided the
-## same way as the [VisionSystem] decides it for a player. Neither bot ever
-## asks which sheep is the Monster.
+## The Sheepherder sees what light falls on, their flashlight's or a lit
+## torch's (GDD §3.1), by the same [LightRules] the [VisionSystem] uses for a
+## player. Neither bot ever asks which sheep is the Monster.
 
 
-## Whether [param point] is in the light of [param herder]: inside the cone and
-## not in the shadow of an obstacle. Nothing is lit by a dead Sheepherder.
-static func is_lit(herder: Sheepherder, point: Vector2) -> bool:
+## The light level at [param point] as [param herder] sees it: their flashlight
+## and the lit torches, not through obstacles. A dead Sheepherder sees nothing.
+static func light_level(herder: Sheepherder, point: Vector2) -> float:
 	if not is_instance_valid(herder) or not herder.is_alive() or not herder.is_inside_tree():
-		return false
-	var cone: FlashlightCone = herder.get_flashlight_cone()
-	if not cone.contains(point):
-		return false
-	return WorldQueries.has_line_of_sight(herder.get_world_2d(), cone.origin, point)
+		return 0.0
+	return LightRules.level_at(
+		herder.get_world_2d(),
+		point,
+		herder.get_flashlight_cone(),
+		LightRules.lit_torches(herder.get_tree())
+	)
 
 
-## Whether [param herder] sees [param body]: some part of it is lit, and it is
-## not cloaked. Like the vision system, this looks at where the body is drawn.
+## Whether [param point] is lit enough for [param herder] to see what is there.
+static func is_lit(herder: Sheepherder, point: Vector2) -> bool:
+	return light_level(herder, point) >= LightRules.SEEN_LEVEL
+
+
+## Whether [param herder] sees [param body]: some part of it is lit enough, and
+## it is not cloaked. Like the vision system, this looks at where the body is
+## drawn.
 static func herder_sees(herder: Sheepherder, body: Node2D) -> bool:
 	var target: VisionTarget = body.get_node_or_null(^"VisionTarget") as VisionTarget
 	if target == null:

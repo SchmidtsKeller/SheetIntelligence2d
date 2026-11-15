@@ -14,6 +14,7 @@ The preset "Web" in [export_presets.cfg](../export_presets.cfg):
 | VRAM texture compression | desktop and mobile | The same build runs in desktop and mobile browsers |
 | Head Include | `page.css`, `page.js`, `vendor/qrcode-generator/qrcode.js`, `vendor/jsqr/jsQR.js`, `pairing.js` | Page rules, and the JavaScript that ships with the game (in this order: `pairing.js` needs the libraries) |
 | Excluded from the build | `tests/`, `tools/`, `web/`, `docs/`, `build/` | Not part of the game |
+| Not imported at all | `resources/` (it holds a `.gdignore`) | Source material: concept art, documents and full-size animation sheets. Imported, it added about 100 MB to `index.pck` (#79). What the game needs goes into `assets/` |
 
 The engine's default HTML shell is used. The game is served as its own page, not inside another site's frame (GDD §9.4).
 
@@ -27,7 +28,7 @@ The build is exported **without Thread Support and without the PWA option**:
 - The PWA route installs a service worker that caches the game. During development that means stale builds on test devices, which is the opposite of what a continuously deployed test build is for.
 - A cross-origin isolated page may not load cross-origin resources that do not opt in. The game has none today, but the restriction would apply to anything added later.
 
-**What this means for audio (input for #10).** Godot's Web builds play audio in *Sample* mode by default: sounds are handed to the browser's Web Audio API, which keeps latency low without threads. Godot's documentation warns that in this mode "positional audio may not always work correctly depending on the node's properties". *Stream* mode supports all audio features, but without Thread Support the audio is mixed on the main thread, which adds latency and can crackle when a frame takes long. So with this export decision, #10 has to make spatial audio work in *Sample* mode, or compute volume and panning in script. If neither is good enough, the fallback is to revisit this decision: Thread Support plus the PWA option.
+**What this means for audio (input for #10).** Godot's Web builds play audio in *Sample* mode by default: sounds are handed to the browser's Web Audio API, which keeps latency low without threads. Godot's documentation warns that in this mode "positional audio may not always work correctly depending on the node's properties". *Stream* mode supports all audio features, but without Thread Support the audio is mixed on the main thread, which adds latency and can crackle when a frame takes long. So with this export decision, #10 has to make spatial audio work in *Sample* mode, or compute volume and panning in script. If neither is good enough, the fallback is to revisit this decision: Thread Support plus the PWA option. #10 kept *Sample* mode: positional audio works there as intended; see [audio.md](audio.md#the-web-build-sample-playback).
 
 ### Page files
 

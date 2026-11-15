@@ -19,7 +19,7 @@ Open the folder in the Godot 4.7 editor and press **F5**, or from a terminal:
 godot --path .
 ```
 
-The game starts in the boot screen, which checks the services and hands over to the lobby. The lobby is a placeholder screen for now; its button starts a match: five rounds with the rules of GDD §2, each followed by the results screen (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against the computer (see [Offline match against the computer](#offline-match-against-the-computer)).
+The game starts in the boot screen, which checks the services and hands over to the lobby. In the [lobby](#lobby-and-scoreboard) both players choose a perk and get ready; then the match begins: five rounds with the rules of GDD §2, each followed by the scoreboard (see [Round rules and match flow](#round-rules-and-match-flow)). Without a second instance you play alone, against the computer (see [Offline match against the computer](#offline-match-against-the-computer)).
 
 The sheep gallery ([entities/sheep/gallery/sheep_gallery.tscn](entities/sheep/gallery/sheep_gallery.tscn), run it with **F6**) shows the sheep of one round at gameplay zoom, with buttons for every animation state, a new round and darkness with a light at the mouse.
 
@@ -28,6 +28,8 @@ The arena sandbox ([systems/arena/arena_sandbox.tscn](systems/arena/arena_sandbo
 The Sheepherder sandbox ([entities/sheepherder/sandbox/sheepherder_sandbox.tscn](entities/sheepherder/sandbox/sheepherder_sandbox.tscn), **F6**) puts you in the arena as the Sheepherder, among a round's sheep that stand still: walk with WASD, aim with the mouse, ring the bell with Space and shoot with the left mouse button.
 
 The vision sandbox ([systems/vision/sandbox/vision_sandbox.tscn](systems/vision/sandbox/vision_sandbox.tscn), **F6**) shows a round's flock in the dark through the Sheepherder's flashlight, or as the Monster sees it, with a sheep in the Monster's slot to steer. Its overlay rings every entity green (seen) or red (hidden). Its perk picker gives the player whose view is shown a perk (Q uses the Monster's invisibility); the Monster's view shows nothing of the Sheepherder's perk.
+
+The sound check ([systems/audio/sandbox/sound_check.tscn](systems/audio/sandbox/sound_check.tscn), **F6**, or the Web build with `?sound-check` in the address) moves one sound around the listener: choose the sound and how it moves, click to place it, and hear whether it comes from the right side and fades out at the end of its range. It says how loud the sound should be in each ear (see [docs/audio.md](docs/audio.md)).
 
 The Monster sandbox ([entities/monster/sandbox/monster_sandbox.tscn](entities/monster/sandbox/monster_sandbox.tscn), **F6**) is a round without rules: you are the Monster among a round's flock, with a Sheepherder who only stands there. Walk with WASD, sprint with Shift, graze with C, bleat with F and eat with E; the status line shows stamina, the eaten count and the attack's cooldown, and a button lets the Sheepherder shoot at you. Started twice with `-- --host` and `-- --join`, it is the same round between two players.
 
@@ -43,9 +45,9 @@ godot --path . -- --host
 godot --path . -- --join
 ```
 
-Both end up in the lobby, which shows who is host and who plays which role. The host's button starts the match on both instances; after every round the host continues from the results screen. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
+Both end up in the lobby, which shows who is host and who plays which role. The match starts when both are ready; after every round both get ready again on the scoreboard. Flags for a simulated bad connection, the network demo scene and the automated two-instance checks are described in [docs/networking.md](docs/networking.md#development-two-instances-on-one-computer).
 
-Until the lobby has a perk selection, `--perk=<id>[,<id>]` selects perks for the roles an instance plays, e.g. `godot --path . -- --join --perk=long_flashlight,invisibility`. The ids are those in [PerkIds](abstractions/types/perk_ids.gd).
+For automated checks, `--perk=<id>[,<id>]` selects perks for the roles an instance plays without the lobby, e.g. `godot --path . -- --join --perk=long_flashlight,invisibility`. The ids are those in [PerkIds](abstractions/types/perk_ids.gd).
 
 ## Run the tests
 
@@ -129,7 +131,7 @@ res://
 ├── abstractions/     Service contracts (abstract classes) and the shared vocabulary in types/
 ├── services/         Service registry, composition root, implementations (stubs/ until the real ones exist)
 ├── entities/         Sheepherder, Monster, NPC sheep, companions, obstacles
-├── systems/          Game config, scene flow, view rule, arena, session, input, flock, vision, perks, match rules, seeded randomness
+├── systems/          Game config, scene flow, view rule, arena, session, input, flock, vision, audio, perks, match rules, seeded randomness
 ├── ui/               Screens, lobby, HUD
 ├── assets/           Sprites, shaders, audio
 ├── tests/            Test harness (framework/) and tests (unit/)
@@ -151,7 +153,7 @@ Each core system is an `@abstract` class in `abstractions/` that extends `Node`:
 | `PerkService` | Perk selection and the modifier-aware stat lookup |
 | `AudioService` | Sound events at world positions, emitters, listener, hearing ranges |
 
-Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input, the flock, combat and perks are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
+Every contract has a stub in `services/stubs/`, which is registered until the real implementation is merged (input, the flock, combat, perks and audio are real by now). A stub is inert but honours the contract (the `PerkService` stub returns the plain config values, the `NetworkService` stub is an offline session of one), so a feature can be built and tested before the real implementation of a neighbouring service is merged.
 
 ### Service registry
 
@@ -213,7 +215,17 @@ The [Arena](systems/arena/arena.gd) is the playing field. It provides:
 
 Its size comes from the config, and the borders are built from it.
 
-Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it.
+Every obstacle type is a scene with the [ArenaObstacle](entities/obstacles/arena_obstacle.gd) script. Its `Footprint` polygon is the one shape that blocks movement, sight and light: the light occluder is built from it. Its `Art` sprite only shows it.
+
+**Painted pieces (#83).** The obstacles, the fence, the river, the torches and the scattered ground details are painted, and so are the menu boards, buttons and touch controls ([PaintedUi](ui/theme/painted_ui.gd)). They are cut from two collage sheets in `resources/art_sources/` (`uiElements.webp`, `MapElements.webp`) by [tools/cut_art_sheets.gd](tools/cut_art_sheets.gd), which knows where each piece sits on its sheet, removes the flat background and writes one PNG per piece into `assets/ui/painted/` and `assets/arena/painted/`. After editing a sheet, cut again and re-import:
+
+```bash
+godot --headless --path . --script res://tools/cut_art_sheets.gd
+```
+
+What still waits for a painted image is listed in [toBeCreatedAsImage.txt](toBeCreatedAsImage.txt), and [toBeCreatedAsImagePrompts.md](toBeCreatedAsImagePrompts.md) has a ready-to-paste generation prompt for each of them and for the placeholder sounds.
+
+**Font (#86).** Text is set in *IM Fell English* (`assets/fonts/`, SIL Open Font License), old print with worn ink, through the shared theme. Its digits are old-style figures that blur at small sizes, so the small HUD texts with numbers use Godot's plain built-in font (`GameTheme.readable_font()`).
 
 **Rule:** whatever asks "can A see B" or "what does this ray hit" uses [WorldQueries](systems/arena/world_queries.gd). Only obstacles and borders (physics layer `world`) block sight; characters and sheep never do. A ray that ends at a border, not an obstacle, has left the map.
 
@@ -256,14 +268,35 @@ Services.combat.begin_round(sheepherder, Monster.of(body).get_body())
 
 What a player sees is decided on their own device by the [VisionSystem](systems/vision/vision_system.gd) (GDD §3.1, §3.2). It changes only what is drawn, never the simulation or what is sent.
 
-- **Sheepherder:** heavy darkness, in which static scenery stays faintly visible. Entities and blood are seen only where the [flashlight](entities/sheepherder/flashlight_light.gd) lights them: inside the cone and not in an obstacle's shadow.
-- **Monster:** no darkness. Entities are seen unless an obstacle hides them; all of the ground is seen, including blood and the Sheepherder's light.
+- **Sheepherder:** a dim night (darker, not black), in which static scenery stays readable. Entities and blood are seen only where light falls on them: the [flashlight](entities/sheepherder/flashlight_light.gd) or a lit [torch](entities/torch/torch.gd), not blocked by an obstacle. [LightRules](systems/vision/light_rules.gd) gives every point a light level from 0 to 1: full inside the cone and near a torch, fading out softly beyond. An entity is shown as bright as the light on it and counts as seen at half light or more. The bots' senses ([BotSenses](systems/bots/bot_senses.gd)) ask the same `LightRules`, so the bots see what a player would.
+- **Monster:** no darkness. Entities are seen unless an obstacle hides them; all of the ground is seen, including blood and the Sheepherder's light. It sees the world through its [NightVision](systems/vision/night_vision.gd) (#90): a dark-red vignette at the edges of the screen and a subtle filter (less saturated, shifted toward red and amber, a little grain, lifted shadows), a little stronger in spider form. It is shown only on the Monster's device, below the HUD, the touch controls and the banners, and changes nothing of what is seen. Its look is tuned in [night_vision.tscn](systems/vision/night_vision.tscn).
 - **Everybody** always sees their own character.
 - **The invisible Monster** (a cloaked `VisionTarget`) is seen by nobody else; its own player sees it faded.
 
 **Rule:** anything that may be hidden (a character, a sheep, a companion, a mark on the ground) has a [VisionTarget](systems/vision/vision_target.gd) child that names the part to fade, and its root is in the group `dynamic_entities`. Effects that belong to it (a muzzle flash, an eating effect) are attached to that target with `attach()`, so they are never seen when the entity is not. There are no rules per entity type.
 
+**Torches** stand at fixed spots in the arena (`Torches` in [arena.tscn](systems/arena/arena.tscn)). The host lights one when a living Sheepherder walks up to it and announces it with `arena.torch_lit`; it burns for the rest of the round. The flicker, the sway of the flashlight while walking and the dust and embers are presentation only.
+
 The round puts a `VisionSystem` into the world (for example the arena's overlays layer) and sets its `role` and `viewer`, the local player's character. A [BloodDecalSpawner](entities/evidence/blood_decal_spawner.gd) leaves blood wherever the combat service reports it.
+
+### Audio
+
+`Services.audio` is the `SpatialAudioService` ([services/audio/spatial_audio_service.gd](services/audio/spatial_audio_service.gd)). Every sound is played where it happens and heard from the local player's character (GDD §7.2), whether or not its source can be seen.
+
+```gdscript
+Services.audio.play_event(AudioEvents.BLEAT, global_position)                  # a one-shot in the world
+var steps: int = Services.audio.start_emitter(AudioEvents.HERDER_STEP, self)   # a loop that follows a node
+Services.audio.set_emitter_playing(steps, walking)
+Services.audio.set_listener(character)                                         # the round does this
+```
+
+- **Hearing ranges.** [AudioEvents](abstractions/types/audio_events.gd) gives each event its range class: quiet (400 px), loud (800 px) or whole map. A sound fades from full at the listener to silence at the end of its range, and pans by where it is across the screen ([AudioMix](systems/audio/audio_mix.gd)). Whole-map sounds fade out only at `audio_whole_map_distance` (8000 px), so they are heard everywhere and still sound further away.
+- **Catalog.** The [AudioCatalog](systems/audio/audio_catalog.tres) gives every event an [AudioCue](systems/audio/audio_cue.gd): its variations, bus, volume, pitch variation and fade. The sounds are placeholders, listed with their sources in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md); the sound pass (#23) replaces them in the catalog.
+- **No audio tell.** NPC sheep and the Monster share every sound, and a sheep's sounds come from where it is shown, with the same delay as its picture.
+- **Own sounds.** On a player's own device, the looping sounds of their own character (footsteps, rustle, grazing) play `audio_own_sound_volume_db` (−10 dB) quieter, so they don't cover the sounds nearby.
+- **The reload click** is heard only by the Sheepherder's player, so the Spare Bullet stays hidden (GDD §4.1).
+- **Buses:** Master, Effects, Ambience and UI ([default_bus_layout.tres](default_bus_layout.tres)). `set_bus_volume` keeps the volume in `user://settings.cfg` for the next start.
+- **Web build.** Audio starts with the first click, tap or key press (a browser rule), and is muted while the page is hidden. The playback type and what was measured are in [docs/audio.md](docs/audio.md).
 
 ### Perks
 
@@ -311,7 +344,7 @@ setup → spawn → countdown → active → resolved → results ─┬→ setu
 - **Points** are always recorded, whoever wins: the Monster gets 1 for every sheep it ate alive (0 for the body of a shot one), the Sheepherder 1 for every sheep that survived and −2 for every sheep they shot.
 - **Same tick.** The host reports lethal events in the order its combat service decides them, and the first one decides the round. The timer is looked at after the events of a tick, so a kill in the tick in which the time runs out still counts.
 
-**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played. Round 1 is played in the roles the session drew at random when it started, which are the ones the lobby shows; they swap after every round, and a rematch draws them anew. The player with more round wins takes the match; equal wins are a draw.
+**The match.** [MatchScore](systems/match/match_score.gd) keeps the record of every round ([RoundResult](systems/match/round_result.gd)) and who played which role. All five rounds are played. Round 1 is played in the roles the session drew at random when it started, which are the ones the lobby shows; they swap after every round, and a rematch draws them anew when the last results come up, so that the players choose perks for the roles they will play. The player with more round wins takes the match; equal wins are a draw.
 
 ```gdscript
 var flow: MatchFlow = Services.match_flow
@@ -325,13 +358,40 @@ flow.get_last_result().get_sheepherder_points()
 flow.request_next_round()                          # host, on the results screen
 flow.request_rematch()                             # host, after the last round
 flow.request_lobby()                               # host: end the match
+flow.set_ready(true)                               # either device, in the lobby and on the results
+flow.is_ready(MatchScore.Player.GUEST)             # the computer of an offline match always is
 ```
 
-The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round, the role and the timer in a plain line, and the [results screen](ui/screens/results_screen.gd) the record of the round, the standing and the host's buttons; the HUD (#21) and the styled scoreboard (#20) replace them. When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+The host starts a match by taking both devices to the round screen: `Services.session.request_screen(SceneFlowController.Screen.ROUND)`. The [round screen](ui/screens/round_screen.gd) shows the round and the role in a plain line and carries the [HUD](#in-game-hud); the [results screen](ui/screens/results_screen.gd) is the scoreboard (see [Lobby and scoreboard](#lobby-and-scoreboard)). When the connection is lost, the match ends on the remaining device and it returns to the lobby.
+
+### In-game HUD
+
+The [Hud](ui/hud/hud.gd) on the round screen shows each player what their role needs (GDD §8.2, #21), and nothing of the other role's:
+
+| Role | Elements |
+|:--|:--|
+| Both | Round timer, short messages ("Out of bullets", "You can kill the Sheepherder now", "… is ready") |
+| Sheepherder | Bullets (3, or 4 with *Spare Bullet*), reload progress, Fire and Bell with their cooldowns; in the world, the [aim line](entities/sheepherder/aim_line.gd) to the first obstacle (it passes through sheep, so it never reveals a hidden one) |
+| Monster | Evolution bar with the kill and the spider milestones (and when the spider is out of reach), living sheep, stamina, Graze / Bleat / Eat / Sprint and the active perk with its charge and cooldown |
+
+- **Display only.** The HUD reads what the match flow, the combat service, the perk service and the round's characters expose; the arithmetic is in [HudReadout](ui/hud/hud_readout.gd), tested on its own. It switches with the roles by itself.
+- **Keyboard and mouse:** the actions sit in a row at the bottom, each with its key, which the input layer names (`InputService.get_action_hint`).
+- **Touchscreen:** no icons next to the buttons; the HUD hands each action's cooldown and meter to its touch button (`InputService.show_action_state`), which draws them. The HUD's own elements stay at the top, away from the controls in the bottom corners.
+
+### Lobby and scoreboard
+
+From page load to the first round (GDD §8.1, #20): pair once, see your role, choose a perk, get ready.
+
+- **[Lobby](ui/screens/lobby_screen.gd).** Without a session, the Web build shows the pairing of #7 ([PairingPanel](ui/pairing/pairing_panel.gd)); a desktop build shows the match against the computer. In a session: who plays against whom, your role in round 1, the [PerkPicker](ui/lobby/perk_picker.gd), Ready and Leave.
+- **Perk choice.** One perk from the pool of the role you play next, or none; each shows its name, its type (passive, active, companion) and what it does. The other role's perks and choice never appear on your screen (GDD §8.1). Ready locks the choice; it can be taken back until the other player is ready too.
+- **Ready.** `MatchFlow.set_ready` tells the host; when both are ready, the host starts the match, the next round or the rematch. Offline, the computer is always ready.
+- **[Scoreboard](ui/screens/results_screen.gd).** Left: the round's outcome and reason, both players' points with where they come from (GDD §8.2), the round wins and, after the last round, the winner and every round from your view. Right: the role you play next, the perk choice and Ready. The host can end the match and take both back to the lobby. Perks are not revealed.
+- **Disconnects.** Losing the other player on any screen ends the session and returns to the lobby, which says why; on the Web the pairing panel offers to pair again.
+- **Layout.** Two columns, so a phone held sideways shows all of it; smaller screens scroll.
 
 ### Offline match against the computer
 
-One player can play a whole match on one device, without pairing (#57). In the Web build the lobby offers **Sheepherder vs. computer** and **Monster vs. computer** next to Host and Join; on the desktop, *Go to Round* without a session does the same with a random role. The chosen role is the player's in round 1; the roles swap after every round as usual.
+One player can play a whole match on one device, without pairing (#57). In the Web build the lobby offers **Sheepherder vs. computer** and **Monster vs. computer** next to Host and Join; on the desktop the lobby has the same two buttons. The chosen role is the player's in round 1; the roles swap after every round as usual. Then the player chooses a perk and gets ready, like in a match of two.
 
 - **Offline session.** `Services.session.play_offline()` starts a session of this device alone on every build. Where the transport needs a second device (WebRTC pairing), an offline transport stands in until the session ends; hosting or joining from the lobby ends the offline session first.
 - **Bots.** The [RoundStage](systems/match/round_stage.gd) spawns the character nobody plays for this device, marked as a bot's: it gets its own [BotInput](systems/bots/bot_input.gd), never `Services.input`, and no camera. A [MonsterBot](systems/bots/monster_bot.gd) or [SheepherderBot](systems/bots/sheepherder_bot.gd) presses its buttons, only while the player may act too.

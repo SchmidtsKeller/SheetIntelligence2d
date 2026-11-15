@@ -201,8 +201,9 @@ func test_alone_the_player_takes_on_the_computer_in_the_role_they_chose() -> voi
 
 		assert_true(Services.session.is_offline(), "no second device")
 		assert_eq(Services.session.get_local_role(), choice[1])
-		assert_eq(flow.current_screen, SceneFlowController.Screen.ROUND)
-		assert_eq(_panel.get_step(), PairingPanel.Step.CHOOSE, "nothing to pair")
+		assert_eq(flow.current_screen, SceneFlowController.Screen.LOBBY, "the perk comes first")
+		assert_eq(_panel.get_step(), PairingPanel.Step.CONNECTED, "out of the lobby's way")
+		assert_false(_panel.mouse_filter == Control.MOUSE_FILTER_STOP, "the lobby takes clicks")
 		Services.session.leave()
 		Services.session.scene_flow = null
 
@@ -211,6 +212,9 @@ func test_after_playing_offline_the_player_can_pair_again() -> void:
 	_note_taking_flow()
 	_press(PairingPanel.OFFLINE_MONSTER)
 
+	# The lobby's Leave button.
+	Services.session.leave()
+	assert_eq(_panel.get_step(), PairingPanel.Step.CHOOSE)
 	_press("Host a game")
 
 	assert_false(Services.session.is_offline())

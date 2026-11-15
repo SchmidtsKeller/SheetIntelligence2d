@@ -10,13 +10,19 @@ extends RefCounted
 const BLEAT: StringName = &"bleat"
 ## A sheep-like entity moves through grass.
 const GRASS_MOVE: StringName = &"grass_move"
+## A sheep-like entity moves through grass faster than a sheep can: the
+## Monster sprinting, or the spider. Louder than walking.
+const GRASS_RUN: StringName = &"grass_run"
 ## A sheep-like entity eats grass.
 const GRAZE: StringName = &"graze"
 ## The Sheepherder rings the bell.
 const BELL: StringName = &"bell"
+## The Sheepherder walks.
+const HERDER_STEP: StringName = &"herder_step"
 ## The Sheepherder fires the firearm.
 const GUNSHOT: StringName = &"gunshot"
-## The firearm finished reloading.
+## The firearm finished reloading. Only the Sheepherder's own player hears it:
+## after the third shot it would tell the Monster about the Spare Bullet.
 const RELOAD_CLICK: StringName = &"reload_click"
 ## The Monster eats a sheep or the Sheepherder.
 const EAT: StringName = &"eat"
@@ -30,8 +36,10 @@ const BAT: StringName = &"bat"
 const ALL: Array[StringName] = [
 	BLEAT,
 	GRASS_MOVE,
+	GRASS_RUN,
 	GRAZE,
 	BELL,
+	HERDER_STEP,
 	GUNSHOT,
 	RELOAD_CLICK,
 	EAT,
@@ -41,19 +49,21 @@ const ALL: Array[StringName] = [
 ]
 
 ## Hearing-range class per event. The GDD (§5) classifies grass movement as
-## quiet, bleating / eating / barking as loud, and bell / gunshot as whole map.
-## The other four are assumptions until the audio task (#10) settles them.
+## quiet, bleating / eating / barking as loud, and bell / gunshot as whole map;
+## the audio task (#10) decided the rest.
 const RANGE_CLASS: Dictionary[StringName, GameEnums.HearingRange] = {
 	BLEAT: GameEnums.HearingRange.LOUD,
 	GRASS_MOVE: GameEnums.HearingRange.QUIET,
-	GRAZE: GameEnums.HearingRange.QUIET,  # assumption
+	GRASS_RUN: GameEnums.HearingRange.QUIET,
+	GRAZE: GameEnums.HearingRange.QUIET,
 	BELL: GameEnums.HearingRange.WHOLE_MAP,
+	HERDER_STEP: GameEnums.HearingRange.QUIET,
 	GUNSHOT: GameEnums.HearingRange.WHOLE_MAP,
-	RELOAD_CLICK: GameEnums.HearingRange.QUIET,  # assumption
+	RELOAD_CLICK: GameEnums.HearingRange.QUIET,
 	EAT: GameEnums.HearingRange.LOUD,
-	SPIDER_SCREECH: GameEnums.HearingRange.WHOLE_MAP,  # assumption (see #16)
+	SPIDER_SCREECH: GameEnums.HearingRange.WHOLE_MAP,
 	DOG_BARK: GameEnums.HearingRange.LOUD,
-	BAT: GameEnums.HearingRange.LOUD,  # assumption
+	BAT: GameEnums.HearingRange.LOUD,
 }
 
 

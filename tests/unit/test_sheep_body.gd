@@ -5,11 +5,17 @@ extends TestCase
 const SHEEP_SCENE: PackedScene = preload("res://entities/sheep/sheep.tscn")
 
 
-## Remembers which emitters are playing.
+## Remembers which emitters are playing, and what they follow.
 class RecordingAudioService:
 	extends StubAudioService
 
 	var playing: Dictionary[int, bool] = {}
+	var targets: Dictionary[int, Node2D] = {}
+
+	func start_emitter(event_id: StringName, target: Node2D) -> int:
+		var handle: int = super(event_id, target)
+		targets[handle] = target
+		return handle
 
 	func set_emitter_playing(handle: int, is_playing: bool) -> void:
 		playing[handle] = is_playing
@@ -54,13 +60,18 @@ func test_the_layers_show_the_look_of_the_seed() -> void:
 	assert_eq(sheep.get_appearance().fingerprint(), expected.fingerprint())
 	for slot_index: int in sheep.catalog.slots.size():
 		var slot: SheepAppearanceSlot = sheep.catalog.slots[slot_index]
-		var layer: Sprite2D = _layer(sheep, slot)
+		var layer: Node2D = _layer(sheep, slot)
 		var part_index: int = expected.part_indices[slot_index]
 		assert_eq(layer.visible, part_index != SheepAppearance.NONE, "layer '%s' visible" % slot.id)
 		if part_index == SheepAppearance.NONE:
 			continue
 		var part: SheepAppearancePart = slot.parts[part_index]
-		assert_eq(layer.texture, part.texture)
+		if part.frames != null:
+			assert_eq((layer as AnimatedSprite2D).sprite_frames, part.frames)
+			assert_true((layer as AnimatedSprite2D).is_playing(), "the painted frames play")
+		else:
+			assert_eq((layer as Sprite2D).texture, part.texture)
+		assert_eq(layer.scale, part.scale)
 		var tint_index: int = expected.tint_indices[slot_index]
 		assert_eq(
 			layer.self_modulate,
@@ -162,7 +173,7 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 	var sheep: SheepBody = _spawn()
 	var move_emitter: int = 1
 	var graze_emitter: int = 2
-	assert_eq(_audio.get_emitter_count(), 2, "rustle and grazing emitters")
+	assert_eq(_audio.get_emitter_count(), 3, "rustle, grazing and running emitters")
 
 	sheep.set_move_input(Vector2.RIGHT)
 	await _physics_frames(5)
@@ -176,6 +187,44 @@ func test_sounds_follow_what_the_sheep_does() -> void:
 	sheep.kill(GameEnums.DeathCause.SHOT)
 	assert_false(_audio.playing[move_emitter])
 	assert_false(_audio.playing[graze_emitter])
+
+
+func test_faster_than_a_sheep_it_rustles_louder() -> void:
+	var sheep: SheepBody = _spawn()
+	var move_emitter: int = 1
+	var run_emitter: int = 3
+	sheep.set_move_input(Vector2.RIGHT)
+	await _physics_frames(20)
+	assert_true(_audio.playing[move_emitter], "a sheep's top speed is walking")
+	assert_false(_audio.playing.get(run_emitter, false))
+
+	# The Monster's sprint (GDD §3.2).
+	sheep.speed_override = Services.config.monster_sprint_speed
+	await _physics_frames(30)
+	assert_false(_audio.playing[move_emitter])
+	assert_true(_audio.playing[run_emitter], "running")
+
+	sheep.speed_override = -1.0
+	await _physics_frames(30)
+	assert_true(_audio.playing[move_emitter], "walking again")
+	assert_false(_audio.playing[run_emitter])
+	sheep.set_move_input(Vector2.ZERO)
+	await _physics_frames(20)
+	assert_false(_audio.playing[move_emitter])
+	assert_false(_audio.playing[run_emitter])
+
+
+func test_sounds_come_from_where_the_sheep_is_shown() -> void:
+	var sheep: SheepBody = _spawn(0, Vector2(50.0, 50.0))
+	sheep.presented_externally = true
+
+	# Shown a moment in the past, behind its body (docs/networking.md).
+	sheep.present(Vector2(20.0, 50.0), 0.0, 0.0, false)
+	sheep.bleat()
+
+	assert_eq(_audio.played[-1]["position"], Vector2(20.0, 50.0))
+	for handle: int in _audio.targets:
+		assert_eq(_audio.targets[handle].global_position, Vector2(20.0, 50.0))
 
 
 # --- Death -------------------------------------------------------------------------
@@ -330,7 +379,7 @@ func _physics_frames(count: int) -> void:
 		await get_tree().physics_frame
 
 
-func _layer(sheep: SheepBody, slot: SheepAppearanceSlot) -> Sprite2D:
+func _layer(sheep: SheepBody, slot: SheepAppearanceSlot) -> Node2D:
 	var anchor: String = (
 		"Facing/Pose/Visual/Head/HeadPose"
 		if slot.anchor == SheepAppearanceSlot.Anchor.HEAD
@@ -386,5 +435,7 @@ func _describe_tree(root: Node) -> PackedStringArray:
 			line += " at=%s rot=%s scale=%s" % [node_2d.position, node_2d.rotation, node_2d.scale]
 		if node is Sprite2D:
 			line += " texture=%s" % (node as Sprite2D).texture
+		if node is AnimatedSprite2D:
+			line += " frames=%s" % (node as AnimatedSprite2D).sprite_frames
 		lines.append(line)
 	return lines

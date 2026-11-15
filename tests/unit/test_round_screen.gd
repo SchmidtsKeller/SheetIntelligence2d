@@ -87,18 +87,21 @@ func test_the_sheepherder_starts_in_their_corner_far_from_the_flock() -> void:
 	assert_true(arena.get_sheepherder_spawn_area().has_point(herder.global_position))
 	assert_true(arena.get_flock_spawn_area().has_point(monster.global_position))
 	# Nobody can act in the countdown; the flock must be out of the flashlight
-	# so a Monster that stands still is not seen doing so.
+	# so a Monster that stands still is not seen doing so, not even in the fade.
+	var config: GameConfig = Services.config
 	assert_gt(
 		herder.global_position.distance_to(monster.global_position),
-		Services.config.flashlight_cone_length
+		config.flashlight_cone_length * (1.0 + config.flashlight_fade_length_share)
 	)
+	for torch: Torch in arena.get_torches():
+		assert_false(torch.is_lit(), "no torch burns before anybody lit one")
 
 
 func test_nobody_can_act_before_the_countdown_is_over() -> void:
 	assert_false(Services.input.is_gameplay_enabled())
 	assert_eq(_screen.call(&"get_banner_text"), "3")
 	assert_true((_screen.call(&"get_status_text") as String).begins_with("Round 1 of 5"))
-	assert_true((_screen.call(&"get_status_text") as String).ends_with("3:00"))
+	assert_eq(_timer_text(), "3:00")
 
 	_pass(Services.config.round_countdown_duration)
 
@@ -108,7 +111,8 @@ func test_nobody_can_act_before_the_countdown_is_over() -> void:
 
 	_pass(59.5)
 
-	assert_true((_screen.call(&"get_status_text") as String).ends_with("2:01"))
+	await wait_frames(1)
+	assert_eq(_timer_text(), "2:01")
 
 
 func test_shooting_the_monster_ends_the_round_for_the_sheepherder() -> void:
@@ -246,11 +250,11 @@ func test_the_results_screen_starts_the_next_round() -> void:
 	var results: Control = add_child_autofree((load(RESULTS_SCENE) as PackedScene).instantiate())
 	_loaded_scenes.clear()
 
-	var next: Button = _button(results, "Next round")
-	assert_true(next.visible)
-	assert_false(_button(results, "Rematch").visible)
+	var ready: Button = results.find_child("Ready", true, false)
+	assert_true(ready.visible)
 	assert_true(_button(results, "Back to lobby").visible)
-	next.pressed.emit()
+	# Alone, the computer is always ready: this player's Ready starts the round.
+	ready.button_pressed = true
 
 	assert_eq(_loaded_scenes, PackedStringArray([ROUND_SCENE]))
 
@@ -354,6 +358,12 @@ func _clear_spot_next_to(arena: Arena, from: Vector2) -> Vector2:
 
 func _stage() -> RoundStage:
 	return _screen.call(&"get_stage")
+
+
+## The round timer as the HUD shows it.
+func _timer_text() -> String:
+	var hud: Hud = _screen.call(&"get_hud")
+	return (hud.get_element("Timer") as Label).text
 
 
 func _pass(seconds: float) -> void:

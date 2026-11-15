@@ -73,8 +73,9 @@ func get_stat_int(stat: StringName) -> int:
 @abstract func get_available_perks(role: GameEnums.Role) -> Array[StringName]
 
 ## Selects [param perk_id] for the player with [param role], replacing an
-## earlier choice. Returns [code]false[/code] if the perk is not in the role's
-## pool or the selection is locked.
+## earlier choice; [constant PerkIds.NONE] plays without a perk. Returns
+## [code]false[/code] if the perk is not in the role's pool or the selection
+## is locked.
 @abstract func select_perk(role: GameEnums.Role, perk_id: StringName) -> bool
 
 ## The perk selected for [param role], or [constant PerkIds.NONE].

@@ -52,10 +52,13 @@
 - **Movement:**
   * *PC:* WASD directional movement on the 2D plane.
   * *Mobile:* On-screen virtual movement joystick.
+  * *Footsteps:* The Sheepherder's steps can be heard within the quiet hearing range (`400 px`), by both players.
 - **Vision & Fog of War Mechanics:**
   * Equipped with a flashlight attached to the end of a single-shot rifle, casting a light cone restricted by specific width and length parameters. The Sheepherder holds the rifle in both hands, aiming the flashlight and the weapon wherever they point. 
   * *Aiming/Rotation:* Rotates 360 degrees around the Sheepherder to match viewing direction (controlled via Mouse cursor on PC; secondary virtual joystick on Mobile).
-  * *Strict Fog of War Rules:* Outside the visibility cone, the map is shrouded in heavy darkness. **Static map elements** (trees, bushes, barns, ground details) remain faintly visible in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless illuminated by the light cone, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible inside the light cone. Players must rely on spatial audio cues to track unseen movement.
+  * *Strict Fog of War Rules:* Outside the light, the map lies in night darkness: darker and colder, not black. **Static map elements** (trees, bushes, barns, ground details, torches) stay readable in the dark, whereas **dynamic entities (NPC sheep and the Monster) are completely invisible** unless light falls on them, even right next to the Sheepherder. **Blood** and the bodies of shot sheep are also only visible in the light. Players must rely on spatial audio cues to track unseen movement.
+  * *Light falloff:* The cone is fully lit. Beyond its end the light fades out softly over a further `60 %` of the cone's length, and beside it over `12°` on each side. An entity in the fade is shown as dim as the light there and counts as seen while at least half lit.
+  * *Torches:* Torches stand at fixed spots in the arena. The Sheepherder lights one by walking up to it; it burns for the rest of the round and lights a circle around it (blocked by obstacles), which counts for the Sheepherder's sight like the flashlight. Light depends only on position, never on which sheep stands there.
 - **Combat & Firearm Mechanics:**
   * Equipped with the aforementioned single-shot rifle with a **strict limit of 3 bullets per round** (4 with the *Spare Bullet* perk).
   * **Bullet Path:** A shot travels along the aim direction until it hits an NPC sheep, the Monster or a solid obstacle, or leaves the map. The light cone doesn't limit its range, so the Sheepherder can hit targets they can't see.
@@ -77,7 +80,7 @@
   * It sees the Sheepherder's light wherever it falls, even when the Sheepherder is hidden.
 - **Movement:**
   * *PC/Mobile Controls:* Directional movement matching PC/Mobile inputs, at the same speed as the NPC sheep.
-  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. Not available in "giant scary monster" (GSM) form.
+  * *Sprint:* Holding a dedicated button moves the Monster at **1.5×** speed while its stamina lasts. NPC sheep never move this fast, so sprinting in view of the Sheepherder can give the Monster away. It also rustles louder than a walking sheep, within the quiet hearing range, so a sprint can be heard as well. Not available in "giant scary monster" (GSM) form.
 - **Abilities & Progression:**
   * **Graze (Mimicry Action):** Hold a dedicated button (PC/Mobile) to lower the head and eat grass, matching NPC sheep idle cycles. The Monster can't move while grazing.
   * **Bleat (Mimicry Action):** Press a dedicated button (PC/Mobile) to bleat like an NPC sheep.
@@ -110,7 +113,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - **Long Flashlight (Passive):** Lengthens the flashlight cone (350 px → 429 px) at the normal angle, lighting **50%** more area for the entire round.
 - **Faster Weapon Reload (Passive):** Reduces firearm reload duration by **50%**.
 - **Friendly Shepherd Dog (Companion):** An AI dog that stays near the Sheepherder; it barks and faces directly toward the Monster whenever the Monster is actively in the middle of its eating animation. It only notices this within **800 px** of the dog (the loud hearing range), and it doesn't react when the Monster eats the body of a shot sheep. The dog passes through sheep and the Sheepherder, so it never blocks anyone.
-- **Spare Bullet (Passive):** Adds a hidden **4th bullet**. Because the Monster never sees the Sheepherder's perk choice, it can't be sure the weapon is empty after 3 shots. The Monster may still work it out by ruling out the perks it can observe (cone shape, the dog, reload speed); this is accepted for now.
+- **Spare Bullet (Passive):** Adds a hidden **4th bullet**. Because the Monster never sees the Sheepherder's perk choice, it can't be sure the weapon is empty after 3 shots. The Monster may still work it out by ruling out the perks it can observe (cone shape, the dog, reload speed); this is accepted for now. Only the Sheepherder hears the reload click, so the reload after the 3rd shot gives nothing away.
 
 ### 4.2 Monster Perks (Choose 1)
 
@@ -139,6 +142,9 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Flashlight Cone Length | `350 px` | Blocked by solid obstacles (trees, barns, hay bales); `429 px` with *Long Flashlight* perk |
 | | Bell Cooldown | `12.0s` | Draws nearby sheep toward the Sheepherder |
 | | Bell Radius | `400 px` | Sheep within this distance walk toward the Sheepherder |
+| | Flashlight Fade | `+60 %` length, `12°` each side | The light fades out beyond the cone; perks and the bat scale it with the cone |
+| | Torch Light Radius | `200 px` | Fully lit; the light fades out over a further `120 px` |
+| | Torch Ignite Range | `60 px` | A living Sheepherder this close lights a torch |
 | **Monster** | Base Movement Speed | `180 px/s` | Same as the NPC sheep movement speed for seamless mimicry |
 | | Sprint Speed | `270 px/s` | `1.5×` base speed while the sprint button is held; sheep form only |
 | | Sprint Stamina | `3.0s` | Drains while sprinting; refills at `0.5×` speed while not sprinting (`6.0s` from empty to full) |
@@ -152,9 +158,9 @@ Before each round begins, each player selects **1 Perk** from their respective p
 | | Graze Duration | `3.0–6.0s` | Random per graze; the sheep stands still with its head lowered |
 | **Perks** | Invisibility Max Duration | `5.0s` | Drains `1.0x` when still, `3.0x` when moving (`30.0s` CD, from when it ends); can be ended early |
 | | Allied Bat Disruption | `10.0s` | Shrinks flashlight cone length and angle by `~42%` each, cutting the lit area by `80%`, from when the bat arrives (`30.0s` CD, from when it leaves) |
-| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass |
-| | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking |
-| | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired |
+| **Audio** | Hearing Range (quiet) | `400 px` | Sheep moving through grass (louder when the Monster sprints), grazing, the Sheepherder's footsteps; the reload click (heard by the Sheepherder only) |
+| | Hearing Range (loud) | `800 px` | Bleating, Monster eating, dog barking, the bat |
+| | Hearing Range (bell, gunshot) | `Whole map` | Lets both players keep track of bell rings and shots fired; also the spider's screech. These still get quieter with distance |
 | **Arena** | Arena Size | `3200 × 2400 px` | One arena; the border fences and river are included |
 
 ---
@@ -174,10 +180,12 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - See file "art_style_giant_scary_monster.md"
 
 ### 7.2 Audio Design
-
-- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet tearing sounds of the Monster's body splitting to consume a victim, "Giant Scary Monster" (GSM) screech upon full evolution.
+- **Diegetic Sound Effects:** Sheep bleating ("mähen"), grass grazing rustles, the Sheepherder's footsteps, Sheepherder's bell (crucial gameplay cue), gunshot and mechanical reload clicks, wet Monster eating cues, "Giant Scary Monster" (GSM) screech upon full evolution.
 - **Music & Ambience:** Ambient wind, realistic, minimal, layered night sounds.
 - **Spatial Audio Rules:** Critical for locating entities hidden in the Fog of War. Directional/distance-attenuated audio cues apply to the Shepherd Dog barking, unseen sheep moving through grass, and Monster consumption sounds.
+  * Every sound is heard from the player's own character. It fades out at the end of its hearing range (see 5) and comes from its direction, whether or not its source can be seen.
+  * A player's own movement sounds (footsteps, rustle, grazing) play `10 dB` quieter on their own device, so they don't drown out the sounds nearby. The other player hears them as usual.
+  * The reload click is heard only by the Sheepherder (see 4.1).
 
 ---
 
@@ -200,6 +208,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
     * Bullet counter (visual display of remaining bullets out of 3, or 4 with *Spare Bullet*).
     * Reload progress indicator.
     * Bell cooldown icon.
+    * Aim line: a thin red line from the rifle along the aim, with a dot at the first obstacle or the arena's edge. It passes through sheep and the Monster, so it never shows a sheep hidden in the dark (see 3.1). Faint while no shot is possible (reloading), gone when the magazine is empty. Only the Sheepherder sees it.
   * *Monster Only:*
     * Action and cooldown icons for Graze, Bleat, Eat, and the active Perk, plus the sprint stamina meter.
     * "Evolution Bar" (tracks progress toward the 5-sheep Herder kill unlock and 10-sheep "Giant Scary Monster" (GSM) evolution).
@@ -217,6 +226,7 @@ Before each round begins, each player selects **1 Perk** from their respective p
 - **Programming Language:** GDScript (Godot 4.7 can't export C# projects to the Web)
 - **Export Target:** Web Browser Build (HTML5 / WebAssembly) supporting cross-play between desktop browsers (PC) and mobile browsers (iOS/Android).
 - **Web Audio:** Web builds play audio in *Sample* mode by default, where Godot's docs warn that "positional audio may not always work correctly depending on the node's properties". *Stream* mode supports all audio features but adds latency, especially without *Thread Support*. The spatial audio from 7.2 must be tested early in the web build.
+  * *Decided (#10):* The web build keeps *Sample* mode. Measured in Chrome, it matched the intended volume and panning at every tested position. *Stream* mode without *Thread Support* dropped 40–50 % of the sound. In *Sample* mode, Godot restarts looping sounds from the main thread, which leaves a short gap each time a loop begins again, so the loops are several seconds long. Measurements are in docs/audio.md.
 
 ### 9.2 Architectural Principles (SoC & DRY)
 

@@ -99,6 +99,9 @@ const BAT_ORBIT_RADIUS: StringName = &"bat_orbit_radius"
 # --- Audio -------------------------------------------------------------------
 const HEARING_RANGE_QUIET: StringName = &"hearing_range_quiet"
 const HEARING_RANGE_LOUD: StringName = &"hearing_range_loud"
+const AUDIO_WHOLE_MAP_DISTANCE: StringName = &"audio_whole_map_distance"
+const AUDIO_PANNING_STRENGTH: StringName = &"audio_panning_strength"
+const AUDIO_OWN_SOUND_VOLUME_DB: StringName = &"audio_own_sound_volume_db"
 
 # --- Network -----------------------------------------------------------------
 const NET_TICK_RATE: StringName = &"net_tick_rate"
@@ -124,6 +127,13 @@ const BOT_HERDER_SUSPICION_DECAY: StringName = &"bot_herder_suspicion_decay"
 const BOT_HERDER_FLOCK_DISTANCE: StringName = &"bot_herder_flock_distance"
 const BOT_HERDER_SWEEP_INTERVAL: StringName = &"bot_herder_sweep_interval"
 const BOT_HERDER_BELL_INTERVAL: StringName = &"bot_herder_bell_interval"
+
+# --- Lighting ----------------------------------------------------------------
+const FLASHLIGHT_FADE_LENGTH_SHARE: StringName = &"flashlight_fade_length_share"
+const FLASHLIGHT_FADE_ANGLE_DEG: StringName = &"flashlight_fade_angle_deg"
+const TORCH_LIGHT_RADIUS: StringName = &"torch_light_radius"
+const TORCH_FADE_LENGTH: StringName = &"torch_fade_length"
+const TORCH_IGNITE_RANGE: StringName = &"torch_ignite_range"
 
 # --- View --------------------------------------------------------------------
 const VIEW_MAX_WORLD_WIDTH: StringName = &"view_max_world_width"

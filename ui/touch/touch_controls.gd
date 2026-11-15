@@ -14,8 +14,8 @@ extends CanvasLayer
 ## fingers work at the same time (move, aim and a button).
 ##
 ## The controls are only shown in the touch scheme, while gameplay input is
-## on and the player has a role. Layout and looks are functional
-## placeholders; the HUD task arranges and styles them.
+## on and the player has a role. The looks are placeholders, marked as such
+## until the art pass (#70) paints them.
 
 const STICK_SIZE: float = 220.0
 const BUTTON_SIZE: float = 108.0
@@ -46,6 +46,8 @@ func _init() -> void:
 	_root.name = "Root"
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The painted sticks come from the theme (#83).
+	GameTheme.apply(_root)
 	add_child(_root)
 
 	_move_stick = _create_stick(

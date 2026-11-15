@@ -19,14 +19,13 @@ func _exit_tree() -> void:
 		Services.combat.blood_spilled.disconnect(spill)
 
 
-## Puts a blood decal at [param at]. Its rotation follows from the position, so
-## both devices show the same mark.
+## Puts a blood decal at [param at]. Its shape follows from the position (see
+## [BloodShape]), so both devices show the same mark.
 func spill(at: Vector2) -> void:
 	if decals == null:
 		push_error("BloodDecalSpawner: no parent for the decals is set.")
 		return
-	var decal: Node2D = DECAL_SCENE.instantiate()
+	var decal: BloodDecal = DECAL_SCENE.instantiate()
 	decal.position = at
-	var random: SeededRandom = SeededRandom.new(roundi(at.x) * 7919 + roundi(at.y))
-	decal.rotation = deg_to_rad(random.next_int(360))
+	decal.shape = BloodShape.for_position(at)
 	decals.add_child(decal)
