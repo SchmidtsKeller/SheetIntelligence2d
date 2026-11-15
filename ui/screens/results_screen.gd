@@ -46,16 +46,15 @@ func _exit_tree() -> void:
 
 ## Everything the screen says, line by line.
 func get_text() -> String:
-	return "\n".join(
-		[
-			_round_label.text,
-			_headline_label.text,
-			_details_label.text,
-			_match_label.text,
-			_history_label.text,
-			_next_role_label.text,
-		]
-	)
+	var lines: PackedStringArray = [
+		_round_label.text,
+		_headline_label.text,
+		_details_label.text,
+		_match_label.text,
+		_history_label.text,
+		_next_role_label.text,
+	]
+	return "\n".join(lines)
 
 
 func get_picker() -> PerkPicker:
@@ -179,18 +178,17 @@ static func describe_history(score: MatchScore, you: MatchScore.Player) -> Strin
 			outcome = "you won"
 		elif winner == MatchScore.other_player(you):
 			outcome = "you lost"
-		lines.append(
-			(
-				"Round %d: you were the %s, %s (%d : %d)"
-				% [
-					index + 1,
-					GameEnums.role_name(your_role),
-					outcome,
-					result.get_points(your_role),
-					result.get_points(GameEnums.opposite_role(your_role)),
-				]
-			)
+		var line: String = (
+			"Round %d: you were the %s, %s (%d : %d)"
+			% [
+				index + 1,
+				GameEnums.role_name(your_role),
+				outcome,
+				result.get_points(your_role),
+				result.get_points(GameEnums.opposite_role(your_role)),
+			]
 		)
+		lines.append(line)
 	return "\n".join(lines)
 
 

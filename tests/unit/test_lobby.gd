@@ -162,11 +162,11 @@ func test_the_history_lists_every_round_from_the_players_view() -> void:
 
 	var history: String = ResultsScreen.describe_history(score, MatchScore.Player.HOST)
 
-	assert_eq(
-		history,
+	var expected: String = (
 		"Round 1: you were the Sheepherder, you won (10 : 0)\n"
 		+ "Round 2: you were the Monster, you won (6 : 4)"
 	)
+	assert_eq(history, expected)
 	assert_eq(
 		ResultsScreen.describe_history(score, MatchScore.Player.GUEST).get_slice("\n", 0),
 		"Round 1: you were the Monster, you lost (0 : 10)"

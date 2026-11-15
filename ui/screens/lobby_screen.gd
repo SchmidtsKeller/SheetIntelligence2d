@@ -81,8 +81,8 @@ func _refresh() -> void:
 		"the computer" if _session.is_offline() else "the other player, connected"
 	)
 	_players.text = "You (%s) against %s" % [who, opponent]
-	_role.text = "In the first round you play the %s" % GameEnums.role_name(
-		_session.get_local_role()
+	_role.text = (
+		"In the first round you play the %s" % GameEnums.role_name(_session.get_local_role())
 	)
 	var ready: bool = _flow.is_ready(you)
 	_ready_button.set_pressed_no_signal(ready)
