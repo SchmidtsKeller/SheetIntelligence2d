@@ -184,8 +184,18 @@ enum EatTarget {
 ## The Monster's current form.
 @abstract func get_monster_form() -> GameEnums.MonsterForm
 
-## Whether the Monster's attack can kill the Sheepherder.
+## Whether the Monster's attack can kill the Sheepherder: it has eaten enough,
+## or it was unleashed ([method unleash_monster]).
 @abstract func can_kill_sheepherder() -> bool
+
+## Host only: the Monster drops its disguise. It becomes the spider and may
+## kill the Sheepherder from now on, however many sheep it has eaten; in the
+## middle of a meal the spider appears when the meal is over. Both devices
+## then emit [signal sheepherder_kill_unlocked] (unless the kill was unlocked
+## already) and [signal monster_form_changed] like after the evolution.
+## [br]Not a rule of a match between two players: an offline match unleashes
+## the bot's Monster once the Sheepherder has no bullet left (#108).
+@abstract func unleash_monster() -> void
 
 ## Whether a bullet can still kill the Monster: not in spider form and the
 ## firearm is not permanently empty.

@@ -196,6 +196,84 @@ func test_the_bot_monster_does_not_eat_in_the_light() -> void:
 	assert_false(body.is_devouring())
 
 
+# --- Out of bullets (#108) -------------------------------------------------------
+
+
+func test_out_of_bullets_the_bot_monster_turns_into_the_spider() -> void:
+	_tune(StatIds.FIREARM_AMMO, 1.0)
+	await _play_as(Role.SHEEPHERDER)
+	var herder: Sheepherder = _stage().get_sheepherder()
+	_pass(Services.config.round_countdown_duration)
+	await _steps(2)
+	assert_eq(Services.combat.get_eaten_count(), 0)
+
+	_shoot_away_from(_stage().get_monster().get_body(), herder)
+	var turned: bool = await _wait_until(
+		func() -> bool: return Services.combat.get_monster_form() == GameEnums.MonsterForm.SPIDER
+	)
+
+	assert_true(Services.combat.is_ammo_depleted())
+	assert_true(turned, "the spider appeared without a sheep eaten")
+	assert_true(Services.combat.can_kill_sheepherder())
+	await _steps(2)
+	var bot: MonsterBot = _stage().get_bot()
+	assert_eq(bot.get_mode(), MonsterBot.Mode.CONFRONT)
+
+
+func test_out_of_bullets_the_spider_strikes_from_the_front() -> void:
+	_tune(StatIds.FIREARM_AMMO, 1.0)
+	await _play_as(Role.SHEEPHERDER)
+	var stage: RoundStage = _stage()
+	var herder: Sheepherder = stage.get_sheepherder()
+	var body: SheepBody = stage.get_monster().get_body()
+	# The Monster is beside the Sheepherder, who looks the other way.
+	body.global_position = _clear_spot_next_to(stage.get_arena(), herder.global_position)
+	_player.aim_direction = body.global_position.direction_to(herder.global_position)
+	_pass(Services.config.round_countdown_duration)
+	await _steps(2)
+	var struck_at: Array[float] = []
+	var record: Callable = func(_at: Vector2) -> void:
+		var offset: Vector2 = body.global_position - herder.global_position
+		struck_at.append(rad_to_deg(absf(herder.get_aim_direction().angle_to(offset))))
+	Services.combat.sheepherder_killed.connect(record)
+
+	_shoot_away_from(body, herder)
+	var killed: bool = await _wait_until(func() -> bool: return not herder.is_alive(), 900)
+	Services.combat.sheepherder_killed.disconnect(record)
+
+	assert_true(killed, "the spider killed the Sheepherder")
+	assert_eq(struck_at.size(), 1)
+	if not struck_at.is_empty():
+		assert_lte(struck_at[0], MonsterBot.STRIKE_ANGLE_DEG, "from the front")
+
+
+func test_the_spider_goes_round_a_sheepherder_who_turns_away() -> void:
+	var facing: Vector2 = Vector2.RIGHT
+	var behind: Vector2 = Vector2(-200.0, 10.0)
+
+	var step: Vector2 = MonsterBot.toward_front(behind, facing)
+
+	assert_almost_eq(rad_to_deg(behind.angle_to(step)), -MonsterBot.CIRCLE_STEP_DEG, 0.01)
+	assert_almost_eq(MonsterBot.off_front_deg(behind, facing), 177.1, 0.1)
+	assert_almost_eq(MonsterBot.off_front_deg(Vector2(100.0, 0.0), facing), 0.0, 0.01)
+	var near_front: Vector2 = Vector2(100.0, 20.0)
+	assert_almost_eq(MonsterBot.toward_front(near_front, facing).angle(), 0.0, 0.0001)
+
+
+func test_with_bullets_left_the_bot_monster_stays_a_sheep() -> void:
+	await _play_as(Role.SHEEPHERDER)
+	var herder: Sheepherder = _stage().get_sheepherder()
+	_pass(Services.config.round_countdown_duration)
+	await _steps(2)
+
+	_shoot_away_from(_stage().get_monster().get_body(), herder)
+	await _steps(120)
+
+	assert_false(Services.combat.is_ammo_depleted())
+	assert_eq(Services.combat.get_monster_form(), GameEnums.MonsterForm.SHEEP)
+	assert_ne(_stage().get_bot().get_mode(), MonsterBot.Mode.CONFRONT)
+
+
 # --- The bot Sheepherder ---------------------------------------------------------
 
 
@@ -280,9 +358,9 @@ func _steps(count: int) -> void:
 		await get_tree().physics_frame
 
 
-## Waits up to [constant PATIENCE] physics steps for [param condition].
-func _wait_until(condition: Callable) -> bool:
-	for step: int in PATIENCE:
+## Waits up to [param patience] physics steps for [param condition].
+func _wait_until(condition: Callable, patience: int = PATIENCE) -> bool:
+	for step: int in patience:
 		if condition.call():
 			return true
 		await get_tree().physics_frame
@@ -294,6 +372,12 @@ func _tune(stat: StringName, value: float) -> void:
 	if not _original_config.has(stat):
 		_original_config[stat] = Services.config.get_number(stat)
 	Services.config.set(stat, value)
+
+
+## The Sheepherder fires where they look, which is away from [param body].
+func _shoot_away_from(body: SheepBody, herder: Sheepherder) -> void:
+	var direction: Vector2 = body.global_position.direction_to(herder.global_position)
+	assert_true(Services.combat.request_shot(herder.global_position, direction), "a shot")
 
 
 func _nearest_sheep_to(body: SheepBody) -> SheepBody:

@@ -104,5 +104,9 @@ func can_kill_sheepherder() -> bool:
 	return false
 
 
+func unleash_monster() -> void:
+	pass
+
+
 func is_monster_killable() -> bool:
 	return true

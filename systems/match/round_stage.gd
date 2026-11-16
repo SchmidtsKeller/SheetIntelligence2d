@@ -12,11 +12,16 @@ extends Node2D
 ##
 ## Offline, the character this player does not play is a bot's: it is spawned
 ## for this device, steered by a [MonsterBot] or a [SheepherderBot] through
-## its own [BotInput], and has no camera (#57).
+## its own [BotInput], and has no camera (#57). Once the player's Sheepherder
+## has fired the last bullet, the bot's Monster is unleashed (#108): it turns
+## into the spider and comes for them (see [MonsterBot]).
 
 const ARENA_SCENE: PackedScene = preload("res://systems/arena/arena.tscn")
 ## The owner of a character that nobody plays: no device steers it.
 const NOBODY: int = -1
+## Offline: how long after the last bullet the bot's Monster is unleashed, so
+## the shot is over before the spider appears.
+const UNLEASH_DELAY: float = 1.0
 
 ## Whether a bot plays the character nobody else plays (offline). Tests of the
 ## round itself switch it off, to have a character that stands still.
@@ -29,6 +34,7 @@ var _flow: MatchFlow
 var _herder: Sheepherder
 var _monster: Monster
 var _bot: Node
+var _unleash_timer: Timer
 
 
 func _ready() -> void:
@@ -39,6 +45,12 @@ func _ready() -> void:
 	add_child(blood)
 	_vision = VisionSystem.new()
 	_arena.get_overlays_layer().add_child(_vision)
+	_unleash_timer = Timer.new()
+	_unleash_timer.name = "UnleashTimer"
+	_unleash_timer.one_shot = true
+	_unleash_timer.wait_time = UNLEASH_DELAY
+	_unleash_timer.timeout.connect(_unleash_bot_monster)
+	add_child(_unleash_timer)
 
 	_session = Services.session
 	_flow = Services.match_flow
@@ -49,6 +61,7 @@ func _ready() -> void:
 	_session.entities.entity_spawned.connect(_on_entity_spawned)
 	_session.roles_changed.connect(_apply_role)
 	_flow.phase_changed.connect(_on_phase_changed)
+	Services.combat.ammo_depleted.connect(_on_ammo_depleted)
 	# The night around the round (GDD §7.2), the same for both players.
 	Services.audio.set_ambience(AudioEvents.AMBIENCE)
 
@@ -57,6 +70,7 @@ func _exit_tree() -> void:
 	_session.entities.entity_spawned.disconnect(_on_entity_spawned)
 	_session.roles_changed.disconnect(_apply_role)
 	_flow.phase_changed.disconnect(_on_phase_changed)
+	Services.combat.ammo_depleted.disconnect(_on_ammo_depleted)
 	Services.input.set_role(GameEnums.Role.NONE)
 	Services.audio.set_listener(null)
 	Services.audio.set_ambience([])
@@ -158,8 +172,21 @@ func _on_entity_spawned(_entity_id: int, entity: Node) -> void:
 	_start_bot()
 
 
+## Offline: the player's Sheepherder is out of bullets, so the bot's Monster
+## will be unleashed (#108).
+func _on_ammo_depleted() -> void:
+	if is_instance_valid(_monster) and _monster.is_bot and _session.is_host():
+		_unleash_timer.start()
+
+
+func _unleash_bot_monster() -> void:
+	if is_instance_valid(_monster) and _monster.is_bot:
+		Services.combat.unleash_monster()
+
+
 ## Offline: the bot takes over the character this player does not play.
 func _start_bot() -> void:
+	_unleash_timer.stop()
 	if is_instance_valid(_bot):
 		_bot.queue_free()
 	_bot = null

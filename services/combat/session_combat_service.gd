@@ -26,6 +26,8 @@ const EVENT_EAT_REQUEST: StringName = &"combat.eat_request"
 ## Host to both: the Monster attacks. [code][target, target_id,
 ## target_position, monster_position, duration, cooldown][/code]
 const EVENT_EAT: StringName = &"combat.eat"
+## Host to both: the Monster is unleashed ([method unleash_monster]). [code][][/code]
+const EVENT_UNLEASH: StringName = &"combat.unleash"
 
 ## Farther than any arena. Every shot ends at a border before this.
 const MAX_SHOT_DISTANCE: float = 100000.0
@@ -62,6 +64,8 @@ var _monster_alive: bool = true
 var _eaten: int = 0
 var _eaten_alive: int = 0
 var _form: GameEnums.MonsterForm = GameEnums.MonsterForm.SHEEP
+## Whether the Monster was unleashed this round (#108).
+var _unleashed: bool = false
 var _eat_target: EatTarget = EatTarget.NONE
 var _eat_target_id: int = -1
 var _eat_left: float = 0.0
@@ -123,6 +127,7 @@ func begin_round(sheepherder: Node2D, monster: Node2D) -> void:
 	_monster_alive = true
 	_eaten = 0
 	_eaten_alive = 0
+	_unleashed = false
 	_stop_eating()
 	ammo_changed.emit(_ammo, _capacity)
 	eaten_count_changed.emit(0)
@@ -225,7 +230,13 @@ func get_monster_form() -> GameEnums.MonsterForm:
 
 
 func can_kill_sheepherder() -> bool:
-	return _eaten >= Services.perks.get_stat_int(StatIds.HERDER_KILL_THRESHOLD)
+	return _unleashed or _eaten >= Services.perks.get_stat_int(StatIds.HERDER_KILL_THRESHOLD)
+
+
+func unleash_monster() -> void:
+	if not session.messenger.is_host() or not _round_active or not _monster_alive or _unleashed:
+		return
+	session.messenger.broadcast(EVENT_UNLEASH, [])
 
 
 func is_monster_killable() -> bool:
@@ -321,6 +332,18 @@ func _on_eat(payload: Array, _sender_id: int) -> void:
 			sheepherder_killed.emit(position)
 
 
+func _on_unleash(_payload: Array, _sender_id: int) -> void:
+	if _unleashed or not _round_active or not _monster_alive:
+		return
+	var kill_was_unlocked: bool = can_kill_sheepherder()
+	_unleashed = true
+	if not kill_was_unlocked:
+		sheepherder_kill_unlocked.emit()
+	# During a meal the spider appears when it is over, as after the evolution.
+	if not is_eating():
+		_evolve()
+
+
 func _count_eaten_sheep() -> void:
 	_eaten += 1
 	eaten_count_changed.emit(_eaten)
@@ -328,10 +351,13 @@ func _count_eaten_sheep() -> void:
 		sheepherder_kill_unlocked.emit()
 
 
-## Turns the Monster into the spider once it has eaten enough.
+## Turns the Monster into the spider once it has eaten enough, or once it is
+## unleashed.
 func _evolve() -> void:
 	var threshold: int = Services.perks.get_stat_int(StatIds.SPIDER_EVOLUTION_THRESHOLD)
-	if _form == GameEnums.MonsterForm.SPIDER or not _monster_alive or _eaten < threshold:
+	if _form == GameEnums.MonsterForm.SPIDER or not _monster_alive:
+		return
+	if _eaten < threshold and not _unleashed:
 		return
 	_form = GameEnums.MonsterForm.SPIDER
 	if is_instance_valid(_monster):
@@ -446,3 +472,5 @@ func _register_events() -> void:
 	messenger.register_event(EVENT_EAT, NetMessenger.SenderRule.HOST_ONLY)
 	messenger.subscribe(EVENT_EAT_REQUEST, _on_eat_request)
 	messenger.subscribe(EVENT_EAT, _on_eat)
+	messenger.register_event(EVENT_UNLEASH, NetMessenger.SenderRule.HOST_ONLY)
+	messenger.subscribe(EVENT_UNLEASH, _on_unleash)

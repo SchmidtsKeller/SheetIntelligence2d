@@ -421,6 +421,70 @@ func test_an_empty_firearm_protects_the_monster_but_does_not_arm_it() -> void:
 		assert_false(combat.can_eat())
 
 
+# --- Unleashed (#108) ------------------------------------------------------------
+
+
+func test_an_unleashed_monster_is_the_spider_and_may_kill_at_once() -> void:
+	watch_signals(_host)
+	watch_signals(_guest)
+
+	_host.unleash_monster()
+
+	for combat: SessionCombatService in [_host, _guest]:
+		assert_eq(combat.get_eaten_count(), 0)
+		assert_eq(combat.get_monster_form(), GameEnums.MonsterForm.SPIDER)
+		assert_true(combat.can_kill_sheepherder())
+		assert_false(combat.is_monster_killable())
+		assert_signal_emit_count(combat, &"sheepherder_kill_unlocked", 1)
+		assert_signal_emitted_with(combat, &"monster_form_changed", [GameEnums.MonsterForm.SPIDER])
+	assert_eq(_events(AudioEvents.SPIDER_SCREECH), [MONSTER_AT, MONSTER_AT])
+	_sheepherder.position = MONSTER_AT + Vector2(0.0, 40.0)
+	assert_true(_host.request_eat())
+	assert_signal_emitted_with(_host, &"eat_started", [EAT_HERDER, -1, 1.0])
+
+
+func test_only_the_host_unleashes_the_monster() -> void:
+	_guest.unleash_monster()
+
+	for combat: SessionCombatService in [_host, _guest]:
+		assert_eq(combat.get_monster_form(), GameEnums.MonsterForm.SHEEP)
+		assert_false(combat.can_kill_sheepherder())
+
+
+func test_unleashed_during_a_meal_the_spider_comes_after_it() -> void:
+	_sheep(MONSTER_AT + Vector2(40.0, 0.0))
+	_host.request_eat()
+
+	_host.unleash_monster()
+
+	assert_eq(_host.get_monster_form(), GameEnums.MonsterForm.SHEEP, "it is still eating")
+	assert_true(_host.can_kill_sheepherder())
+	_advance_both(Services.config.eat_duration)
+	for combat: SessionCombatService in [_host, _guest]:
+		assert_eq(combat.get_monster_form(), GameEnums.MonsterForm.SPIDER)
+
+
+func test_an_unleashed_monster_with_the_kill_unlocked_unlocks_it_only_once() -> void:
+	_eat_sheep(5)
+	watch_signals(_host)
+
+	_host.unleash_monster()
+	_host.unleash_monster()
+
+	assert_signal_not_emitted(_host, &"sheepherder_kill_unlocked")
+	assert_signal_emit_count(_host, &"monster_form_changed", 1)
+
+
+func test_a_shot_monster_is_not_unleashed() -> void:
+	await get_tree().physics_frame
+	_host.request_shot(MONSTER_AT - Vector2(300.0, 0.0), Vector2.RIGHT)
+
+	_host.unleash_monster()
+
+	assert_eq(_host.get_monster_form(), GameEnums.MonsterForm.SHEEP)
+	assert_false(_host.can_kill_sheepherder())
+
+
 # --- Rounds ----------------------------------------------------------------------
 
 
@@ -428,6 +492,7 @@ func test_a_new_round_starts_from_nothing() -> void:
 	_eat_sheep(10)
 	watch_signals(_host)
 
+	_host.unleash_monster()
 	_host.begin_round(_sheepherder, _monster)
 
 	assert_signal_emitted_with(_host, &"monster_form_changed", [GameEnums.MonsterForm.SHEEP])
