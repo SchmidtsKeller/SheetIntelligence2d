@@ -11,7 +11,9 @@ extends Node
 ## [/codeblock]
 ##
 ## It exits with code 0 if every match was played to its end and the bots did
-## something in it: at least one sheep eaten and one shot fired.
+## something in it: at least one sheep eaten and one shot fired. A round in
+## which the Sheepherder used up every bullet says so, and how it ended: the
+## bot's Monster is unleashed then (#108).
 
 const ROUND_SCENE: String = "res://ui/screens/round_screen.tscn"
 const DEFAULT_SPEED: float = 6.0
@@ -24,6 +26,7 @@ var _matches_played: int = 0
 var _rounds: int = 0
 var _eaten: int = 0
 var _shots: int = 0
+var _out_of_bullets: bool = false
 var _real_time: float = 0.0
 ## Game time, which runs [member _speed] times faster; the match's clock.
 var _game_time: float = 0.0
@@ -53,6 +56,7 @@ func _ready() -> void:
 	flow.round_resolved.connect(_on_round_resolved)
 	flow.match_finished.connect(_on_match_finished)
 	Services.combat.shot_fired.connect(_on_shot_fired)
+	Services.combat.ammo_depleted.connect(_on_ammo_depleted)
 	_start_match.call_deferred()
 
 
@@ -97,6 +101,10 @@ func _on_shot_fired(_from: Vector2, _to: Vector2, _result: CombatService.ShotRes
 	_shots += 1
 
 
+func _on_ammo_depleted() -> void:
+	_out_of_bullets = true
+
+
 func _start_match() -> void:
 	SceneFlow.go_to(SceneFlowController.Screen.ROUND)
 
@@ -104,9 +112,11 @@ func _start_match() -> void:
 func _on_round_resolved(result: RoundResult) -> void:
 	_rounds += 1
 	_eaten += result.eaten_sheep + result.eaten_bodies
+	var bullets: String = ", out of bullets" if _out_of_bullets else ""
+	_out_of_bullets = false
 	print(
 		(
-			"BOTCHECK round %d: %s, %s | eaten %d (+%d bodies), shot %d, alive %d, %d s left"
+			"BOTCHECK round %d: %s, %s | eaten %d (+%d bodies), shot %d, alive %d, %d s left%s"
 			% [
 				_rounds,
 				result.get_headline(),
@@ -116,6 +126,7 @@ func _on_round_resolved(result: RoundResult) -> void:
 				result.shot_sheep,
 				result.surviving_sheep,
 				result.time_left,
+				bullets,
 			]
 		)
 	)
