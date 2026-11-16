@@ -106,6 +106,7 @@ The phase event feeds `SwarmService.sheep_phase_changed` on both devices, for ga
 | `combat.shot` | Host | `[origin, end_position, result, sheep_id, ammo_left, reload_time]` |
 | `combat.eat_request` | Either device, to the host | `[monster_position]` |
 | `combat.eat` | Host | `[target, target_id, target_position, monster_position, duration, cooldown]` |
+| `combat.unleash` | Host | `[]`: the Monster is the spider and may kill the Sheepherder (`CombatService.unleash_monster`; offline only, #108) |
 
 A request carries where the player's own character was when they pressed the button, because that device is the one that knows. The host decides against its own state of everything else. The Monster's player sees the others `net_interpolation_delay` in the past, so the host accepts an attack from the other device if the target can have been in reach that long ago. The result event carries the durations, so both devices count the same lock and cooldown even while a perk changes them.
 
